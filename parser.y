@@ -21,11 +21,6 @@
     char* strval;
 }
 
-/* STACK ONLY DA
-ExceptionType
-ExceptionTypeList
-*/
-
 %token<numval> LITERAL_integer
 %token<realval> LITERAL_floatingpoint
 %token<boolval> LITERAL_boolean
@@ -34,10 +29,10 @@ ExceptionTypeList
 %token<strval> LITERAL_textblock
 %token LITERAL_null 
 
-%token KEYWORD_class KEYWORD_extends KEYWORD_super KEYWORD_public KEYWORD_private KEYWORD_abstract KEYWORD_static KEYWORD_final KEYWORD_sealed KEYWORD_nonsealed KEYWORD_strictfp KEYWORD_implements KEYWORD_permits KEYWORD_transient KEYWORD_volatile KEYWORD_synchronized KEYWORD_native KEYWORD_void KEYWORD_this KEYWORD_enum KEYWORD_if KEYWORD_else KEYWORD_assert KEYWORD_while KEYWORD_for KEYWORD_break KEYWORD_yield KEYWORD_continue KEYWORD_return KEYWORD_throw KEYWORD_try KEYWORD_catch KEYWORD_finally KEYWORD_boolean KEYWORD_new KEYWORD_instanceof KEYWORD_var KEYWORD_byte KEYWORD_short KEYWORD_int KEYWORD_long KEYWORD_char KEYWORD_float KEYWORD_double
+%token KEYWORD_class KEYWORD_extends KEYWORD_super KEYWORD_public KEYWORD_private KEYWORD_abstract KEYWORD_static KEYWORD_final KEYWORD_sealed KEYWORD_nonsealed KEYWORD_strictfp KEYWORD_implements KEYWORD_permits KEYWORD_transient KEYWORD_volatile KEYWORD_synchronized KEYWORD_native KEYWORD_void KEYWORD_this KEYWORD_enum KEYWORD_if KEYWORD_else KEYWORD_assert KEYWORD_while KEYWORD_for KEYWORD_break KEYWORD_yield KEYWORD_continue KEYWORD_return KEYWORD_throw KEYWORD_try KEYWORD_catch KEYWORD_finally KEYWORD_boolean KEYWORD_new KEYWORD_instanceof KEYWORD_var KEYWORD_byte KEYWORD_short KEYWORD_int KEYWORD_long KEYWORD_char KEYWORD_float KEYWORD_double KEYWORD_protected KEYWORD_throws
 %token<strval> Identifier
-%token DELIM_semicolon
-%token OPERATOR_assignment
+%token DELIM_semicolon DELIM_period DELIM_lpar DELIM_rpar DELIM_lsq DELIM_rsq DELIM_lcurl DELIM_rcurl DELIM_comma DELIM_ellipsis DELIM_proportion DELIM_attherate 
+%token OPERATOR_equal OPERATOR_ternarycolon OPERATOR_assignment OPERATOR_bitwiseand OPERATOR_ternaryquestion OPERATOR_logicalor OPERATOR_logicaland OPERATOR_bitwiseor OPERATOR_xor OPERATOR_logicalequal OPERATOR_neq OPERATOR_lt OPERATOR_gt OPERATOR_leq OPERATOR_geq OPERATOR_leftshift OPERATOR_rightshift OPERATOR_unsignedrightshift OPERATOR_plus OPERATOR_minus OPERATOR_multiply OPERATOR_divide OPERATOR_mod OPERATOR_increment OPERATOR_decrement OPERATOR_bitwisecomp OPERATOR_not
 
 %start CompilationUnit
 
@@ -47,15 +42,15 @@ ExceptionTypeList
     /***************************** TOKEN SECTION ******************************/
     // prog: NUM {
     //     cout << $1 << endl;
-    //     cout << "TERI MA KI CHUT" << endl;
+    //    
     // } 
     // | prog NUM {
     //     cout << $2 << endl;
-    //     cout << "Teri MA ki chut" << endl;
+    //     
     // }
     // | REAL {
     //     cout << $1 << endl;
-    //     cout << "FLOATING POINT NUMBERS MFKER" << endl;
+    //     
     // }
 
     /****************** TYPES, VALUES AND VARIABLES  ******************/
@@ -66,50 +61,51 @@ ExceptionTypeList
     // ! sAnnotation removed
     PrimitiveType: NumericType | KEYWORD_boolean ;
     NumericType: IntegralType | FloatingPointType ;
-    ReferenceType: Name | Identifier | ArrayType ; // ClassOrInterfaceType is same as ClassType
+    // ReferenceType: ArrayType ; // ClassOrInterfaceType is same as ClassType
     // ClassOrInterfaceType: ClassType | InterfaceType
     //! sAnnotation removed
-    // ClassType: Identifier | Name "." Identifier | ClassType "." Identifier // We ignore TypeArguments and replace ClassType with Name everywhere
+    // ClassType: Identifier | NameDot Identifier | ClassType DELIM_period Identifier // We ignore TypeArguments and replace ClassType with Name everywhere
     // InterfaceType: ClassType
     // TypeIdentifier: Identifier // Replaced by Identifier
     // ! sAnnotation
     // TypeVariable: TypeIdentifier ; // TypeIdentifier is same as Identifier, therefore TypeVariable just replaced by Identifier
-    ArrayType: PrimitiveType Dims | Name Dims ;
-
+    ArrayType: Name Dims ; // Java style array declarations ignored
     // ! sAnnotation
-    Dims: "[]" | Dims "[]" ;
+    Dims: DELIM_lsq DELIM_rsq | DELIM_lsq DELIM_rsq Dims ;
     qDims: | Dims ;
     
     // TypeParameter: sAnnotation TypeIdentifier qTypeBound ;
     // TypeParameterModifier: Annotation //TypeParameterModifier is same as Annotation
     // TypeBound: KEYWORD_extends TypeVariable | KEYWORD_extends ClassType sAdditionalBound ; // useless symbol
     // qTypeBound: | TypeBound ; // useless symbol
-    AdditionalBound: "&" Name ;
-    sAdditionalBound: | sAdditionalBound AdditionalBound ;
+    AdditionalBound: OPERATOR_bitwiseand Name ;
+    pAdditionalBound: AdditionalBound | pAdditionalBound AdditionalBound ;
     // TypeArgumentList: TypeArgument sCommaTypeArgument ; // useless symbol
-    // sCommaTypeArgument: | sCommaTypeArgument "," TypeArgument ; // useless symbol
+    // sCommaTypeArgument: | sCommaTypeArgument DELIM_comma TypeArgument ; // useless symbol
     // TypeArgument: ReferenceType | Wildcard ; // useless symbol
     // ! sAnnotation
-    // Wildcard: "?" qWildcardBounds ; // useless symbol
+    // Wildcard: OPERATOR_ternaryquestion qWildcardBounds ; // useless symbol
     // WildcardBounds: KEYWORD_extends ReferenceType | KEYWORD_super ReferenceType ; // useless symbol
     // qWildcardBounds: | WildcardBounds; // useless symbol
 
     /****************** NAMES  ******************/
 
-    Name: Name "." Identifier | Identifier ;
-    sCommaName: | sCommaName "," Name ;
+    Name: NameDot Identifier | Identifier ;
+    sCommaName: | sCommaName DELIM_comma Name ;
     NameList: Name sCommaName ;
 
     /****************** PACKAGES and MODULES  ******************/
-    CompilationUnit: OrdinaryCompilationUnit; // used to be OrdinaryCompilationUnit | ModularCompilationUnit;
+    CompilationUnit: OrdinaryCompilationUnit {
+        cout << "mathced da!" << endl;
+    }; // used to be OrdinaryCompilationUnit | ModularCompilationUnit;
     OrdinaryCompilationUnit: sTopLevelClassOrInterfaceDeclaration;
     sTopLevelClassOrInterfaceDeclaration: | sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration;
     TopLevelClassOrInterfaceDeclaration: NormalClassDeclaration | DELIM_semicolon ; // ClassDeclaration is the same as NormalClassDeclaration
    
     // ModularCompilationUnit: ModuleDeclaration;
-    // ModuleDeclaration: sAnnotation qopen KEYWORD_module Identifier sDotIdentifier "{" sModuleDirective "}" ;
+    // ModuleDeclaration: sAnnotation qopen KEYWORD_module Identifier sDotIdentifier DELIM_lcurl sModuleDirective DELIM_rcurl ;
     // qopen: KEYWORD_open | ;
-    // sDotIdentifier: | sDotIdentifier "." Identifier;
+    // sDotIdentifier: | sDotIdentifier DELIM_period Identifier;
     // sModuleDirective: | sModuleDirective ModuleDirective;
     // ModuleDirective:
         // KEYWORD_requires sRequiresModifier ModuleName ";"
@@ -123,10 +119,14 @@ ExceptionTypeList
     
     /****************** CLASSES  ******************/
     // ClassDeclaration: NormalClassDeclaration | EnumDeclaration | RecordDeclaration we only implement Normal Class Declaration
-    NormalClassDeclaration: sClassModifier KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody;
 
-    ClassModifier: KEYWORD_public | KEYWORD_private | KEYWORD_abstract | KEYWORD_static | KEYWORD_final | KEYWORD_sealed | KEYWORD_nonsealed | KEYWORD_strictfp ;
-    sClassModifier: | sClassModifier ClassModifier ;
+    Modifiers: Modifier | Modifiers Modifier ;
+    Modifier: KEYWORD_public | KEYWORD_private | KEYWORD_protected | KEYWORD_static | KEYWORD_final | KEYWORD_abstract | KEYWORD_native | KEYWORD_synchronized | KEYWORD_transient | KEYWORD_volatile ;
+
+    NormalClassDeclaration: Modifiers KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody;
+
+    // ClassModifier: KEYWORD_public | KEYWORD_private | KEYWORD_abstract | KEYWORD_static | KEYWORD_final | KEYWORD_sealed | KEYWORD_nonsealed | KEYWORD_strictfp ;
+    // sClassModifier: | sClassModifier ClassModifier ;
 
     ClassExtends: KEYWORD_extends Name ;
     qClassExtends: | ClassExtends ;
@@ -138,7 +138,7 @@ ExceptionTypeList
     ClassPermits: KEYWORD_permits Name sCommaName ;
     qClassPermits: | ClassPermits ;
     
-    ClassBody: "{" sClassBodyDeclaration "}" ;
+    ClassBody: DELIM_lcurl sClassBodyDeclaration DELIM_rcurl ;
     qClassBody: | ClassBody ;
     ClassBodyDeclaration: 
     ClassMemberDeclaration | InstanceInitializer | StaticInitializer | ConstructorDeclaration ;
@@ -146,60 +146,62 @@ ExceptionTypeList
     
     ClassMemberDeclaration: FieldDeclaration | MethodDeclaration | NormalClassDeclaration | DELIM_semicolon ; // ClassDeclaration is the same as NormalClassDeclaration, removed InterfaceDeclaration
 
-    FieldDeclaration: sFieldModifier UnannType VariableDeclaratorList DELIM_semicolon ;     
+    FieldDeclaration: Modifiers UnannType VariableDeclaratorList DELIM_semicolon ;     
     // ! Annotation removed
-    FieldModifier: KEYWORD_public | KEYWORD_private | KEYWORD_static | KEYWORD_final | KEYWORD_transient | KEYWORD_volatile ; 
-    sFieldModifier: | sFieldModifier FieldModifier ;
+    // FieldModifier: KEYWORD_public | KEYWORD_private | KEYWORD_static | KEYWORD_final | KEYWORD_transient | KEYWORD_volatile ; 
+    // sFieldModifier: | sFieldModifier FieldModifier ;
     
     VariableDeclaratorList: VariableDeclarator sCommaVariableDeclarator ;
-    sCommaVariableDeclarator : | sCommaVariableDeclarator "," VariableDeclarator ;
+    sCommaVariableDeclarator : | sCommaVariableDeclarator DELIM_comma VariableDeclarator ;
     VariableDeclarator: VariableDeclaratorId qEqualVariableInitializer ;
     VariableDeclaratorId: Identifier qDims ;
-    qEqualVariableInitializer: | "=" VariableInitializer ;
+    qEqualVariableInitializer: | OPERATOR_equal VariableInitializer ;
     VariableInitializer: Expression | ArrayInitializer ;
 
-    UnannType: UnannPrimitiveType | UnannReferenceType ;
-    UnannPrimitiveType: NumericType | KEYWORD_boolean ; // ? literal
-    UnannReferenceType: Name | UnannArrayType ; //UnannInterfaceType is same as UnannClassType
-    // UnannClassOrInterfaceType: UnannClassType | UnannInterfaceType ;
+    UnannType: PrimitiveType | Name qDims ;
+    // UnannPrimitiveType: NumericType | KEYWORD_boolean ; // ? literal
+    // UnannReferenceType: Name | ArrayType ; //UnannInterfaceType is same as UnannClassType
+    // UnannClassOrInterfaceType: UnannClassType | UnannIn  erfaceType ;
     
     // ! sAnnotation
-    // UnannClassType: Identifier | Name "." Identifier | UnannClassType "." Identifier ; // Replaced by Name
+    // UnannClassType: Identifier | NameDot Identifier | UnannClassType DELIM_period Identifier ; // Replaced by Name
     // UnannInterfaceType: UnannClassType
     // UnannTypeVariable: Identifier // ? Do we remove this? ################## // Replaced by Identifier everywhere
-    UnannArrayType: UnannPrimitiveType Dims | Name Dims
+    // UnannArrayType: PrimitiveType Dims | Name Dims
 
-    MethodDeclaration: sMethodModifier MethodHeader MethodBody ;
+    MethodDeclaration: Modifiers MethodHeader MethodBody ;
 
     // ! Annotation removed
-    MethodModifier: KEYWORD_public | KEYWORD_private | KEYWORD_abstract | KEYWORD_static | KEYWORD_final | KEYWORD_synchronized | KEYWORD_native | KEYWORD_strictfp ;
-    sMethodModifier: | sMethodModifier MethodModifier ;
+    // MethodModifier: KEYWORD_public | KEYWORD_private | KEYWORD_abstract | KEYWORD_static | KEYWORD_final | KEYWORD_synchronized | KEYWORD_native | KEYWORD_strictfp ;
+    // sMethodModifier: | sMethodModifier MethodModifier ;
 
     //  ! Removing this rule: | TypeParameters sAnnotation Result MethodDeclarator qThrows
-    MethodHeader: Result MethodDeclarator qThrows
+    MethodHeader: Result MethodDeclarator qThrows ;
 
     Result: UnannType | KEYWORD_void;
 
-    MethodDeclarator: Identifier "(" qReceiverParameterComma qFormalParameterList ")" qDims ;
+    MethodDeclarator: Identifier DELIM_lpar qFormalParameterList DELIM_rpar qDims ;
+                    |   Identifier DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar qDims ; // qreceiverparametercomma was here
 
-    ReceiverParameterComma: ReceiverParameter "," ;
+    ReceiverParameterComma: ReceiverParameter DELIM_comma ;
     // ! sAnnotation
     ReceiverParameter: UnannType qIdentifierDot KEYWORD_this ;
-    qReceiverParameterComma: | ReceiverParameterComma ;
-    IdentifierDot: Identifier "." ;
+    // qReceiverParameterComma: | ReceiverParameterComma ;
+    IdentifierDot: Identifier DELIM_period ;
     qIdentifierDot: | IdentifierDot ;
 
     FormalParameterList: FormalParameter sCommaFormalParameter ;
     qFormalParameterList: | FormalParameterList ;
-    FormalParameter: sVariableModifier UnannType VariableDeclaratorId | VariableArityParameter ;
-    sCommaFormalParameter: | sCommaFormalParameter "," FormalParameter ;
+    FormalParameter: pVariableModifier UnannType VariableDeclaratorId | VariableArityParameter | UnannType VariableDeclaratorId ;
+    sCommaFormalParameter: | sCommaFormalParameter DELIM_comma FormalParameter ;
     
     // ! sAnnotation and Annotation removed
-    VariableArityParameter: sVariableModifier UnannType "..." Identifier ;
-    VariableModifier: KEYWORD_final ;
-    sVariableModifier: | sVariableModifier VariableModifier ;
+    VariableArityParameter: pVariableModifier UnannType DELIM_ellipsis Identifier | UnannType DELIM_ellipsis Identifier ;
+    // VariableModifier: KEYWORD_final ;
+    // sVariableModifier: | sVariableModifier KEYWORD_final ;
+    pVariableModifier: KEYWORD_final | pVariableModifier KEYWORD_final ;
  
-    Throws: "throws" NameList ;
+    Throws: KEYWORD_throws NameList ;
     qThrows: |  Throws;
     // ExceptionTypeList: Name sCommaName ; // Replaced by NameList
     
@@ -209,30 +211,37 @@ ExceptionTypeList
 
     StaticInitializer: KEYWORD_static Block ;
 
-    ConstructorDeclaration: sConstructorModifier ConstructorDeclarator qThrows ConstructorBody ;
+    ConstructorDeclaration: Modifiers ConstructorDeclarator qThrows ConstructorBody ;
     // ! Annotation removed
-    ConstructorModifier: KEYWORD_public | KEYWORD_private ;
-    sConstructorModifier: | sConstructorModifier ConstructorModifier ;
+    // ConstructorModifier: KEYWORD_public | KEYWORD_private ;
+    // sConstructorModifier: | sConstructorModifier ConstructorModifier ;
 
-    ConstructorDeclarator: Name "(" qReceiverParameterComma qFormalParameterList ")" ;
+    ConstructorDeclarator: Name DELIM_lpar qFormalParameterList DELIM_rpar ;
+                        |   Name DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar ;
 
-    ConstructorBody: "{" qExplicitConstructorInvocation qBlockStatements "}" ;
+    ConstructorBody: DELIM_lcurl qBlockStatements DELIM_rcurl ;
+                    |   DELIM_lcurl ExplicitConstructorInvocation qBlockStatements DELIM_rcurl ;
     ExplicitConstructorInvocation: KEYWORD_this BracketArgumentList DELIM_semicolon 
-                                 | KEYWORD_super BracketArgumentList DELIM_semicolon 
-                                 | Name "." KEYWORD_super BracketArgumentList DELIM_semicolon
-                                 | Primary "." KEYWORD_super BracketArgumentList DELIM_semicolon ;
-    qExplicitConstructorInvocation: | ExplicitConstructorInvocation ;
-    BracketArgumentList: "(" qArgumentList ")" ;
+                                 | KEYWORD_super BracketArgumentList DELIM_semicolon
+                                 | NameDotSuper BracketArgumentList DELIM_semicolon
+                                 | PrimaryDotSuper BracketArgumentList DELIM_semicolon ;
+    PrimaryDot: Primary DELIM_period;
+    PrimaryDotSuper: PrimaryDot KEYWORD_super;
+    NameDot: Name DELIM_period;
+    NameDotSuper: NameDot KEYWORD_super;
+
+    // qExplicitConstructorInvocation: | ExplicitConstructorInvocation ;
+    BracketArgumentList: DELIM_lpar qArgumentList DELIM_rpar ;
     // qBracketArgumentList: | BracketArgumentList ; // useless symbol
 
     // EnumDeclaration: sClassModifier KEYWORD_enum TypeIdentifier qClassImplements EnumBody ; // useless symbol
-    // EnumBody: "{" qEnumConstantList qComma qEnumBodyDeclarations "}" ; // useless symbol
+    // EnumBody: DELIM_lcurl qEnumConstantList qComma qEnumBodyDeclarations DELIM_rcurl ; // useless symbol
 
     // EnumConstantList: EnumConstant sCommaEnumConstant ; // useless symbol
     // qEnumConstantList: | EnumConstantList ; // useless symbol
 
     // EnumConstant: Identifier qBracketArgumentList qClassBody ; // useless symbol
-    // CommaEnumConstant: "," EnumConstant ; // useless symbol
+    // CommaEnumConstant: DELIM_comma EnumConstant ; // useless symbol
     // sCommaEnumConstant: | sCommaEnumConstant CommaEnumConstant ; // useless symbol
 
 
@@ -242,29 +251,22 @@ ExceptionTypeList
     //CompactConstructorDeclaration: sConstructorModifier SimpleTypeName ConstructorBody ;  @TODO
 
     /************** ARRAYS  ******************/
-    ArrayInitializer: sArray;
-    sArray: | sArray Array;
-    Array: qVariableInitializerList qComma;
-    qComma: | ",";
-    sCommaVariableInitializer: | sCommaVariableInitializer "," VariableInitializer;
+    ArrayInitializer: DELIM_lcurl qVariableInitializerList qComma DELIM_rcurl;
+    qComma: | DELIM_comma;
+    sCommaVariableInitializer: | sCommaVariableInitializer DELIM_comma VariableInitializer;
     VariableInitializerList: VariableInitializer sCommaVariableInitializer;
     qVariableInitializerList: | VariableInitializerList;
 
-
-
-
     /****************** BLOCKS, STATEMENTS ******************/
     Block:
-        "{" qBlockStatements "}"
+        DELIM_lcurl qBlockStatements DELIM_rcurl
         ;
     qBlockStatements:
         |   BlockStatements
         ;
     BlockStatements:
-        BlockStatement sBlockStatement
-        ;
-    sBlockStatement:
-        |   sBlockStatement BlockStatement
+        BlockStatement 
+        |   BlockStatement BlockStatements
         ;
     BlockStatement:
             LocalClassOrInterfaceDeclaration
@@ -278,7 +280,8 @@ ExceptionTypeList
         LocalVariableDeclaration DELIM_semicolon
         ;
     LocalVariableDeclaration:
-        sVariableModifier LocalVariableType VariableDeclaratorList
+        pVariableModifier LocalVariableType VariableDeclaratorList 
+        | LocalVariableType VariableDeclaratorList
         ;
     LocalVariableType:
             UnannType
@@ -316,10 +319,10 @@ ExceptionTypeList
         DELIM_semicolon
         ;
     LabeledStatement:
-        Identifier ":" Statement
+        Identifier OPERATOR_ternarycolon Statement
         ;
     LabeledStatementNoShortIf:
-        Identifier ":" StatementNoShortIf
+        Identifier OPERATOR_ternarycolon StatementNoShortIf
         ;
     ExpressionStatement:
         StatementExpression DELIM_semicolon
@@ -334,24 +337,24 @@ ExceptionTypeList
         |   ClassInstanceCreationExpression
         ;
     IfThenStatement:
-        KEYWORD_if "(" Expression ")" Statement
+        KEYWORD_if DELIM_lpar Expression DELIM_rpar Statement
         ;
     IfThenElseStatement:
-        KEYWORD_if "(" Expression ")" StatementNoShortIf KEYWORD_else Statement
+        KEYWORD_if DELIM_lpar Expression DELIM_rpar StatementNoShortIf KEYWORD_else Statement
         ;
     IfThenElseStatementNoShortIf:
-        KEYWORD_if "(" Expression ")" StatementNoShortIf KEYWORD_else StatementNoShortIf
+        KEYWORD_if DELIM_lpar Expression DELIM_rpar StatementNoShortIf KEYWORD_else StatementNoShortIf
         ;
     AssertStatement:
             KEYWORD_assert Expression DELIM_semicolon
-        |   KEYWORD_assert Expression ":" Expression DELIM_semicolon
+        |   KEYWORD_assert Expression OPERATOR_ternarycolon Expression DELIM_semicolon
         ;
     // CaseConstant: ConditionalExpression ; // useless symbol
     WhileStatement:
-        KEYWORD_while "(" Expression ")" Statement
+        KEYWORD_while DELIM_lpar Expression DELIM_rpar Statement
         ;
     WhileStatementNoShortIf:
-        KEYWORD_while "(" Expression ")" StatementNoShortIf
+        KEYWORD_while DELIM_lpar Expression DELIM_rpar StatementNoShortIf
         ;
     ForStatement:
             BasicForStatement
@@ -362,10 +365,10 @@ ExceptionTypeList
         |   EnhancedForStatementNoShortIf
         ;
     BasicForStatement:
-        KEYWORD_for "(" qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate ")" Statement
+        KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar Statement
         ;
     BasicForStatementNoShortIf:
-        KEYWORD_for "(" qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate ")" StatementNoShortIf
+        KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar StatementNoShortIf
         ;
     qForInit:
         |   ForInit
@@ -384,13 +387,13 @@ ExceptionTypeList
         StatementExpression sCommaStatementExpression
         ;
     sCommaStatementExpression:
-        |   sCommaStatementExpression "," StatementExpression
+        |   sCommaStatementExpression DELIM_comma StatementExpression
         ;
     EnhancedForStatement:
-        KEYWORD_for "(" LocalVariableDeclaration ":" Expression ")" Statement
+        KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar Statement
         ;
     EnhancedForStatementNoShortIf:
-        KEYWORD_for "(" LocalVariableDeclaration ":" Expression ")" StatementNoShortIf
+        KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar StatementNoShortIf
         ;
     BreakStatement:
         KEYWORD_break qIdentifier DELIM_semicolon
@@ -414,7 +417,7 @@ ExceptionTypeList
         KEYWORD_throw Expression DELIM_semicolon
         ;
     SynchronizedStatement:
-        KEYWORD_synchronized "(" Expression ")" Block
+        KEYWORD_synchronized DELIM_lpar Expression DELIM_rpar Block
         ;
     TryStatement:
             KEYWORD_try Block Catches
@@ -431,18 +434,19 @@ ExceptionTypeList
     Catches:
         pCatches;
     CatchClause:
-        KEYWORD_catch "(" CatchFormalParameter ")" Block
+        KEYWORD_catch DELIM_lpar CatchFormalParameter DELIM_rpar Block
         ;
     CatchFormalParameter:
-        sVariableModifier CatchType VariableDeclaratorId
+        pVariableModifier CatchType VariableDeclaratorId
+        |   CatchType VariableDeclaratorId
         ;
     CatchType:
         Name sOrName ;
         ;
     // sorClasstype:
-    //     |   sorClasstype "|" Name
+    //     |   sorClasstype OPERATOR_bitwiseor Name
     //     ;
-    sOrName:    | sOrName "|" Name ;
+    sOrName:    | sOrName OPERATOR_bitwiseor Name ;
     Finally:
         KEYWORD_finally Block
         ;
@@ -453,7 +457,7 @@ ExceptionTypeList
         |   Finally
         ;
     ResourceSpecification:
-        "(" ResourceList qsemicolon ")"
+        DELIM_lpar ResourceList qsemicolon DELIM_rpar
     qsemicolon:
         |   DELIM_semicolon
         ;
@@ -489,80 +493,80 @@ ExceptionTypeList
         ;
     ConditionalExpression:
         ConditionalOrExpression
-        |   ConditionalOrExpression "?" Expression ":" ConditionalExpression
+        |   ConditionalOrExpression OPERATOR_ternaryquestion Expression OPERATOR_ternarycolon ConditionalExpression
         ;
     ConditionalOrExpression:
         ConditionalAndExpression
-        |   ConditionalOrExpression "||" ConditionalAndExpression
+        |   ConditionalOrExpression OPERATOR_logicalor ConditionalAndExpression
         ;
     ConditionalAndExpression:
         InclusiveOrExpression
-        |   ConditionalAndExpression "&&" InclusiveOrExpression
+        |   ConditionalAndExpression OPERATOR_logicaland InclusiveOrExpression
         ;
     InclusiveOrExpression:
             ExclusiveOrExpression
-        |   InclusiveOrExpression "|" ExclusiveOrExpression
+        |   InclusiveOrExpression OPERATOR_bitwiseor ExclusiveOrExpression
         ;
     ExclusiveOrExpression:
             AndExpression
-        |   ExclusiveOrExpression "^" AndExpression
+        |   ExclusiveOrExpression OPERATOR_xor AndExpression
         ;
     AndExpression:
             EqualityExpression
-        |   AndExpression "&" EqualityExpression
+        |   AndExpression OPERATOR_bitwiseand EqualityExpression
         ;
     EqualityExpression: 
             RelationalExpression
-        |   EqualityExpression "==" RelationalExpression
-        |   EqualityExpression "!=" RelationalExpression
+        |   RelationalExpression OPERATOR_logicalor EqualityExpression
+        |   RelationalExpression OPERATOR_neq EqualityExpression
         ;
     RelationalExpression: 
             ShiftExpression
-        |   RelationalExpression "<" ShiftExpression
-        |   RelationalExpression ">" ShiftExpression
-        |   RelationalExpression "<=" ShiftExpression
-        |   RelationalExpression ">=" ShiftExpression
+        |   RelationalExpression OPERATOR_lt ShiftExpression
+        |   RelationalExpression OPERATOR_gt ShiftExpression
+        |   RelationalExpression OPERATOR_leq ShiftExpression
+        |   RelationalExpression OPERATOR_geq ShiftExpression
         |   InstanceofExpression
         ;
     ShiftExpression:
             AdditiveExpression
-        |   ShiftExpression "<<" AdditiveExpression
-        |   ShiftExpression ">>" AdditiveExpression
-        |   ShiftExpression ">>>" AdditiveExpression
+        |   ShiftExpression OPERATOR_leftshift AdditiveExpression
+        |   ShiftExpression OPERATOR_rightshift AdditiveExpression
+        |   ShiftExpression OPERATOR_unsignedrightshift AdditiveExpression
         ;
     AdditiveExpression:
             MultiplicativeExpression
-        |   AdditiveExpression "+" MultiplicativeExpression
-        |   AdditiveExpression "-" MultiplicativeExpression
+        |   AdditiveExpression OPERATOR_plus MultiplicativeExpression
+        |   AdditiveExpression OPERATOR_minus MultiplicativeExpression
         ;
     MultiplicativeExpression:
             UnaryExpression
-        |   MultiplicativeExpression "*" UnaryExpression
-        |   MultiplicativeExpression "/" UnaryExpression
-        |   MultiplicativeExpression "%" UnaryExpression
+        |   MultiplicativeExpression OPERATOR_multiply UnaryExpression
+        |   MultiplicativeExpression OPERATOR_divide UnaryExpression
+        |   MultiplicativeExpression OPERATOR_mod UnaryExpression
         ;
     UnaryExpression:
             PreIncrementExpression
         |   PreDecrementExpression
-        |   "+" UnaryExpression
-        |   "-" UnaryExpression
+        |   OPERATOR_plus UnaryExpression
+        |   OPERATOR_minus UnaryExpression
         |   UnaryExpressionNotPlusMinus
         ;
     PreIncrementExpression:
-        "++" UnaryExpression
+        OPERATOR_increment UnaryExpression
         ;
     PreDecrementExpression:
-        "--" UnaryExpression
+        OPERATOR_decrement UnaryExpression
         ;
     UnaryExpressionNotPlusMinus:
-            PostfixExpression
-        |   "~" UnaryExpression
-        |   "!" UnaryExpression
+            Name
+        |   PostfixExpression
+        |   OPERATOR_bitwisecomp UnaryExpression
+        |   OPERATOR_not UnaryExpression
         |   CastExpression
         ;   // can also include SwitchExpression
     PostfixExpression:
             Primary
-        |   Name
         |   PostIncrementExpression
         |   PostDecrementExpression 
         ;
@@ -574,8 +578,8 @@ ExceptionTypeList
             Literal
         |   ClassLiteral
         |   KEYWORD_this
-        |   Name "." KEYWORD_this
-        |   "(" Expression ")"
+        |   NameDot KEYWORD_this
+        |   DELIM_lpar Expression DELIM_rpar
         |   ClassInstanceCreationExpression
         |   FieldAccess
         |   ArrayAccess
@@ -584,55 +588,51 @@ ExceptionTypeList
         ;
     Literal: LITERAL_integer | LITERAL_floatingpoint | LITERAL_boolean | LITERAL_char | LITERAL_string | LITERAL_textblock | LITERAL_null ;
     ClassLiteral:
-            Name ssquarebrackets "." "class"
-        |   NumericType ssquarebrackets "." "class"
-        |   KEYWORD_boolean ssquarebrackets "." "class"
-        |   KEYWORD_void "." "class"
+            Name DELIM_period KEYWORD_class
+        |   Name Dims qDims DELIM_period KEYWORD_class
+        |   NumericType qDims DELIM_period KEYWORD_class
+        |   KEYWORD_boolean qDims DELIM_period KEYWORD_class
+        |   KEYWORD_void DELIM_period KEYWORD_class
         ; 
-    ssquarebrackets:
-        |   ssquarebrackets "[" "]"
-        ;
     ClassInstanceCreationExpression:
             UnqualifiedClassInstanceCreationExpression
-        |   Name "." UnqualifiedClassInstanceCreationExpression
-        |   Primary "." UnqualifiedClassInstanceCreationExpression
+        |   NameDot UnqualifiedClassInstanceCreationExpression
+        |   PrimaryDot UnqualifiedClassInstanceCreationExpression
         ;
     UnqualifiedClassInstanceCreationExpression:
-        KEYWORD_new  ClassOrInterfaceTypeToInstantiate BracketArgumentList qClassBody
+        KEYWORD_new Name BracketArgumentList qClassBody
         ;
         
     // ! sAnnotation
-    ClassOrInterfaceTypeToInstantiate:
-        Identifier sDotsAnnotationIdentifier;
-    sDotsAnnotationIdentifier: | sDotsAnnotationIdentifier "." Identifier;
+    // ClassOrInterfaceTypeToInstantiate: Name ;
+    //     Identifier sDotIdentifier;
+    // sDotIdentifier: | sDotIdentifier DELIM_period Identifier;
     qArgumentList: | ArgumentList;
     ArgumentList: Expression sCommaExpression;
-    sCommaExpression: | sCommaExpression "," Expression;
+    sCommaExpression: | DELIM_comma Expression sCommaExpression ;
     FieldAccess:
-        Primary "." Identifier
-        |   KEYWORD_super "." Identifier
-        |   Name "." KEYWORD_super "." Identifier
+        PrimaryDot Identifier
+        |   KEYWORD_super DELIM_period Identifier
+        |   NameDotSuper DELIM_period Identifier
         ;
     ArrayAccess:
-        Name qExpression
-        |   PrimaryNoNewArray qExpression
+        Name DELIM_lsq Expression DELIM_rsq
+        |   PrimaryNoNewArray DELIM_lsq Expression DELIM_rsq
         ;
     MethodInvocation:
         Name BracketArgumentList
-        |   Name "."  Identifier BracketArgumentList
-        |   Name "."  Identifier BracketArgumentList
-        |   Primary "."  Identifier BracketArgumentList
-        |   KEYWORD_super "."  Identifier BracketArgumentList
-        |   Name "." KEYWORD_super "."  Identifier BracketArgumentList
+        |   PrimaryDot Identifier BracketArgumentList
+        |   KEYWORD_super DELIM_period  Identifier BracketArgumentList
+        |   NameDotSuper DELIM_period  Identifier BracketArgumentList
         ; 
     MethodReference:
-        Name "::"  Identifier
-        |   Primary "::"  Identifier
-        |   ReferenceType "::"  Identifier
-        |   KEYWORD_super "::"  Identifier
-        |   Name "." KEYWORD_super "::"  Identifier
-        |   Name "::"  KEYWORD_new
-        |   ArrayType "::" KEYWORD_new
+        Name DELIM_proportion  Identifier
+        |   Primary DELIM_proportion  Identifier
+        |   ArrayType DELIM_proportion  Identifier
+        |   KEYWORD_super DELIM_proportion  Identifier
+        |   NameDotSuper DELIM_proportion  Identifier
+        |   Name DELIM_proportion  KEYWORD_new
+        |   ArrayType DELIM_proportion KEYWORD_new
         ;
     ArrayCreationExpression:
         KEYWORD_new PrimitiveType DimExprs qDims
@@ -643,19 +643,25 @@ ExceptionTypeList
     DimExprs: DimExpr sDimExpr;
     sDimExpr: | sDimExpr DimExpr;
     // ! sAnnotation
-    DimExpr: qExpression;
-    PostIncrementExpression: PostfixExpression "++";
-    PostDecrementExpression: PostfixExpression "--"; 
+    DimExpr: DELIM_lsq Expression DELIM_rsq;
+    PostIncrementExpression: Name OPERATOR_increment | PostfixExpression OPERATOR_increment;
+    PostDecrementExpression: Name OPERATOR_decrement | PostfixExpression OPERATOR_decrement; 
     CastExpression:
-        "(" PrimitiveType ")" UnaryExpression
-        |   "(" ReferenceType sAdditionalBound ")" UnaryExpressionNotPlusMinus
+        DELIM_lpar PrimitiveType DELIM_rpar UnaryExpression
+        |   DELIM_lpar ArrayType DELIM_rpar UnaryExpressionNotPlusMinus
+        |   DELIM_lpar ArrayType pAdditionalBound DELIM_rpar UnaryExpressionNotPlusMinus
+        |   DELIM_lpar Name pAdditionalBound DELIM_rpar UnaryExpressionNotPlusMinus
+        |   DELIM_lpar Name DELIM_rpar UnaryExpressionNotPlusMinus
         ;
     // will have to define SwitchExpression: for bonus
     InstanceofExpression:
-        RelationalExpression KEYWORD_instanceof ReferenceType
+        RelationalExpression KEYWORD_instanceof ArrayType
+        |   RelationalExpression KEYWORD_instanceof Name;
         |   RelationalExpression KEYWORD_instanceof Pattern;
     Assignment:
-        LeftHandSide OPERATOR_assignment Expression;
+        LeftHandSide OPERATOR_assignment Expression
+        | OPERATOR_equal Expression
+        ;
     LeftHandSide:
         Name
         |   FieldAccess
