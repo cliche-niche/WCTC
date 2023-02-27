@@ -1,6 +1,8 @@
-public class test {
-    public static void main(String[] args) {
-        int x10;
-        int y = 50;
+public class BubbleSort {
+    public static void main(final String[] args) {
+        
+        if(a < b == a < b){
+            ;
+        }
     }
 }

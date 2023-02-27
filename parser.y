@@ -29,16 +29,42 @@
 %token<strval> LITERAL_textblock
 %token LITERAL_null 
 
-%token KEYWORD_class KEYWORD_extends KEYWORD_super KEYWORD_public KEYWORD_private KEYWORD_abstract KEYWORD_static KEYWORD_final KEYWORD_sealed KEYWORD_nonsealed KEYWORD_strictfp KEYWORD_implements KEYWORD_permits KEYWORD_transient KEYWORD_volatile KEYWORD_synchronized KEYWORD_native KEYWORD_void KEYWORD_this KEYWORD_enum KEYWORD_if KEYWORD_else KEYWORD_assert KEYWORD_while KEYWORD_for KEYWORD_break KEYWORD_yield KEYWORD_continue KEYWORD_return KEYWORD_throw KEYWORD_try KEYWORD_catch KEYWORD_finally KEYWORD_boolean KEYWORD_new KEYWORD_instanceof KEYWORD_var KEYWORD_byte KEYWORD_short KEYWORD_int KEYWORD_long KEYWORD_char KEYWORD_float KEYWORD_double KEYWORD_protected KEYWORD_throws
+%token KEYWORD_class KEYWORD_extends KEYWORD_super KEYWORD_public KEYWORD_private KEYWORD_abstract KEYWORD_static KEYWORD_final KEYWORD_sealed KEYWORD_nonsealed KEYWORD_strictfp KEYWORD_implements KEYWORD_permits KEYWORD_transient KEYWORD_volatile KEYWORD_synchronized KEYWORD_native KEYWORD_void KEYWORD_this KEYWORD_enum KEYWORD_if KEYWORD_else KEYWORD_assert KEYWORD_while KEYWORD_for KEYWORD_break KEYWORD_yield KEYWORD_continue KEYWORD_return KEYWORD_throw KEYWORD_try KEYWORD_catch KEYWORD_finally KEYWORD_boolean KEYWORD_new KEYWORD_var KEYWORD_byte KEYWORD_short KEYWORD_int KEYWORD_long KEYWORD_char KEYWORD_float KEYWORD_double KEYWORD_protected KEYWORD_throws
 %token<strval> Identifier
 %token DELIM_semicolon DELIM_period DELIM_lpar DELIM_rpar DELIM_lsq DELIM_rsq DELIM_lcurl DELIM_rcurl DELIM_comma DELIM_ellipsis DELIM_proportion DELIM_attherate 
-%token OPERATOR_equal OPERATOR_ternarycolon OPERATOR_assignment OPERATOR_bitwiseand OPERATOR_ternaryquestion OPERATOR_logicalor OPERATOR_logicaland OPERATOR_bitwiseor OPERATOR_xor OPERATOR_logicalequal OPERATOR_neq OPERATOR_lt OPERATOR_gt OPERATOR_leq OPERATOR_geq OPERATOR_leftshift OPERATOR_rightshift OPERATOR_unsignedrightshift OPERATOR_plus OPERATOR_minus OPERATOR_multiply OPERATOR_divide OPERATOR_mod OPERATOR_increment OPERATOR_decrement OPERATOR_bitwisecomp OPERATOR_not
+
+%precedence PREC_reduce_VariableInitializerList
+%precedence DELIM_comma
+
+%precedence PREC_excor_to_and
+%precedence PREC_incor_to_excor
+%precedence PREC_condor_to_condand
+%precedence PREC_condand_to_incor
+%precedence PREC_cond_to_condor
+%precedence PREC_and_to_equality
+%precedence PREC_equality_to_relational
+
+%right DELIM_lsq
+%right OPERATOR_assignment OPERATOR_equal
+%right OPERATOR_ternarycolon OPERATOR_ternaryquestion
+%left OPERATOR_logicalor
+%left OPERATOR_logicaland
+%left OPERATOR_bitwiseor
+%left OPERATOR_xor
+%left OPERATOR_bitwiseand
+%left OPERATOR_logicalequal OPERATOR_neq
+%left OPERATOR_lt OPERATOR_gt OPERATOR_leq OPERATOR_geq KEYWORD_instanceof
+%left OPERATOR_leftshift OPERATOR_rightshift OPERATOR_unsignedrightshift
+%left OPERATOR_plus OPERATOR_minus
+%left OPERATOR_multiply OPERATOR_divide OPERATOR_mod
+%right UNARY_minus UNARY_plus OPERATOR_not OPERATOR_bitwisecomp
+%nonassoc OPERATOR_increment OPERATOR_decrement
 
 %start CompilationUnit
 
 %%
     /***************************** TOKEN SECTION ******************************/
-    //idhar add kardo jo tokens add karne hain, baad multiset ka set bana lenge
+    //idhar add kardo jo tokens add karne hain, baad im ka set bana lenge
     /***************************** TOKEN SECTION ******************************/
     // prog: NUM {
     //     cout << $1 << endl;
@@ -71,7 +97,9 @@
     // TypeVariable: TypeIdentifier ; // TypeIdentifier is same as Identifier, therefore TypeVariable just replaced by Identifier
     ArrayType: Name Dims ; // Java style array declarations ignored
     // ! sAnnotation
-    Dims: DELIM_lsq DELIM_rsq | DELIM_lsq DELIM_rsq Dims ;
+    Dims: DELIM_lsq DELIM_rsq
+        | DELIM_lsq DELIM_rsq Dims
+        ;
     qDims: | Dims ;
     
     // TypeParameter: sAnnotation TypeIdentifier qTypeBound ;
@@ -90,7 +118,7 @@
 
     /****************** NAMES  ******************/
 
-    Name: NameDot Identifier | Identifier ;
+    Name: NameDot Identifier | Identifier { cout << $1 << endl; } ;
     sCommaName: | sCommaName DELIM_comma Name ;
     NameList: Name sCommaName ;
 
@@ -176,9 +204,9 @@
     // sMethodModifier: | sMethodModifier MethodModifier ;
 
     //  ! Removing this rule: | TypeParameters sAnnotation Result MethodDeclarator qThrows
-    MethodHeader: Result MethodDeclarator qThrows ;
+    MethodHeader: UnannType MethodDeclarator qThrows | KEYWORD_void MethodDeclarator qThrows;
 
-    Result: UnannType | KEYWORD_void;
+    // Result: UnannType | KEYWORD_void;
 
     MethodDeclarator: Identifier DELIM_lpar qFormalParameterList DELIM_rpar qDims ;
                     |   Identifier DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar qDims ; // qreceiverparametercomma was here
@@ -196,7 +224,8 @@
     sCommaFormalParameter: | sCommaFormalParameter DELIM_comma FormalParameter ;
     
     // ! sAnnotation and Annotation removed
-    VariableArityParameter: pVariableModifier UnannType DELIM_ellipsis Identifier | UnannType DELIM_ellipsis Identifier ;
+    VariableArityParameter: pVariableModifier UnannType DELIM_ellipsis Identifier
+    | UnannType DELIM_ellipsis Identifier ;
     // VariableModifier: KEYWORD_final ;
     // sVariableModifier: | sVariableModifier KEYWORD_final ;
     pVariableModifier: KEYWORD_final | pVariableModifier KEYWORD_final ;
@@ -251,11 +280,19 @@
     //CompactConstructorDeclaration: sConstructorModifier SimpleTypeName ConstructorBody ;  @TODO
 
     /************** ARRAYS  ******************/
-    ArrayInitializer: DELIM_lcurl qVariableInitializerList qComma DELIM_rcurl;
-    qComma: | DELIM_comma;
-    sCommaVariableInitializer: | sCommaVariableInitializer DELIM_comma VariableInitializer;
-    VariableInitializerList: VariableInitializer sCommaVariableInitializer;
-    qVariableInitializerList: | VariableInitializerList;
+    ArrayInitializer: DELIM_lcurl qVariableInitializerList qComma DELIM_rcurl
+                    ;
+    qComma: 
+            | DELIM_comma
+            ;
+    sCommaVariableInitializer: 
+                            | sCommaVariableInitializer DELIM_comma VariableInitializer %prec DELIM_comma
+                            ;
+    VariableInitializerList: VariableInitializer sCommaVariableInitializer %prec PREC_reduce_VariableInitializerList 
+                            ;
+    qVariableInitializerList: 
+                            | VariableInitializerList
+                            ;
 
     /****************** BLOCKS, STATEMENTS ******************/
     Block:
@@ -492,46 +529,46 @@
         |   Assignment
         ;
     ConditionalExpression:
-        ConditionalOrExpression
+        ConditionalOrExpression         %prec PREC_cond_to_condor
         |   ConditionalOrExpression OPERATOR_ternaryquestion Expression OPERATOR_ternarycolon ConditionalExpression
         ;
     ConditionalOrExpression:
-        ConditionalAndExpression
+        ConditionalAndExpression        %prec PREC_condor_to_condand
         |   ConditionalOrExpression OPERATOR_logicalor ConditionalAndExpression
         ;
     ConditionalAndExpression:
-        InclusiveOrExpression
+        InclusiveOrExpression           %prec PREC_condand_to_incor
         |   ConditionalAndExpression OPERATOR_logicaland InclusiveOrExpression
         ;
     InclusiveOrExpression:
-            ExclusiveOrExpression
+            ExclusiveOrExpression       %prec PREC_incor_to_excor
         |   InclusiveOrExpression OPERATOR_bitwiseor ExclusiveOrExpression
         ;
     ExclusiveOrExpression:
-            AndExpression
+            AndExpression               %prec PREC_excor_to_and
         |   ExclusiveOrExpression OPERATOR_xor AndExpression
         ;
     AndExpression:
-            EqualityExpression
+            EqualityExpression      
         |   AndExpression OPERATOR_bitwiseand EqualityExpression
         ;
     EqualityExpression: 
-            RelationalExpression
-        |   RelationalExpression OPERATOR_logicalor EqualityExpression
-        |   RelationalExpression OPERATOR_neq EqualityExpression
+            RelationalExpression    %prec PREC_equality_to_relational           { cout<<"relational to equality matched\n"; }
+        |   EqualityExpression OPERATOR_logicalequal RelationalExpression       { cout<<"logical equal idhar chutiye\n"; }
+        |   EqualityExpression OPERATOR_neq RelationalExpression
         ;
-    RelationalExpression: 
-            ShiftExpression
-        |   RelationalExpression OPERATOR_lt ShiftExpression
+    RelationalExpression:
+            ShiftExpression          { cout<< "shift to relational" << endl; }
+        |   RelationalExpression OPERATOR_lt ShiftExpression { cout << "less than" << endl; }
         |   RelationalExpression OPERATOR_gt ShiftExpression
         |   RelationalExpression OPERATOR_leq ShiftExpression
         |   RelationalExpression OPERATOR_geq ShiftExpression
         |   InstanceofExpression
         ;
     ShiftExpression:
-            AdditiveExpression
-        |   ShiftExpression OPERATOR_leftshift AdditiveExpression
-        |   ShiftExpression OPERATOR_rightshift AdditiveExpression
+            AdditiveExpression  { cout << "Additive to shift" << endl; }
+        |   ShiftExpression OPERATOR_leftshift AdditiveExpression    { cout << "left shift" << endl; }
+        |   ShiftExpression OPERATOR_rightshift AdditiveExpression 
         |   ShiftExpression OPERATOR_unsignedrightshift AdditiveExpression
         ;
     AdditiveExpression:
@@ -548,9 +585,9 @@
     UnaryExpression:
             PreIncrementExpression
         |   PreDecrementExpression
-        |   OPERATOR_plus UnaryExpression
-        |   OPERATOR_minus UnaryExpression
-        |   UnaryExpressionNotPlusMinus
+        |   OPERATOR_plus UnaryExpression       %prec UNARY_plus
+        |   OPERATOR_minus UnaryExpression      %prec UNARY_minus
+        |   UnaryExpressionNotPlusMinus { cout << "sx" << endl; }
         ;
     PreIncrementExpression:
         OPERATOR_increment UnaryExpression
@@ -559,7 +596,7 @@
         OPERATOR_decrement UnaryExpression
         ;
     UnaryExpressionNotPlusMinus:
-            Name
+            Name { cout << "sex" << endl; }
         |   PostfixExpression
         |   OPERATOR_bitwisecomp UnaryExpression
         |   OPERATOR_not UnaryExpression
@@ -640,8 +677,9 @@
         |   KEYWORD_new PrimitiveType Dims ArrayInitializer
         |   KEYWORD_new Name Dims ArrayInitializer
         ; // ClassOrInterfaceType is same as ClassType
-    DimExprs: DimExpr sDimExpr;
-    sDimExpr: | sDimExpr DimExpr;
+    DimExprs: DimExpr // DimExprs is equivalent to pDimExpr
+        | DimExprs DimExpr 
+        ;
     // ! sAnnotation
     DimExpr: DELIM_lsq Expression DELIM_rsq;
     PostIncrementExpression: Name OPERATOR_increment | PostfixExpression OPERATOR_increment;
@@ -660,7 +698,7 @@
         |   RelationalExpression KEYWORD_instanceof Pattern;
     Assignment:
         LeftHandSide OPERATOR_assignment Expression
-        | OPERATOR_equal Expression
+        | LeftHandSide OPERATOR_equal Expression
         ;
     LeftHandSide:
         Name

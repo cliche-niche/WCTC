@@ -14,6 +14,8 @@
     }
 
     string tb;
+    bool malloced_before_str_lit = false;
+    bool malloced_before_id = false;
 
     // case, const, default, do, goto, import, interface, package, switch, underscore, exports, module, open, opens, provides, record, requires, to, transitive, uses, with
 %}
@@ -186,10 +188,23 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 {DECFLOAT}|{HEXFLOAT} { yylval.realval = stold(yytext); return (LITERAL_floatingpoint); }
 {BOOL} { return (LITERAL_boolean); }
 {CHAR} { yylval.charval = yytext[0]; return (LITERAL_char); }
-{STRING} { strcpy(yylval.strval, yytext); return (LITERAL_string); }
+{STRING} { if (malloced_before_str_lit) {
+                free(yylval.strval);
+            }
+            malloced_before_str_lit = true;
+            yylval.strval = (char*) malloc(sizeof(char) * (yyleng + 5));
+            strcpy(yylval.strval, yytext); 
+            return (LITERAL_string); }
 {NULL} { return (LITERAL_null); }
 
-{ID} { return (Identifier); }
+{ID} { if(malloced_before_id) {
+        free(yylval.strval);
+    }
+        malloced_before_id = true;
+        yylval.strval = (char *)malloc(sizeof(char) * (yyleng + 5));
+        strcpy(yylval.strval, yytext);
+        return (Identifier); 
+    }
 
 . {
     cerr << "Unknown character " << yytext << " found at line: " << yylineno << "\n";
