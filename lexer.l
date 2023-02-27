@@ -17,7 +17,7 @@
     bool malloced_before_str_lit = false;
     bool malloced_before_id = false;
 
-    // case, const, default, do, goto, import, interface, package, switch, underscore, exports, module, open, opens, provides, record, requires, to, transitive, uses, with
+    // case, const, default, do, goto, interface, switch, underscore, exports, module, open, opens, provides, record, requires, to, transitive, uses, with
 %}
 
 %x comment1
@@ -122,12 +122,14 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 "float"  { return (KEYWORD_float); }
 "for"  { return (KEYWORD_for); }
 "if"  { return (KEYWORD_if); }
+"import"  { return (KEYWORD_import); }
 "implements"  { return (KEYWORD_implements); }
 "instanceof"  { return (KEYWORD_instanceof); }
 "int"  { return (KEYWORD_int); }
 "long"  { return (KEYWORD_long); }
 "native"  { return (KEYWORD_native); }
 "new"  { return (KEYWORD_new); }
+"package"  { return (KEYWORD_package); }
 "private"  { return (KEYWORD_private); }
 "protected"  { return (KEYWORD_protected); }
 "public"  { return (KEYWORD_public); }
@@ -198,11 +200,15 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 {NULL} { return (LITERAL_null); }
 
 {ID} { if(malloced_before_id) {
-        free(yylval.strval);
-    }
+            cout << yyleng << endl;
+            free(yylval.strval);
+            cout << "assigned" << endl;
+        }
         malloced_before_id = true;
+        cout<<yyleng<<' ';
         yylval.strval = (char *)malloc(sizeof(char) * (yyleng + 5));
         strcpy(yylval.strval, yytext);
+        cout<<yytext<<'\n';
         return (Identifier); 
     }
 
