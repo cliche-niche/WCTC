@@ -12,7 +12,8 @@
     extern "C" int yylineno;
     void yyerror(const char* s);
     void add_child(node* parent, node* child);
-    void print_tree(node* v, int tab);
+
+    node* root;
 %}
 %define parse.error verbose
 
@@ -239,7 +240,8 @@
             OrdinaryCompilationUnit                                     { 
                                                                             $$ = new node("CompilationUnit", false);
                                                                             add_child($$, $1);
-                                                                            print_tree($$, 0);
+
+                                                                            root = $$;
                                                                         }
             ; // used to be OrdinaryCompilationUnit | ModularCompilationUnit;
     OrdinaryCompilationUnit:
@@ -2574,21 +2576,6 @@ void yyerror(const char *error)
         (parent->child_count)++;
 }
 
-void print_tree(node* v, int tab){
-    for(int i=0; i<tab; i++){
-        cout<<'\t';
-    }
-    cout<<(v->name)<<"-> ";
-    for(auto i: (v->children)){
-        cout<<(i->name)<<' ';
-    }
-    cout<<'\n';
-    tab++;
-    for(auto i: (v->children)){
-        print_tree(i, tab);
-    }
-}
-
 int main(int argc, char* argv[]) {
     // if(argc != 2) {
     //     cout << "Usage: ./a.out <filename>" << endl;
@@ -2597,4 +2584,6 @@ int main(int argc, char* argv[]) {
 
     // freopen(argv[1], "r", stdin);
     yyparse();
+    // root->print_tree(0);
+    root->make_dot();
 }
