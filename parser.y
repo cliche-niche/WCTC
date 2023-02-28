@@ -13,7 +13,7 @@
     void yyerror(const char* s);
     void add_child(node* parent, node* child);
 
-    node* root;
+    node* root;     // contains the root node of the parse tree
 %}
 %define parse.error verbose
 
@@ -2594,20 +2594,4 @@ void yyerror(const char *error)
 {
     printf("Line Number:%d, Error:%s\n", yylineno, error);
     exit(0);
-}
-
-int main(int argc, char* argv[]) {
-    
-    bool verbose = false;
-    for(int i = 1; i < argc; i++){
-        verbose |= (argv[i] == "-verbose");
-    }
-
-    yyparse();
-    if(verbose){
-        cout<<"The following rules were matched ";
-        root->print_tree(0);
-    }
-    root->clean_tree();
-    root->make_dot();
 }

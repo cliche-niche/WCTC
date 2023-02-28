@@ -1,8 +1,8 @@
 clear
 bison -d -t -v parser.y
 flex lexer.l
-g++ parser.tab.c lex.yy.c node.cpp -ll
-./a.out < test.java
+g++ -o WCTC parser.tab.c lex.yy.c node.cpp main.cpp -ll
+./WCTC < test.java
 rm lex.yy.c parser.tab.h parser.tab.c
 dot -Tpng tree.gv -o ast.png
 
