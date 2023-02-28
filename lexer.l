@@ -87,9 +87,9 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 <textblock>"\""+"\"\"" { 
     tb += yytext; 
     tb = "";
-
-    return (LITERAL_textblock);
+    yylval.strval = strdup(yytext);
     BEGIN 0; 
+    return (LITERAL_textblock);
 }
 
 ";" { return (DELIM_semicolon); }
@@ -181,36 +181,18 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 "--" { return (OPERATOR_decrement); }
 "~" { return (OPERATOR_bitwisecomp); }
 "!" { return (OPERATOR_not); }
-{ASSIGNMENTOPERATOR} { return (OPERATOR_assignment); }
+{ASSIGNMENTOPERATOR} { yylval.strval = strdup(yytext); return (OPERATOR_assignment); }
 
-{DEC} { yylval.numval = stol(yytext); return (LITERAL_integer); }
-{HEX} { yylval.numval = stol(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 16); return (LITERAL_integer); }
-{OCT} { yylval.numval = stol(yytext, 0, 8); return (LITERAL_integer); }
-{BIN} { yylval.numval = stol(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 2) ; return (LITERAL_integer); }
-{DECFLOAT}|{HEXFLOAT} { yylval.realval = stold(yytext); return (LITERAL_floatingpoint); }
-{BOOL} { return (LITERAL_boolean); }
-{CHAR} { yylval.charval = yytext[0]; return (LITERAL_char); }
-{STRING} { if (malloced_before_str_lit) {
-                free(yylval.strval);
-            }
-            malloced_before_str_lit = true;
-            yylval.strval = (char*) malloc(sizeof(char) * (yyleng + 5));
-            strcpy(yylval.strval, yytext); 
-            return (LITERAL_string); }
-{NULL} { return (LITERAL_null); }
-
-{ID} { if(malloced_before_id) {
-            cout << yyleng << endl;
-            free(yylval.strval);
-            cout << "assigned" << endl;
-        }
-        malloced_before_id = true;
-        cout<<yyleng<<' ';
-        yylval.strval = (char *)malloc(sizeof(char) * (yyleng + 5));
-        strcpy(yylval.strval, yytext);
-        cout<<yytext<<'\n';
-        return (Identifier); 
-    }
+{DEC}                   { int x = stol(yytext); yylval.strval = strdup(yytext); return (LITERAL_integer); }
+{HEX}                   { int x = stol(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 16); yylval.strval = strdup(yytext); return (LITERAL_integer); }
+{OCT}                   { int x = stol(yytext, 0, 8); yylval.strval = strdup(yytext); return (LITERAL_integer); }
+{BIN}                   { int x = stol(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 2) ; yylval.strval = strdup(yytext); return (LITERAL_integer); }
+{DECFLOAT}|{HEXFLOAT}   { yylval.realval = stold(yytext); return (LITERAL_floatingpoint); }
+{BOOL}                  { return (LITERAL_boolean); }
+{CHAR}                  { yylval.charval = yytext[0]; return (LITERAL_char); }
+{STRING}                { yylval.strval = strdup(yytext); return (LITERAL_string); }
+{NULL}                  { return (LITERAL_null); }
+{ID}                    { yylval.strval = strdup(yytext); return (Identifier); }
 
 . {
     cerr << "Unknown character " << yytext << " found at line: " << yylineno << "\n";
