@@ -1,1 +1,5 @@
 *.vscode/
+*.o
+*.gv
+*.output
+JavaProgram/*

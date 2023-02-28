@@ -1,37 +1,54 @@
-public class test {
-    int t = 5;
-    int a = b = c = d;
-}
-public class BubbleSort {
-    public static void main(final String[] args) {
-        int ttic = 5;
-        int a = 5;
-        if(a < b == a){
-            ;
-        }
-        int a = 5;
-
-    }
-}
-
-public class BubbleSort {
-    public static void main(final String[] args) {
-        int n = 10, c, d, swap;
-
-        final int array[] = new int[] { 23, 1, 78, 45, 46, 90, 2, 12, 75, 0 };
-
-        for (c = 0; c < (n - 1); c++) {
-            for (d = 0; d < n - c - 1; d++) {
-                if (array[d] > array[d + 1]) /* For descending order use < */
-                {
-                    swap = array[d];
-                    array[d] = array[d + 1];
-                    array[d + 1] = swap;
-                }
+import java.io.*;
+import java.util.*;
+  
+class MatrixMultiplication {
+  
+    static int R1 = 2; // number of rows in Matrix-1
+    static int C1 = 2; // number of columns in Matrix-1
+    static int R2 = 2; // number of rows in Matrix-2
+    static int C2 = 2; // number of columns in Matrix-2
+  
+    // This function multiplies mat1[][]
+    // and mat2[][], and stores the result
+    // in res[][]
+    static void mulMat(int mat1[][], int mat2[][])
+    {
+        // To store result
+        int rslt[][] = new int[R1][C2];
+        System.out.println(
+            "Multiplication of given two matrices is:");
+        int i, j, k;
+        for (i = 0; i < R1; i++) {
+            for (j = 0; j < C2; j++) {
+                rslt[i][j] = 0;
+                for (k = 0; k < R2; k++)
+                    rslt[i][j] += mat1[i][k] * mat2[k][j];
+                System.out.print(rslt[i][j] + " ");
             }
+            System.out.println("");
         }
-        System.out.println();
-        for (c = 0; c < n; c++)
-            System.out.println(array[c]);
+    }
+  
+    // Driver code
+    public static void main(String[] args)
+    {
+        int mat1[][] = { { 1, 1 },
+                         { 2, 2 } };
+  
+        int mat2[][] = { { 1, 1 },
+                         { 2, 2 } };
+  
+  
+        if (C1 != R2) {
+            System.out.println(
+                "The number of columns in Matrix-1  must be equal to the number of rows in Matrix-2");
+            System.out.println(
+                "Please update the global variables according to your array dimension");
+        }
+        else {
+            
+              // Function call
+            mulMat(mat1, mat2);
+        }
     }
 }
