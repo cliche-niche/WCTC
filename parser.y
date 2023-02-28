@@ -2561,7 +2561,7 @@
                                                                         $$ -> exp_applicable = true;
                                                                         $$->add_child($1);
                                                                         string s($2);
-                                                                        node* temp_node = new node(s, true, "OP_ASSIGNMENT");
+                                                                        node* temp_node = new node(s, true, "OPERATOR");
                                                                         $$->add_child(temp_node);
                                                                         $$->add_child($3);
                                                                     }
@@ -2569,7 +2569,7 @@
                                                                         $$ = new node("Assignment");
                                                                         $$ -> exp_applicable = true;
                                                                         $$->add_child($1);
-                                                                        node* temp_node = new node("=", true, "OP_ASSIGNMENT");
+                                                                        node* temp_node = new node("=", true, "OPERATOR");
                                                                         $$->add_child(temp_node);
                                                                         $$->add_child($3);
                                                                     }

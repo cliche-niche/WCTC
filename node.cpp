@@ -155,7 +155,7 @@ struct node{
             dot_code += "node" + to_string(this->node_number) + "[label = \"" + this->type + '\n' + this->name + "\", shape = rectangle, color = ";
             if(this->type == "ID"){
                 dot_code += "purple";
-            }else if(this->type == "OPERATOR"){
+            }else if(this->type == "OPERATOR" || this->type == "OP_ASSIGNMENT"){
                 dot_code += "green";
             }else if(this->type == "KEYWORD"){
                 dot_code += "blue";
