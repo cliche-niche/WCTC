@@ -23,6 +23,7 @@
 %x comment1
 %x comment2
 %x textblock
+%x character
 %option noyywrap
 %option yylineno
 
@@ -45,7 +46,6 @@ DECFLOAT {DIGITS}"."{DIGITS}?{EXP}?[fFdD]?|"."{DIGITS}{EXP}?[fFdD]?|{DIGITS}{EXP
 HEXFLOAT {HEX}"."?|"0x"{HEXDIGS}?"."{HEXDIGS}|"0X"{HEXDIGS}?"."{HEXDIGS}[pP][\+\-]?{DIGITS}[fFdD]?
 BOOL "true"|"false"
 NULL "null"
-CHAR \'.\'
 STRING "\""[^\"\n\r]*"\""
 LITERAL {DEC}|{HEX}|{OCT}|{BIN}|{DECFLOAT}|{HEXFLOAT}|{BOOL}|{CHAR}|{STRING}|{NULL}
 ID {JLETTER}({JLETTER}|{DIGIT})*
@@ -70,7 +70,7 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 
 "\"\"\""{SPACE}*{LT} { 
     BEGIN textblock; 
-    tb = yytext;
+    tb = "";    // we do not include the starting quotes
 }
 <textblock>[^\"\\]* { tb += yytext; }
 <textblock>\\ { 
@@ -78,18 +78,68 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
     BEGIN 0;
     return 0;
 }
-<textblock>\"{1,2} { tb += yytext; }
+<textblock>\"{1,2} {
+    tb += (yyleng == 1 ? "\\\"" : "\\\"\\\"") ; 
+}
 <textblock><<EOF>> { 
     cerr << "Unfinished textblock. Aborting!" << '\n';
     BEGIN 0;
     return 0; 
 }
 <textblock>"\""+"\"\"" { 
-    tb += yytext; 
+    yylval.strval = strdup(tb.c_str()); // we do not include the ending quotes
     tb = "";
-    yylval.strval = strdup(yytext);
     BEGIN 0; 
     return (LITERAL_textblock);
+}
+
+"\'" {
+    BEGIN character;
+    tb = "";
+}
+<character>[^\'] {
+    tb += yytext;
+}
+<character>"\'" {
+    if(tb.size() == 1) {
+        yylval.charval = tb[0];
+        return (LITERAL_char);
+    }
+    else if(tb.size() == 2) {
+        if(tb[0] == '\\') {
+            switch(tb[1]) {
+                case 't' : yylval.charval = '\t';
+                break;
+                case 'b' : yylval.charval = '\b';
+                break;
+                case 'n' : yylval.charval = '\n';
+                break;
+                case 'r' : yylval.charval = '\r';
+                break;
+                case 'f' : yylval.charval = '\f';
+                break;
+                case '\'' : yylval.charval = '\'';
+                break;
+                case '\"' : yylval.charval = '\"';
+                break;
+                case '\\' : yylval.charval = '\\';
+                break;
+                default: cerr << "Illegal escape sequence: " << yylineno << '\n';
+                return 0;
+            }
+            return (LITERAL_char);
+        }
+        else {
+            cerr << "Illegal character definition found at: " << yylineno << '\n';
+            return 0;
+        }
+    }
+    else {
+        cerr << "Illegal character definition found at: " << yylineno << '\n';
+        return 0;
+    }
+    tb = "";
+    BEGIN 0;
 }
 
 ";" { return (DELIM_semicolon); }
@@ -187,10 +237,14 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 {HEX}                   { int x = stol(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 16); yylval.strval = strdup(yytext); return (LITERAL_integer); }
 {OCT}                   { int x = stol(yytext, 0, 8); yylval.strval = strdup(yytext); return (LITERAL_integer); }
 {BIN}                   { int x = stol(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 2) ; yylval.strval = strdup(yytext); return (LITERAL_integer); }
-{DECFLOAT}|{HEXFLOAT}   { yylval.realval = stold(yytext); return (LITERAL_floatingpoint); }
+{DECFLOAT}|{HEXFLOAT}   { long double x = stold(yytext); return (LITERAL_floatingpoint); }
 {BOOL}                  { return (LITERAL_boolean); }
-{CHAR}                  { yylval.charval = yytext[0]; return (LITERAL_char); }
-{STRING}                { yylval.strval = strdup(yytext); return (LITERAL_string); }
+{STRING}                {
+                            string tmp(yytext);
+                            string tmp2 = tmp.substr(1, yyleng - 2);
+                            yylval.strval = strdup(tmp2.c_str());
+                            return (LITERAL_string); 
+                        }
 {NULL}                  { return (LITERAL_null); }
 {ID}                    { yylval.strval = strdup(yytext); return (Identifier); }
 

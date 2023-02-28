@@ -1,5 +1,6 @@
 public class test {
-  int t = 5;
+    int t = 5;
+    int a = b = c = d;
 }
 public class BubbleSort {
     public static void main(final String[] args) {
