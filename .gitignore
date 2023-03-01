@@ -2,4 +2,4 @@
 *.o
 *.gv
 *.output
-JavaProgram/*
+JavaPrograms/*
