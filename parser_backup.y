@@ -2589,7 +2589,8 @@
             $$->add_child(temp_node);     
         } 
         ; 
-    CastExpression:     // Partial implementation of casting. Cannot cast classes
+    // Partial implementation of casting. Cannot cast classes
+    CastExpression:     
         DELIM_lpar PrimitiveType DELIM_rpar UnaryExpression {
             $$ = new node("CastExpression");
             node* temp_node = new node("(", true, "DELIMITER");
