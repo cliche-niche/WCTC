@@ -9,6 +9,7 @@
     set<string> lexical_value_needed;
 
     string lhs;
+    int brace_balance = 0;
     
     void initialize_maps();
     void write_func(bool l, string name, bool isT, string token);
@@ -85,21 +86,30 @@ E .|"\n"
     BEGIN precedence;
 }
 <rhs>"{" {
+    brace_balance = 1;
     BEGIN action;
     write_tree_code();
 }
 <rhs>{E} { }
 
 <precedence>"{" {
+    brace_balance = 1;
     BEGIN action;
     write_tree_code();
 }
 <precedence>{E} { output << yytext; }
 
+<action>"{" { 
+    output << "{";
+    brace_balance++; 
+}
 <action>"}" {
     output << "}";
-    rhs_terms.clear();
-    BEGIN rules;
+    brace_balance--;
+    if(brace_balance == 0) {
+        rhs_terms.clear();
+        BEGIN rules;
+    }
     //"}\n"|"}"({SPACE}|"\n")*";"
 }
 <action>{E} { 

@@ -98,35 +98,37 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
     tb = "";
 }
 <character>[^\'] {
-    tb += yytext;
+    tb += yytext; 
 }
 <character>"\'" {
     if(tb.size() == 1) {
-        yylval.charval = tb[0];
+        yylval.strval = strdup(tb.c_str());
+        BEGIN 0;
         return (LITERAL_char);
     }
     else if(tb.size() == 2) {
         if(tb[0] == '\\') {
             switch(tb[1]) {
-                case 't' : yylval.charval = '\t';
+                case 't' : yylval.strval = strdup("\t");
                 break;
-                case 'b' : yylval.charval = '\b';
+                case 'b' : yylval.strval = strdup("\b");
                 break;
-                case 'n' : yylval.charval = '\n';
+                case 'n' : yylval.strval = strdup("\n");
                 break;
-                case 'r' : yylval.charval = '\r';
+                case 'r' : yylval.strval = strdup("\r");
                 break;
-                case 'f' : yylval.charval = '\f';
+                case 'f' : yylval.strval = strdup("\f");
                 break;
-                case '\'' : yylval.charval = '\'';
+                case '\'' : yylval.strval = strdup("\'");
                 break;
-                case '\"' : yylval.charval = '\"';
+                case '\"' : yylval.strval = strdup("\"");
                 break;
-                case '\\' : yylval.charval = '\\';
+                case '\\' : yylval.strval = strdup("\\");
                 break;
                 default: cerr << "Illegal escape sequence: " << yylineno << '\n';
                 return 0;
             }
+            BEGIN 0;
             return (LITERAL_char);
         }
         else {
@@ -138,8 +140,6 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
         cerr << "Illegal character definition found at: " << yylineno << '\n';
         return 0;
     }
-    tb = "";
-    BEGIN 0;
 }
 
 ";" { return (DELIM_semicolon); }

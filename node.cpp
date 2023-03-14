@@ -1,8 +1,12 @@
 #ifndef NODE_CPP
 #define NODE_CPP
 
+#include "symbol_table.cpp"
 #include <bits/stdc++.h>
 using namespace std;
+
+// extern ull num_scopes;
+// extern map<string, int> type_to_size;
 
 struct node{
     string name = "";   // stores the lexeme if terminal or the name of the non terminal otherwise
@@ -11,6 +15,11 @@ struct node{
     string type = ""; // * To be used only if node is a terminal, empty otherwise. stores the token
     unsigned long long node_number = 0;     // For disambiguity in AST code
     node* parent = NULL;
+
+    symbol_table* sym_tab;
+    st_entry* sym_tab_entry;
+    vector<st_entry* > entry_list;
+
     vector< node* > children;
 
     node(string name = "", bool terminal = false, string type = "", node* parent = NULL){

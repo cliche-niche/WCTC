@@ -5,11 +5,13 @@
     #include <vector>
     #include <stdio.h>
     #include "node.cpp"
+    #include "symbol_table.cpp"
 
     using namespace std;
 
     extern "C" int yylex();
     extern "C" int yylineno;
+    unsigned long long int count_semicolon;
     void yyerror(const char* s);
     void add_child(node* parent, node* child);
 
@@ -21,7 +23,6 @@
     long numval;
     long double realval;
     int boolval;
-    char charval;
     char* strval;
     struct node* treenode;
 }
@@ -282,14 +283,50 @@
     // sFieldModifier: | sFieldModifier FieldModifier ;
     
     VariableDeclaratorList: 
-        VariableDeclarator sCommaVariableDeclarator        %prec PREC_reduce_VariableDeclaratorList { }
+        VariableDeclarator sCommaVariableDeclarator        %prec PREC_reduce_VariableDeclaratorList {
+        
+            if($2 == NULL) {
+                $$ -> entry_list.push_back($1 -> sym_tab_entry); 
+            }
+            else {
+                $$ -> entry_list . push_back($1 -> sym_tab_entry);
+                for(const auto (&entry) : $2 -> entry_list){
+                    $$ -> entry_list . push_back(entry);
+                }
+                $2 -> entry_list . clear();
+            }
+        }
         ;
-        sCommaVariableDeclarator: { }
-        | sCommaVariableDeclarator DELIM_comma VariableDeclarator    %prec DELIM_comma { }
+    sCommaVariableDeclarator: { }
+        | sCommaVariableDeclarator DELIM_comma VariableDeclarator    %prec DELIM_comma { 
+            if($1 != NULL){
+                $$ -> entry_list = $1 -> entry_list;
+                $1 -> entry_list . clear();
+            }
+            $$ -> entry_list.push_back($3 -> sym_tab_entry);    
+        }
         ;
-        VariableDeclarator: VariableDeclaratorId qEqualVariableInitializer { }
+    VariableDeclarator: VariableDeclaratorId qEqualVariableInitializer { 
+            $$ -> sym_tab_entry = $1 -> sym_tab_entry;
+        }
         ;
-        VariableDeclaratorId: Identifier qDims { }
+    VariableDeclaratorId: Identifier qDims { 
+            int dimensions = 0; 
+            if($2){
+                node* temp_node = $2;
+                temp_node = temp_node -> children[0]; // node is Dims right now
+                do{
+                    dimensions++;
+                    if(temp_node->children.size() == 3){
+                        temp_node = temp_node->children[2];
+                    }else{
+                        break;
+                    }
+                }while(true);
+            }
+            $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            $$ -> sym_tab_entry -> dimensions = dimensions;
+        }
         ;
     qEqualVariableInitializer: { }
         | OPERATOR_equal VariableInitializer { 
@@ -333,7 +370,9 @@
 
     // Result: UnannType | KEYWORD_void;
     MethodDeclarator: 
-        Identifier DELIM_lpar qFormalParameterList DELIM_rpar qDims { }   
+        Identifier DELIM_lpar qFormalParameterList DELIM_rpar qDims { 
+            
+        }   
         | Identifier DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar qDims { } 
         ; // qreceiverparametercomma was here
     ReceiverParameterComma: 
@@ -457,7 +496,7 @@
         ;
     VariableInitializerList: 
         VariableInitializer sCommaVariableInitializer %prec PREC_reduce_VariableInitializerList { }
-                            ;
+        ;
     qVariableInitializerList: 
         { }                          
         | VariableInitializerList { }
@@ -484,11 +523,32 @@
         NormalClassDeclaration { }
         ; // NormalInterfaceDeclaration was removed
     LocalVariableDeclarationStatement:
-        LocalVariableDeclaration DELIM_semicolon { }
+        LocalVariableDeclaration DELIM_semicolon {
+
+            count_semicolon++;  // declaration statement, hence statement count increased
+        }
         ;
     LocalVariableDeclaration:
-        pVariableModifier LocalVariableType VariableDeclaratorList { }
-        | LocalVariableType VariableDeclaratorList { }
+        pVariableModifier LocalVariableType VariableDeclaratorList { 
+            
+        }
+        | LocalVariableType VariableDeclaratorList { 
+            $$ -> entry_list = $2 -> entry_list;
+            $2 -> entry_list . clear();
+            string type = "ERROR_TYPE";
+            {   // code to obtain the type name
+                node* temp_node = $1;
+                while(!(temp_node -> terminal)){    
+                    temp_node = temp_node->children[0];     
+                } 
+                type = temp_node->name;
+            }
+            for(auto (&entry) : $$ -> entry_list) {
+                entry -> update_type(type);
+
+                cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+            }
+        }
         ;
     LocalVariableType:
         UnannType { }
