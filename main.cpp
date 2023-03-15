@@ -4,6 +4,7 @@
 
 using namespace std;
 
+extern int yydebug;
 extern FILE *yyin;
 extern FILE *yyout;
 extern node *root;   // root node of parse tree in the parser
@@ -51,7 +52,7 @@ int main(int argc, char* argv[]) {
 
     yyin = program;
 
-
+    // yydebug = 1;
     yyparse();
     if(verbose){
         root->print_tree(0);

@@ -43,7 +43,6 @@
 %precedence PREC_reduce_VariableDeclaratorList
 %precedence PREC_reduce_VariableInitializerList
 %precedence PREC_reduce_ResourceList
-%precedence PREC_reduce_Modifiers
 %precedence PREC_reduce_Dims
 %precedence PREC_shift_Dims
 
@@ -75,7 +74,7 @@
 %right UNARY_minus UNARY_plus OPERATOR_not OPERATOR_bitwisecomp
 %nonassoc OPERATOR_increment OPERATOR_decrement
 
-%type<treenode> IntegralType FloatingPointType PrimitiveType NumericType ArrayType Dims qDims Name Modifiers CompilationUnit OrdinaryCompilationUnit Modifier sCommaName NameList AdditionalBound pAdditionalBound ArrayInitializer qComma sCommaVariableInitializer VariableInitializerList qVariableInitializerList sImportDeclaration ImportDeclaration importName  PackageDeclaration sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration ClassExtends qClassExtends ClassImplements qClassImplements Block qBlockStatements BlockStatements BlockStatement LocalClassOrInterfaceDeclaration LocalVariableDeclarationStatement LocalVariableDeclaration LocalVariableType Statement StatementNoShortIf StatementWithoutTrailingSubstatement EmptyStatement LabeledStatement LabeledStatementNoShortIf ExpressionStatement StatementExpression IfThenStatement IfThenElseStatement IfThenElseStatementNoShortIf AssertStatement WhileStatement WhileStatementNoShortIf ForStatement ForStatementNoShortIf BasicForStatement BasicForStatementNoShortIf qForInit qForUpdate ForInit ForUpdate StatementExpressionList sCommaStatementExpression EnhancedForStatement EnhancedForStatementNoShortIf BreakStatement qIdentifier YieldStatement ContinueStatement ReturnStatement qExpression ThrowStatement SynchronizedStatement TryStatement qCatches pCatches Catches CatchClause CatchFormalParameter CatchType sOrName Finally TryWithResourcesStatement qFinally ResourceSpecification qSemicolon ResourceList ssemicolonResource Resource VariableAccess Pattern TypePattern NormalClassDeclaration ClassPermits qClassPermits ClassBody qClassBody ClassBodyDeclaration sClassBodyDeclaration ClassMemberDeclaration FieldDeclaration VariableDeclaratorList sCommaVariableDeclarator VariableDeclarator VariableDeclaratorId qEqualVariableInitializer VariableInitializer UnannType MethodDeclaration MethodHeader MethodDeclarator ReceiverParameterComma ReceiverParameter IdentifierDot qIdentifierDot FormalParameterList qFormalParameterList FormalParameter sCommaFormalParameter VariableArityParameter pVariableModifier Throws qThrows MethodBody InstanceInitializer StaticInitializer ConstructorDeclaration ConstructorDeclarator ConstructorBody ExplicitConstructorInvocation BracketArgumentList UnaryExpression PreIncrementExpression UnaryExpressionNotPlusMinus PostfixExpression Primary PrimaryNoNewArray Literal ClassLiteral ClassInstanceCreationExpression UnqualifiedClassInstanceCreationExpression qArgumentList ArgumentList sCommaExpression FieldAccess ArrayAccess MethodInvocation MethodReference ArrayCreationExpression DimExprs DimExpr PostIncrementExpression PostDecrementExpression CastExpression InstanceofExpression Assignment LeftHandSide Expression AssignmentExpression ConditionalExpression ConditionalOrExpression ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression PreDecrementExpression 
+%type<treenode> IntegralType FloatingPointType PrimitiveType NumericType ArrayType Dims qDims Name Modifiers CompilationUnit OrdinaryCompilationUnit Modifier sCommaName NameList AdditionalBound pAdditionalBound ArrayInitializer qComma sCommaVariableInitializer VariableInitializerList qVariableInitializerList sImportDeclaration ImportDeclaration importName  PackageDeclaration sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration ClassExtends qClassExtends ClassImplements qClassImplements Block qBlockStatements BlockStatements BlockStatement LocalClassOrInterfaceDeclaration LocalVariableDeclarationStatement LocalVariableDeclaration LocalVariableType Statement StatementNoShortIf StatementWithoutTrailingSubstatement EmptyStatement LabeledStatement LabeledStatementNoShortIf ExpressionStatement StatementExpression IfThenStatement IfThenElseStatement IfThenElseStatementNoShortIf AssertStatement WhileStatement WhileStatementNoShortIf ForStatement ForStatementNoShortIf BasicForStatement BasicForStatementNoShortIf qForInit qForUpdate ForInit ForUpdate StatementExpressionList sCommaStatementExpression EnhancedForStatement EnhancedForStatementNoShortIf BreakStatement qIdentifier YieldStatement ContinueStatement ReturnStatement qExpression ThrowStatement SynchronizedStatement TryStatement qCatches pCatches Catches CatchClause CatchFormalParameter CatchType sOrName Finally TryWithResourcesStatement qFinally ResourceSpecification qSemicolon ResourceList ssemicolonResource Resource VariableAccess Pattern TypePattern NormalClassDeclaration ClassPermits qClassPermits ClassBody qClassBody ClassBodyDeclaration sClassBodyDeclaration ClassMemberDeclaration FieldDeclaration VariableDeclaratorList sCommaVariableDeclarator VariableDeclarator VariableDeclaratorId qEqualVariableInitializer VariableInitializer UnannType MethodDeclaration MethodHeader MethodDeclarator ReceiverParameterComma ReceiverParameter IdentifierDot qIdentifierDot FormalParameterList qFormalParameterList FormalParameter sCommaFormalParameter VariableArityParameter Throws qThrows MethodBody InstanceInitializer StaticInitializer ConstructorDeclaration ConstructorDeclarator ConstructorBody ExplicitConstructorInvocation BracketArgumentList UnaryExpression PreIncrementExpression UnaryExpressionNotPlusMinus PostfixExpression Primary PrimaryNoNewArray Literal ClassLiteral ClassInstanceCreationExpression UnqualifiedClassInstanceCreationExpression qArgumentList ArgumentList sCommaExpression FieldAccess ArrayAccess MethodInvocation MethodReference ArrayCreationExpression DimExprs DimExpr PostIncrementExpression PostDecrementExpression CastExpression InstanceofExpression Assignment LeftHandSide Expression AssignmentExpression ConditionalExpression ConditionalOrExpression ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression PreDecrementExpression BooleanDims NumericTypeDims 
 
 %start CompilationUnit
 
@@ -99,6 +98,16 @@
         NumericType { }
         | KEYWORD_boolean { }
         ;
+    
+    // Non terminal for Java style array declaration support
+    NumericTypeDims:
+        NumericType Dims { }
+        ;
+    // Non terminal for Java style array declaration support
+    BooleanDims:
+        KEYWORD_boolean Dims { }
+        ;
+    
     NumericType :
         IntegralType { }
         | FloatingPointType { }
@@ -168,7 +177,9 @@
     sImportDeclaration: { }
         |  sImportDeclaration ImportDeclaration { }
         ;
-    ImportDeclaration:  KEYWORD_import importName DELIM_semicolon { }
+    ImportDeclaration:  KEYWORD_import importName DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     importName: KEYWORD_static Name { }
         | KEYWORD_static Name DELIM_period OPERATOR_multiply { }
@@ -177,7 +188,9 @@
         ;                
     
     PackageDeclaration:
-        KEYWORD_package Name DELIM_semicolon { }
+        KEYWORD_package Name DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     
     sTopLevelClassOrInterfaceDeclaration: { }
@@ -185,7 +198,9 @@
         ;
     TopLevelClassOrInterfaceDeclaration:
         NormalClassDeclaration { }
-        | DELIM_semicolon { }
+        | DELIM_semicolon { 
+            count_semicolon++;
+        }
         ; // ClassDeclaration is the same as NormalClassDeclaration
    
     // ModularCompilationUnit: ModuleDeclaration;
@@ -207,20 +222,45 @@
     // ClassDeclaration: NormalClassDeclaration | EnumDeclaration | RecordDeclaration we only implement Normal Class Declaration
 
     Modifiers:
-        Modifier { }
-        | Modifiers Modifier { }
-        | Modifiers pVariableModifier     %prec PREC_reduce_Modifiers { }   
+        Modifier { 
+            $$ -> entry_list.push_back($1 -> sym_tab_entry);
+        }
+        | Modifiers Modifier {
+            $$ -> entry_list = $1 -> entry_list;
+            $$ -> entry_list.push_back($2 -> sym_tab_entry);
+        } 
         ;
     Modifier:
-        KEYWORD_public { }
-        | KEYWORD_private { }
-        | KEYWORD_protected { }
-        | KEYWORD_static { }
-        | KEYWORD_abstract { }
-        | KEYWORD_native { }
-        | KEYWORD_synchronized { }
-        | KEYWORD_transient { }
-        | KEYWORD_volatile { }
+        KEYWORD_public { 
+            $$ -> sym_tab_entry = new st_entry("public", 0, 0);
+        }
+        | KEYWORD_private { 
+            $$ -> sym_tab_entry = new st_entry("private", 0, 0);
+        }
+        | KEYWORD_protected { 
+            $$ -> sym_tab_entry = new st_entry("protected", 0, 0);
+        }
+        | KEYWORD_static { 
+            $$ -> sym_tab_entry = new st_entry("static", 0, 0);
+        }
+        | KEYWORD_abstract { 
+            $$ -> sym_tab_entry = new st_entry("abstract", 0, 0);
+        }
+        | KEYWORD_native { 
+            $$ -> sym_tab_entry = new st_entry("native", 0, 0);
+        }
+        | KEYWORD_synchronized { 
+            $$ -> sym_tab_entry = new st_entry("synchronized", 0, 0);
+        }
+        | KEYWORD_transient { 
+            $$ -> sym_tab_entry = new st_entry("transient", 0, 0);
+        }
+        | KEYWORD_volatile { 
+            $$ -> sym_tab_entry = new st_entry("volatile", 0, 0);
+        }
+        | KEYWORD_final { 
+            $$ -> sym_tab_entry = new st_entry("final", 0, 0);
+        }
         ;
 
     NormalClassDeclaration:
@@ -272,19 +312,24 @@
         FieldDeclaration { }
         | MethodDeclaration { }
         | NormalClassDeclaration { }
-        | DELIM_semicolon { }
+        | DELIM_semicolon { 
+            count_semicolon++;
+        }
         ; // ClassDeclaration is the same as NormalClassDeclaration, removed InterfaceDeclaration
 
     FieldDeclaration: 
-        Modifiers UnannType VariableDeclaratorList DELIM_semicolon { }
-        | UnannType VariableDeclaratorList DELIM_semicolon { }
+        Modifiers UnannType VariableDeclaratorList DELIM_semicolon { 
+            count_semicolon++;
+        }
+        | UnannType VariableDeclaratorList DELIM_semicolon { 
+            count_semicolon++;
+        }
     // ! Annotation removed
     // FieldModifier: KEYWORD_public | KEYWORD_private | KEYWORD_static | KEYWORD_final | KEYWORD_transient | KEYWORD_volatile ; 
     // sFieldModifier: | sFieldModifier FieldModifier ;
     
     VariableDeclaratorList: 
         VariableDeclarator sCommaVariableDeclarator        %prec PREC_reduce_VariableDeclaratorList {
-        
             if($2 == NULL) {
                 $$ -> entry_list.push_back($1 -> sym_tab_entry); 
             }
@@ -311,21 +356,8 @@
         }
         ;
     VariableDeclaratorId: Identifier qDims { 
-            int dimensions = 0; 
-            if($2){
-                node* temp_node = $2;
-                temp_node = temp_node -> children[0]; // node is Dims right now
-                do{
-                    dimensions++;
-                    if(temp_node->children.size() == 3){
-                        temp_node = temp_node->children[2];
-                    }else{
-                        break;
-                    }
-                }while(true);
-            }
             $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
-            $$ -> sym_tab_entry -> dimensions = dimensions;
+            $$ -> sym_tab_entry -> dimensions = $$ -> get_dims($2);
         }
         ;
     qEqualVariableInitializer: { }
@@ -338,9 +370,26 @@
         | ArrayInitializer { }
         ;
 
-    UnannType: 
-        PrimitiveType { } 
-        | Name qDims { }
+    UnannType:
+        PrimitiveType { 
+            string primitive_name = $$ -> get_name($1);
+            $$ -> sym_tab_entry = new st_entry(primitive_name, yylineno, count_semicolon);
+        } 
+        | NumericTypeDims { 
+            string primitive_name = $$ -> get_name($1 -> children[0]);
+            $$ -> sym_tab_entry = new st_entry(primitive_name, yylineno, count_semicolon);
+            $$ -> sym_tab_entry -> dimensions = $$ -> get_dims($1 -> children[1]);
+        }
+        | BooleanDims { 
+            string primitive_name = $$ -> get_name($1 -> children[0]);
+            $$ -> sym_tab_entry = new st_entry(primitive_name, yylineno, count_semicolon);
+            $$ -> sym_tab_entry -> dimensions = $$ -> get_dims($1 -> children[1]);
+        }
+        | Name qDims { 
+            string qualified_name = $$ -> get_name($1);
+            $$ -> sym_tab_entry = new st_entry(qualified_name, yylineno, count_semicolon);
+            $$ -> sym_tab_entry -> dimensions = $$ -> get_dims($2);
+        }
         ;   
     
     // UnannPrimitiveType: NumericType | KEYWORD_boolean ; // ? literal
@@ -354,8 +403,32 @@
     // UnannArrayType: PrimitiveType Dims | Name Dims
 
     MethodDeclaration: 
-        Modifiers MethodHeader MethodBody { }
-        | MethodHeader MethodBody { }
+        Modifiers MethodHeader MethodBody { 
+            $$ -> sym_tab_entry = $2 -> sym_tab_entry;
+            $$ -> entry_list = $2 -> entry_list;
+
+            cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
+            cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
+            cout << "Method return type dimensions: " << $$ -> sym_tab_entry -> dimensions << endl;
+            for(auto &entry : $$ -> entry_list) {
+                cout << "Formal Parameter identifier: " << entry -> name << endl;
+                cout << "Formal Parameter type: " << entry -> type << endl;
+                cout << "Formal Parameter dimension: " << entry -> dimensions << endl;
+            }
+        }
+        | MethodHeader MethodBody { 
+            $$ -> sym_tab_entry = $1 -> sym_tab_entry;
+            $$ -> entry_list = $1 -> entry_list;
+
+            cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
+            cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
+            cout << "Method return type dimensions: " << $$ -> sym_tab_entry -> dimensions << endl;
+            for(auto &entry : $$ -> entry_list) {
+                cout << "Formal Parameter identifier: " << entry -> name << endl;
+                cout << "Formal Parameter type: " << entry -> type << endl;
+                cout << "Formal Parameter dimension: " << entry -> dimensions << endl;
+            }
+        }
         ;
 
     // ! Annotation removed
@@ -364,16 +437,29 @@
 
     //  ! Removing this rule: | TypeParameters sAnnotation Result MethodDeclarator qThrows
     MethodHeader: 
-        UnannType MethodDeclarator qThrows { }
-        | KEYWORD_void MethodDeclarator qThrows { }
+        UnannType MethodDeclarator qThrows { 
+            $$ -> sym_tab_entry = $2 -> sym_tab_entry;
+            $$ -> entry_list = $2 -> entry_list;
+            $$ -> sym_tab_entry -> update_type($1 -> sym_tab_entry -> name);
+            $$ -> sym_tab_entry -> dimensions = $1 -> sym_tab_entry -> dimensions;
+        }
+        | KEYWORD_void MethodDeclarator qThrows {
+            $$ -> sym_tab_entry = $2 -> sym_tab_entry;
+            $$ -> entry_list = $2 -> entry_list;
+            $$ -> sym_tab_entry -> update_type("void");
+        }
         ;
 
-    // Result: UnannType | KEYWORD_void;
     MethodDeclarator: 
         Identifier DELIM_lpar qFormalParameterList DELIM_rpar qDims { 
-            
+            $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            if($3) {
+                $$ -> entry_list = $3 -> entry_list;
+            }
         }   
-        | Identifier DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar qDims { } 
+        | Identifier DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar qDims {  
+
+        } 
         ; // qreceiverparametercomma was here
     ReceiverParameterComma: 
         ReceiverParameter DELIM_comma { }
@@ -384,38 +470,58 @@
         ;
     // qReceiverParameterComma: | ReceiverParameterComma ;
     IdentifierDot: 
-        Identifier DELIM_period { }
+        Identifier DELIM_period {
+        }
         ;
     qIdentifierDot: { }
         | IdentifierDot { }
         ;
 
     FormalParameterList: 
-        FormalParameter sCommaFormalParameter { }
+        FormalParameter sCommaFormalParameter { 
+            $$ -> entry_list.push_back($1 -> sym_tab_entry);
+            if($2) {
+                for(auto (&entry) : $2 -> entry_list){
+                    $$ -> entry_list.push_back(entry);
+                }
+            }
+        }
         ;
     qFormalParameterList: { }
-        | FormalParameterList { }
+        | FormalParameterList { 
+            $$ -> entry_list = $1 -> entry_list;
+        }
         ;
     FormalParameter: 
-        pVariableModifier UnannType VariableDeclaratorId { }
+        Modifiers UnannType VariableDeclaratorId { 
+            // Modifier can only be a single final
+            $$ -> sym_tab_entry = $3 -> sym_tab_entry;
+            $$ -> sym_tab_entry -> update_type($2 -> sym_tab_entry -> name);
+            $$ -> sym_tab_entry -> dimensions = $2 -> sym_tab_entry -> dimensions + $3 -> sym_tab_entry -> dimensions;
+        }
+        | UnannType VariableDeclaratorId { 
+            $$ -> sym_tab_entry = $2 -> sym_tab_entry;
+            $$ -> sym_tab_entry -> update_type($1 -> sym_tab_entry -> name);
+            $$ -> sym_tab_entry -> dimensions = $1 -> sym_tab_entry -> dimensions + $2 -> sym_tab_entry -> dimensions;
+        }         
         | VariableArityParameter { } 
-        | UnannType VariableDeclaratorId { }         
         ;
     sCommaFormalParameter: { }
-        | sCommaFormalParameter DELIM_comma FormalParameter { }
-        ;
+        | sCommaFormalParameter DELIM_comma FormalParameter {
+            if($1) {
+                $$ -> entry_list = $1 -> entry_list;
+            }
+            $$ -> entry_list.push_back($3 -> sym_tab_entry);
+    ;
+        }
     // ! sAnnotation and Annotation removed
     VariableArityParameter: 
-        pVariableModifier UnannType DELIM_ellipsis Identifier { }
+        Modifiers UnannType DELIM_ellipsis Identifier { 
+            // Modifier can only be a single final
+        }
         | UnannType DELIM_ellipsis Identifier { }
         ;
-    // VariableModifier: KEYWORD_final ;
-    // sVariableModifier: | sVariableModifier KEYWORD_final ;
-    pVariableModifier: 
-        KEYWORD_final { }
-        | pVariableModifier KEYWORD_final      %prec KEYWORD_final { }
-        ;
- 
+
     Throws: 
         KEYWORD_throws NameList { }
         ;
@@ -427,7 +533,9 @@
     
     MethodBody: 
         Block { }
-        | DELIM_semicolon { }
+        | DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
 
     InstanceInitializer: 
@@ -456,10 +564,18 @@
         ;
                     
     ExplicitConstructorInvocation: 
-        KEYWORD_this BracketArgumentList DELIM_semicolon { }
-        | KEYWORD_super BracketArgumentList DELIM_semicolon { }
-        | Name DELIM_period KEYWORD_super BracketArgumentList DELIM_semicolon { }
-        | Primary DELIM_period KEYWORD_super BracketArgumentList DELIM_semicolon { }
+        KEYWORD_this BracketArgumentList DELIM_semicolon { 
+            count_semicolon++;
+        }
+        | KEYWORD_super BracketArgumentList DELIM_semicolon { 
+            count_semicolon++;
+        }
+        | Name DELIM_period KEYWORD_super BracketArgumentList DELIM_semicolon { 
+            count_semicolon++;
+        }
+        | Primary DELIM_period KEYWORD_super BracketArgumentList DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     // qExplicitConstructorInvocation: | ExplicitConstructorInvocation ;
     BracketArgumentList: DELIM_lpar qArgumentList DELIM_rpar { }
@@ -529,30 +645,28 @@
         }
         ;
     LocalVariableDeclaration:
-        pVariableModifier LocalVariableType VariableDeclaratorList { 
-            
+        Modifiers LocalVariableType VariableDeclaratorList { 
+            // Modifier can only be a single final
         }
         | LocalVariableType VariableDeclaratorList { 
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
-            string type = "ERROR_TYPE";
-            {   // code to obtain the type name
-                node* temp_node = $1;
-                while(!(temp_node -> terminal)){    
-                    temp_node = temp_node->children[0];     
-                } 
-                type = temp_node->name;
-            }
+            string type = $$ -> get_name($1);
             for(auto (&entry) : $$ -> entry_list) {
                 entry -> update_type(type);
+                entry -> dimensions = ($1 -> sym_tab_entry ? $1 -> sym_tab_entry -> dimensions : 0);
 
                 cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
         }
         ;
     LocalVariableType:
-        UnannType { }
-        |   KEYWORD_var { }
+        UnannType {
+            $$ -> sym_tab_entry = $1 -> sym_tab_entry;
+        }
+        |   KEYWORD_var {
+            
+        }
         ;
     Statement:
         StatementWithoutTrailingSubstatement { }
@@ -583,7 +697,9 @@
         |   YieldStatement { }
         ;
     EmptyStatement:
-        DELIM_semicolon { }
+        DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     LabeledStatement:
         Identifier OPERATOR_ternarycolon Statement { }
@@ -592,7 +708,9 @@
         Identifier OPERATOR_ternarycolon StatementNoShortIf { }
         ;
     ExpressionStatement:
-        StatementExpression DELIM_semicolon { }
+        StatementExpression DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     StatementExpression:
         Assignment { }
@@ -613,8 +731,12 @@
         KEYWORD_if DELIM_lpar Expression DELIM_rpar StatementNoShortIf KEYWORD_else StatementNoShortIf { }
         ;
     AssertStatement:
-        KEYWORD_assert Expression DELIM_semicolon { }
-        |   KEYWORD_assert Expression OPERATOR_ternarycolon Expression DELIM_semicolon { }
+        KEYWORD_assert Expression DELIM_semicolon { 
+            count_semicolon++;
+        }
+        | KEYWORD_assert Expression OPERATOR_ternarycolon Expression DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     // CaseConstant: ConditionalExpression ; // useless symbol
     WhileStatement:
@@ -641,7 +763,7 @@
         { }
         |   ForInit { }
         ;
-    qForUpdate:   
+    qForUpdate:
         { }
         |   ForUpdate { }
         ;
@@ -666,27 +788,37 @@
         KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar StatementNoShortIf { }
         ;
     BreakStatement:
-        KEYWORD_break qIdentifier DELIM_semicolon { }
+        KEYWORD_break qIdentifier DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     qIdentifier:   
         { }
         |   Identifier { }
         ;
     YieldStatement:
-        KEYWORD_yield Expression DELIM_semicolon { }
+        KEYWORD_yield Expression DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     ContinueStatement:
-        KEYWORD_continue qIdentifier DELIM_semicolon { }
+        KEYWORD_continue qIdentifier DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     ReturnStatement:
-        KEYWORD_return qExpression DELIM_semicolon { }
+        KEYWORD_return qExpression DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     qExpression:   
         { }
         |   Expression { }
         ;
     ThrowStatement:
-        KEYWORD_throw Expression DELIM_semicolon { }
+        KEYWORD_throw Expression DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     SynchronizedStatement:
         KEYWORD_synchronized DELIM_lpar Expression DELIM_rpar Block { }
@@ -711,7 +843,9 @@
         KEYWORD_catch DELIM_lpar CatchFormalParameter DELIM_rpar Block { }
         ;
     CatchFormalParameter:
-        pVariableModifier CatchType VariableDeclaratorId { }
+        Modifiers CatchType VariableDeclaratorId { 
+            // Modifier can only be a single final
+        }    
         |   CatchType VariableDeclaratorId { }
         ;
     CatchType:
@@ -736,16 +870,21 @@
         ;
     ResourceSpecification:
         DELIM_lpar ResourceList qSemicolon DELIM_rpar { }
-        qSemicolon: 
+        ;
+    qSemicolon: 
         { }
-        |   DELIM_semicolon { }
+        | DELIM_semicolon { 
+            count_semicolon++;
+        }
         ;
     ResourceList:
         Resource ssemicolonResource     %prec PREC_reduce_ResourceList { }
         ;
     ssemicolonResource:                                                             
         { }
-        | ssemicolonResource DELIM_semicolon Resource     %prec DELIM_semicolon { } // shift over reduce
+        | ssemicolonResource DELIM_semicolon Resource     %prec DELIM_semicolon { 
+            count_semicolon++;
+        } // shift over reduce
         ;
     Resource:
         LocalVariableDeclaration { }
@@ -929,7 +1068,7 @@
         |   NumericType qDims DELIM_period KEYWORD_class { }
         |   KEYWORD_boolean qDims DELIM_period KEYWORD_class { }
         |   KEYWORD_void DELIM_period KEYWORD_class { }
-        ; 
+        ;
     ClassInstanceCreationExpression:
         UnqualifiedClassInstanceCreationExpression { }
         |   Name DELIM_period UnqualifiedClassInstanceCreationExpression { }

@@ -195,6 +195,44 @@ struct node{
         child->parent = this;
         this->children.push_back(child);
     }
+
+    string get_name(node* v){
+        // Only for UnannType-like nodes
+        if(v->name == "Name" || (v->type == "ID" && v->terminal)){
+            // For Name-like nodes
+            if(v->children.size() == 3){
+                return get_name(v->children[0]) + "." + (v->children[2]->name);
+            }else if(v->children.size() == 0){
+                return (v->name);
+            }
+        }else if(v->terminal || v->children.size() == 1){
+            // For PrimitiveType-like nodes
+            while(v->terminal == false){
+                v = v->children[0];
+            }
+            return (v->name);
+        }else{
+            cout<<"Maybe get_name is not working right after all\n";
+        }
+        return "Possibly an error.\n";
+    }
+
+    int get_dims(node* v){
+        // Only for qDims-like nodes
+        if(v){
+            if(v->name == "qDims"){
+                return get_dims(v->children[0]);
+            }else if(v->name == "Dims"){
+                if(v->children.size() == 2){
+                    return 1;
+                }else if(v->children.size() == 3){
+                    return 1 + get_dims(v->children[2]);
+                }
+            }
+        }
+        return 0;
+    }
 };
+
 
 #endif

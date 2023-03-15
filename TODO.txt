@@ -1,0 +1,7 @@
+Java does not care about forward declaration. All member functions may be out of order.
+Take care of name in symbol_table_func and symbol_table_class
+Calculate size of class through sem actions or otherwise. Also, add their entry to type_to_size map
+Qualified names have to be taken care of
+Escape sequences
+Semicolon count in for statements have not been dealt with
+Semicolon count in resource statements have not been dealt with -> will probably not be supported either way
