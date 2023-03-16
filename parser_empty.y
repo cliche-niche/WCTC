@@ -227,6 +227,13 @@
         }
         | Modifiers Modifier {
             $$ -> entry_list = $1 -> entry_list;
+            $1 -> entry_list.clear();
+            for(auto entry : $$ -> entry_list){
+                if(entry->name == $2 -> sym_tab_entry -> name){
+                    cout << "Error: The modifier " << entry->name << " has been used more than once in the same declaration." << endl;
+                    exit(1);
+                }
+            }
             $$ -> entry_list.push_back($2 -> sym_tab_entry);
         } 
         ;
