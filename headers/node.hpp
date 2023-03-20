@@ -13,7 +13,7 @@ struct node{
     unsigned long long node_number = 0;     // For disambiguity in AST code
     node* parent = NULL;
 
-    symbol_table* sym_tab;
+    symbol_table* sym_tab; // symbol table to which the node belongs
     st_entry* sym_tab_entry;
     vector<st_entry* > entry_list;
 
@@ -38,6 +38,10 @@ struct node{
     
     string get_name(node* v);   // used for
     int get_dims(node* v);      // semantic actions
+
+    symbol_table* get_symbol_table();
+    void generate_symbol_table(node* v);
+    void create_scope_hierarchy();
 };
 
 #endif

@@ -193,10 +193,8 @@ string node::get_name(node* v){
             v = v->children[0];
         }
         return (v->name);
-    }else{
-        cout<<"Maybe get_name is not working right after all\n";
     }
-    return "Possibly an error.\n";
+    return "ERROR.\n";
 }
 
 int node::get_dims(node* v){
@@ -213,4 +211,55 @@ int node::get_dims(node* v){
         }
     }
     return 0;
+}
+
+symbol_table* node::get_symbol_table() {
+    node* temp_node = this -> parent;
+    while(temp_node && !(temp_node -> sym_tab)){
+        temp_node = temp_node->parent;
+    }
+    if(temp_node == NULL) {
+        return NULL;
+    }
+    if(this -> name == "MethodDeclaration") {
+        if(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name) {
+            cout << "Error: Constructor cannot have a return type at line number: " << this -> sym_tab_entry -> line_no << endl;
+            exit(1);
+        }
+        ((symbol_table_class*) temp_node -> sym_tab) -> add_entry((symbol_table_func*) this -> sym_tab);
+    }
+    else if(this -> name == "ConstructorDeclaration") {
+        if(!(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name)) {
+            cout << "Error: Constructor name does not match simple class name at line number: " << this -> sym_tab_entry -> line_no << endl;
+            exit(1);
+        }
+
+        ((symbol_table_class*) temp_node -> sym_tab) -> add_entry((symbol_table_func*) this -> sym_tab);
+    }
+    if (temp_node -> name == "BasicForStatement" ||
+        temp_node -> name == "BasicForStatementNoShortIf" || 
+        temp_node -> name == "EnhancedForStatement" || 
+        temp_node -> name == "EnhancedForStatementNoShortIf" ||
+        temp_node -> name == "MethodDeclaration" ) {
+        this -> sym_tab = temp_node -> sym_tab;
+        return NULL;    
+    }
+    return (temp_node -> sym_tab);
+}
+
+void node::create_scope_hierarchy() {
+    if(this -> sym_tab) {
+        symbol_table* temp_st = this -> get_symbol_table();
+        if(temp_st) { 
+            this -> sym_tab -> parent_st = temp_st;
+            (temp_st -> sub_scopes)++;
+            this->sym_tab->scope = ((temp_st->scope != "") ? temp_st->scope + "/" : "") + (this->sym_tab->name) + "#" + to_string(temp_st->sub_scopes);
+            cout << "Current scope: " << this -> sym_tab -> scope << endl;
+            cout << "Parent scope: " << temp_st -> scope << endl; 
+        }    
+    }
+
+    for(auto &child : this -> children) {
+        child->create_scope_hierarchy();
+    }
 }

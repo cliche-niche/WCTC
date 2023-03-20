@@ -168,11 +168,46 @@
     CompilationUnit:
         OrdinaryCompilationUnit { 
             root = $$;
+            root -> sym_tab = new symbol_table("Global");
+
+            for(auto &entry : $1 -> entry_list) {
+                root -> sym_tab -> add_entry(entry);
+            }
         }
         ; // used to be OrdinaryCompilationUnit | ModularCompilationUnit;
     OrdinaryCompilationUnit:
-        sImportDeclaration sTopLevelClassOrInterfaceDeclaration { }
-        | PackageDeclaration sImportDeclaration sTopLevelClassOrInterfaceDeclaration { }
+        sImportDeclaration sTopLevelClassOrInterfaceDeclaration {
+            // checking duplicate class names
+            if($2) {
+                map<string, int> count_class;
+                for(auto &entry : $2 -> entry_list) {
+                    count_class[entry -> name]++;
+                    if(count_class[entry -> name] > 1) {
+                        cout << "ERROR: Duplicate class " << entry -> name << " at line number " << entry -> line_no << endl;
+                        exit(1);
+                    }
+                }
+                $$ -> entry_list = $2 -> entry_list;
+                $2 -> entry_list . clear();
+            }
+
+        }
+        | PackageDeclaration sImportDeclaration sTopLevelClassOrInterfaceDeclaration { 
+
+            if($3) {
+                map<string, int> count_class;
+                for(auto &entry : $3 -> entry_list) {
+                    count_class[entry -> name]++;
+                    if(count_class[entry -> name] > 1) {
+                        cout << "ERROR: Duplicate class " << entry -> name << " at line number " << entry -> line_no << endl;
+                        exit(1);
+                    }
+                }
+                $$ -> entry_list = $3 -> entry_list;
+                $3 -> entry_list . clear();
+            }
+
+        }
         ;
     
     sImportDeclaration: { }
@@ -195,10 +230,19 @@
         ;
     
     sTopLevelClassOrInterfaceDeclaration: { }
-        | sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration { }
+        | sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration { 
+            if($1 && $1 -> entry_list . size() > 0) {
+                $$ -> entry_list = $1 -> entry_list;
+                $1 -> entry_list . clear();
+            }
+
+            $$ -> entry_list.push_back($2 -> sym_tab_entry);
+        }
         ;
     TopLevelClassOrInterfaceDeclaration:
-        NormalClassDeclaration { }
+        NormalClassDeclaration { 
+            $$ -> sym_tab_entry = $1 -> sym_tab_entry;
+        }
         | DELIM_semicolon { 
             count_semicolon++;
         }
@@ -240,34 +284,34 @@
         ;
     Modifier:
         KEYWORD_public { 
-            $$ -> sym_tab_entry = new st_entry("public", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("public", yylineno, 0);
         }
         | KEYWORD_private { 
-            $$ -> sym_tab_entry = new st_entry("private", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("private", yylineno, 0);
         }
         | KEYWORD_protected { 
-            $$ -> sym_tab_entry = new st_entry("protected", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("protected", yylineno, 0);
         }
         | KEYWORD_static { 
-            $$ -> sym_tab_entry = new st_entry("static", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("static", yylineno, 0);
         }
         | KEYWORD_abstract { 
-            $$ -> sym_tab_entry = new st_entry("abstract", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("abstract", yylineno, 0);
         }
         | KEYWORD_native { 
-            $$ -> sym_tab_entry = new st_entry("native", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("native", yylineno, 0);
         }
         | KEYWORD_synchronized { 
-            $$ -> sym_tab_entry = new st_entry("synchronized", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("synchronized", yylineno, 0);
         }
         | KEYWORD_transient { 
-            $$ -> sym_tab_entry = new st_entry("transient", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("transient", yylineno, 0);
         }
         | KEYWORD_volatile { 
-            $$ -> sym_tab_entry = new st_entry("volatile", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("volatile", yylineno, 0);
         }
         | KEYWORD_final { 
-            $$ -> sym_tab_entry = new st_entry("final", 0, 0);
+            $$ -> sym_tab_entry = new st_entry("final", yylineno, 0);
         }
         ;
 
@@ -305,9 +349,16 @@
             // Need to check funcs from classbody whether they are abstract for an abstract class and final for a final class
             // Need to check qExtends: if non-sealed class has a sealed superclass
             // If superclass is non-sealed, then class must not be non-sealed
-            // If superclass is sealed, then class snf_count must be at least (exactly) one 
+            // If superclass is sealed, then class snf_count must be at least (exactly) one
+
+            $$ -> sym_tab = new symbol_table_class($3);
+            $$ -> sym_tab_entry = new st_entry($3, $1 -> entry_list[0] -> line_no, count_semicolon, $3);
         }
-        | KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody { }
+        | KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody { 
+
+            $$ -> sym_tab = new symbol_table_class($2);
+            $$ -> sym_tab_entry = new st_entry($2, yylineno, count_semicolon, $2);
+        }
         ;
 
     // ClassModifier: KEYWORD_public | KEYWORD_private | KEYWORD_abstract | KEYWORD_static | KEYWORD_final | KEYWORD_sealed | KEYWORD_nonsealed | KEYWORD_strictfp ;
@@ -391,7 +442,7 @@
                 entry -> update_type(type);
                 entry -> dimensions = $2 -> sym_tab_entry -> dimensions;
 
-                cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+                // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
 
             count_semicolon++;
@@ -405,7 +456,7 @@
                 entry -> update_type(type);
                 entry -> dimensions = $1 -> sym_tab_entry -> dimensions;
 
-                cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+                // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
 
             count_semicolon++;
@@ -550,28 +601,32 @@
 
             $$ -> sym_tab_entry = $2 -> sym_tab_entry;
             $$ -> entry_list = $2 -> entry_list;
+            $2 -> entry_list . clear();
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
 
-            cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
-            cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
-            cout << "Method return type dimensions: " << $$ -> sym_tab_entry -> dimensions << endl;
-            for(auto &entry : $$ -> entry_list) {
-                cout << "Formal Parameter identifier: " << entry -> name << endl;
-                cout << "Formal Parameter type: " << entry -> type << endl;
-                cout << "Formal Parameter dimension: " << entry -> dimensions << endl;
-            }
+            // cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
+            // cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
+            // cout << "Method return type dimensions: " << $$ -> sym_tab_entry -> dimensions << endl;
+            // for(auto &entry : $$ -> entry_list) {
+            //     cout << "Formal Parameter identifier: " << entry -> name << endl;
+            //     cout << "Formal Parameter type: " << entry -> type << endl;
+            //     cout << "Formal Parameter dimension: " << entry -> dimensions << endl;
+            // }
         }
         | MethodHeader MethodBody { 
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
             $$ -> entry_list = $1 -> entry_list;
+            $1 -> entry_list . clear();
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
 
-            cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
-            cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
-            cout << "Method return type dimensions: " << $$ -> sym_tab_entry -> dimensions << endl;
-            for(auto &entry : $$ -> entry_list) {
-                cout << "Formal Parameter identifier: " << entry -> name << endl;
-                cout << "Formal Parameter type: " << entry -> type << endl;
-                cout << "Formal Parameter dimension: " << entry -> dimensions << endl;
-            }
+            // cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
+            // cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
+            // cout << "Method return type dimensions: " << $$ -> sym_tab_entry -> dimensions << endl;
+            // for(auto &entry : $$ -> entry_list) {
+            //     cout << "Formal Parameter identifier: " << entry -> name << endl;
+            //     cout << "Formal Parameter type: " << entry -> type << endl;
+            //     cout << "Formal Parameter dimension: " << entry -> dimensions << endl;
+            // }
         }
         ;
 
@@ -622,11 +677,15 @@
         ;
 
     FormalParameterList: 
-        FormalParameter sCommaFormalParameter { 
+        FormalParameter sCommaFormalParameter {
             $$ -> entry_list.push_back($1 -> sym_tab_entry);
             if($2) {
                 for(auto (&entry) : $2 -> entry_list){
                     $$ -> entry_list.push_back(entry);
+                    if($1 -> sym_tab_entry -> name == entry -> name) {
+                        cout << "ERROR: Duplicate formal parameters " << entry -> name << " defined at line number: " << $1 -> sym_tab_entry -> line_no << endl;
+                        exit(1);
+                    }
                 }
             }
         }
@@ -701,16 +760,31 @@
                 cout<<"ERROR in line " << yylineno << ": Constructor Declaration Modifier list must only contain one of pubilc OR private OR protected.\n";
                 exit(1);
             }
+            
+            $$ -> sym_tab_entry = $2 -> sym_tab_entry;
+            $$ -> entry_list = $2 -> entry_list;
+            $2 -> entry_list . clear();
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
         }
-        | ConstructorDeclarator qThrows ConstructorBody { }
+        | ConstructorDeclarator qThrows ConstructorBody { 
+            $$ -> sym_tab_entry = $1 -> sym_tab_entry;
+            $$ -> entry_list = $1 -> entry_list;
+            $1 -> entry_list . clear();
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+        }
         ;
     // ! Annotation removed
     // ConstructorModifier: KEYWORD_public | KEYWORD_private ;
     // sConstructorModifier: | sConstructorModifier ConstructorModifier ;
 
     ConstructorDeclarator: 
-        Name DELIM_lpar qFormalParameterList DELIM_rpar { }
-        |   Name DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar { }
+        Identifier DELIM_lpar qFormalParameterList DELIM_rpar { 
+            $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            if($3){
+                $$ -> entry_list = $3 -> entry_list;
+            }
+        }
+        |   Identifier DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar { }
         ;
 
     ConstructorBody: 
@@ -775,7 +849,10 @@
 
     /************** BLOCKS ******************/
     Block:
-        DELIM_lcurl qBlockStatements DELIM_rcurl { }
+        DELIM_lcurl DELIM_rcurl { }
+        | DELIM_lcurl BlockStatements DELIM_rcurl {
+            $$ -> sym_tab = new symbol_table();
+        }
         ;
     qBlockStatements: 
         { }
@@ -795,7 +872,6 @@
         ; // NormalInterfaceDeclaration was removed
     LocalVariableDeclarationStatement:
         LocalVariableDeclaration DELIM_semicolon {
-
             count_semicolon++;  // declaration statement, hence statement count increased
         }
         ;
@@ -812,7 +888,7 @@
                 entry -> update_type(type);
                 entry -> dimensions = ($1 -> sym_tab_entry ? $1 -> sym_tab_entry -> dimensions : 0);
 
-                cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+                // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
         }
         | LocalVariableType VariableDeclaratorList { 
@@ -823,7 +899,7 @@
                 entry -> update_type(type);
                 entry -> dimensions = ($1 -> sym_tab_entry ? $1 -> sym_tab_entry -> dimensions : 0);
 
-                cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+                // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
         }
         ;
@@ -921,10 +997,14 @@
         |   EnhancedForStatementNoShortIf { }
         ;
     BasicForStatement:
-        KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar Statement { }
+        KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar Statement { 
+            $$ -> sym_tab = new symbol_table();
+        }
         ;
     BasicForStatementNoShortIf:
-        KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar StatementNoShortIf { }
+        KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar StatementNoShortIf { 
+            $$ -> sym_tab = new symbol_table();
+        }
         ;
     qForInit:     
         { }
@@ -949,10 +1029,14 @@
         |   sCommaStatementExpression DELIM_comma StatementExpression { }
         ;
     EnhancedForStatement:
-        KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar Statement { }
+        KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar Statement { 
+            $$ -> sym_tab = new symbol_table();
+        }
         ;
     EnhancedForStatementNoShortIf:
-        KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar StatementNoShortIf { }
+        KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar StatementNoShortIf {
+            $$ -> sym_tab = new symbol_table();
+         }
         ;
     BreakStatement:
         KEYWORD_break qIdentifier DELIM_semicolon { 

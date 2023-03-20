@@ -24,7 +24,7 @@ st_entry::st_entry(string name, ull line_no, ull semicolon_no, string type /*= "
     this->line_no = line_no;
     this->stmt_no = semicolon_no;
     this->type = type;
-    // this->size = type_to_size[type];
+    this->size = type_to_size[type];
 }
 
 st_entry::st_entry(string name, st_entry (&other)){
@@ -37,19 +37,16 @@ st_entry::st_entry(string name, st_entry (&other)){
 
 void st_entry::update_type(string type){
     this->type = type;
-    // this->size = type_to_size[type];
+    this->size = type_to_size[type];
 }
 
 symbol_table::symbol_table(){
-    // num_scopes++;
-    // scope = to_string(num_scopes);
+    scope = "";
     name = scope;
 }
 
-symbol_table::symbol_table(symbol_table* parent){
-    // In case the scope is nested
-    parent->add_scope(this);
-    name = scope;
+symbol_table::symbol_table(string name) {
+    this->name = name;
 }
 
 void symbol_table::add_scope(symbol_table* st){
@@ -61,7 +58,7 @@ void symbol_table::add_scope(symbol_table* st){
 void symbol_table::add_entry(st_entry* new_entry){
     for(const auto (&entry) : entries){
         if(new_entry->name == entry->name){
-            cout << "Error: Variable " << new_entry->name << " is already declared at line number " << entry->line_no << " in the same scope.\n";
+            cout << "ERROR: Variable " << new_entry->name << " is already declared at line number " << entry->line_no << " in the same scope.\n";
             exit(1);
         }
     }
@@ -107,23 +104,22 @@ st_entry* symbol_table::look_up(string name, ull line_no){
     return NULL;
 }
 
-symbol_table_func::symbol_table_func(symbol_table* parent_table, string func_name){
-    this->parent_st = parent_table;
+symbol_table_func::symbol_table_func(string func_name, vector<st_entry* > (&params)){
     this->name = func_name;
-    parent_table->add_scope(this);       
+    this->params = params;    
 }
 
 void symbol_table_func::add_entry(st_entry* new_entry) {
     for(const auto (&param) : params) {
         if(new_entry->name == param->name) {
-            cout << "Error: Variable " << new_entry -> name << " is already declared at line number " << param->line_no << " as a formal parameter.\n";
+            cout << "ERROR: Variable " << new_entry -> name << " is already declared at line number " << param->line_no << " as a formal parameter.\n";
             exit(1);
         }
     }
 
     for(const auto (&entry) : entries){
         if(new_entry -> name == entry -> name){
-            cout << "Error: Variable " << new_entry -> name << " is already declared at line number " << entry -> line_no << " in the same scope.\n";
+            cout << "ERROR: Variable " << new_entry -> name << " is already declared at line number " << entry -> line_no << " in the same scope.\n";
             exit(1);
         }
     }
@@ -132,7 +128,7 @@ void symbol_table_func::add_entry(st_entry* new_entry) {
 }
 
 bool symbol_table_func::operator == (const symbol_table_func& other){
-    if(this->func_name == other.name){
+    if(this->name == other.name){
         if((this->params).size() == other.params.size()){
             for(int idx = 0; idx < other.params.size(); idx++){
                 if((this->params)[idx]->type != other.params[idx]->type){
@@ -143,4 +139,26 @@ bool symbol_table_func::operator == (const symbol_table_func& other){
         }
     }
     return false;
+}
+
+symbol_table_class::symbol_table_class(string class_name) {
+    this -> name = class_name;
+}
+
+void symbol_table_class::add_entry(symbol_table_func* new_func){
+    for(auto (&func) : (this->member_funcs)){
+        if((*func) == (*new_func)){
+            cout << "ERROR: Function with name " << (new_func->name) << " and parameter tuple: (";
+            for(int idx = 0; idx < new_func->params.size(); idx++){
+                if(idx){
+                    cout << ", " << (new_func->params)[idx]->type;
+                }else{
+                    cout << (new_func->params)[idx]->type;
+                }
+            }
+            cout << ") already exists at line number: " << new_func -> params[0] -> line_no << "\n";
+            exit(1);
+        }
+    }
+    this->member_funcs.push_back(new_func);
 }

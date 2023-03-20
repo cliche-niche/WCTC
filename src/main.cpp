@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
     root->clean_tree();
     root->make_dot(output_file);
 
+    root->create_scope_hierarchy();
 
     fclose(program);
 }

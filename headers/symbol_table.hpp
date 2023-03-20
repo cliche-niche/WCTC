@@ -31,7 +31,7 @@ struct symbol_table {
     int sub_scopes = 0;
 
     symbol_table();
-    symbol_table(symbol_table* parent);
+    symbol_table(string name);
 
     void add_scope(symbol_table* st);
 
@@ -48,9 +48,9 @@ struct symbol_table_func : public symbol_table {
     vector<st_entry* > params;
     string func_name;
     
-    void add_entry(st_entry* new_entry);
+    symbol_table_func(string func_name, vector<st_entry* > (&params));
 
-    symbol_table_func(symbol_table* parent_table, string func_name);
+    void add_entry(st_entry* new_entry);
 
     bool operator == (const symbol_table_func& other);
 };
@@ -59,6 +59,9 @@ struct symbol_table_class : public symbol_table {
     // Stores member variables and a list of Function-Symbol tables for member functions 
     vector<symbol_table_func* > member_funcs;
 
+    symbol_table_class(string class_name);
+
+    void add_entry(symbol_table_func* func);
 };
 
 #endif 

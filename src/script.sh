@@ -8,4 +8,4 @@ flex lexer.l
 g++ -o WCTC.o parser.tab.c lex.yy.c node.cpp symbol_table.cpp main.cpp -ll
 ./WCTC.o -i ../tests/test.java
 dot -Tpng tree.gv -o AST.png
-rm tree.gv WCTC.o parser.output parser.tab.* lex.yy.c AST.png 
+rm tree.gv WCTC.o parser.output parser.tab.* lex.yy.c 
