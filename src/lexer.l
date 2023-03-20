@@ -16,8 +16,6 @@
     string tb;
     bool malloced_before_str_lit = false;
     bool malloced_before_id = false;
-
-    // case, const, default, do, goto, interface, switch, underscore, exports, module, open, opens, provides, record, requires, to, transitive, uses, with
 %}
 
 %x comment1

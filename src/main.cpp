@@ -1,13 +1,13 @@
 #include <iostream>
-#include "node.cpp"
 #include "parser.tab.h"
+#include "../headers/global_vars.hpp"
 
 using namespace std;
 
 extern int yydebug;
 extern FILE *yyin;
 extern FILE *yyout;
-extern node *root;   // root node of parse tree in the parser
+
 FILE *program;  // the input to the compiler
 string input_file = "test.java";
 string output_file = "tree.gv"; 

@@ -1,6 +1,6 @@
 all: WCTC.o
 
-WCTC.o: parser.tab.h parser.tab.c node.cpp lexer.l parser.y 
+WCTC.o: parser.tab.h parser.tab.c node.cpp node.hpp symbol_table.hpp symbol_table.cpp lexer.l parser.y 
 	g++ -o WCTC.o parser.tab.c lex.yy.c node.cpp symbol_table.cpp main.cpp -ll
 
 parser.tab.h: parser.y node.cpp

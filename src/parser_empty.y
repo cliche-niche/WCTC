@@ -4,21 +4,19 @@
     #include <iostream>
     #include <vector>
     #include <stdio.h>
-    #include "node.cpp"
-    #include "symbol_table.cpp"
+    #include "../headers/global_vars.hpp"
 
     using namespace std;
 
     extern "C" int yylex();
     extern "C" int yylineno;
-    ull num_scopes;
+
     unsigned long long int count_semicolon;
     void yyerror(const char* s);
     void add_child(node* parent, node* child);
 
-    
-
-    node* root;     // contains the root node of the parse tree
+    // extern ull num_scopes;
+    // extern node* root;
 %}
 %define parse.error verbose
 
