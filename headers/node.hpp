@@ -40,8 +40,10 @@ struct node{
     int get_dims(node* v);      // semantic actions
 
     symbol_table* get_symbol_table();
-    void generate_symbol_table(node* v);
     void create_scope_hierarchy();
+    void populate_and_check();
+
+    bool isClassScope(string scope);
 };
 
 #endif

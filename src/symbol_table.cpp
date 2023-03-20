@@ -63,6 +63,7 @@ void symbol_table::add_entry(st_entry* new_entry){
         }
     }
     entries.push_back(new_entry);
+    new_entry -> table = this;
 }
 
 void symbol_table::delete_entry(string name){
@@ -125,6 +126,7 @@ void symbol_table_func::add_entry(st_entry* new_entry) {
     }
 
     entries.push_back(new_entry);
+    new_entry -> table = this;
 }
 
 bool symbol_table_func::operator == (const symbol_table_func& other){

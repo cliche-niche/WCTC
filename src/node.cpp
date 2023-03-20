@@ -236,10 +236,10 @@ symbol_table* node::get_symbol_table() {
 
         ((symbol_table_class*) temp_node -> sym_tab) -> add_entry((symbol_table_func*) this -> sym_tab);
     }
-    if (temp_node -> name == "BasicForStatement" ||
+    if (/*temp_node -> name == "BasicForStatement" ||
         temp_node -> name == "BasicForStatementNoShortIf" || 
         temp_node -> name == "EnhancedForStatement" || 
-        temp_node -> name == "EnhancedForStatementNoShortIf" ||
+        temp_node -> name == "EnhancedForStatementNoShortIf" ||*/
         temp_node -> name == "MethodDeclaration" ) {
         this -> sym_tab = temp_node -> sym_tab;
         return NULL;    
@@ -247,6 +247,7 @@ symbol_table* node::get_symbol_table() {
     return (temp_node -> sym_tab);
 }
 
+// WALK 1
 void node::create_scope_hierarchy() {
     if(this -> sym_tab) {
         symbol_table* temp_st = this -> get_symbol_table();
@@ -261,5 +262,49 @@ void node::create_scope_hierarchy() {
 
     for(auto &child : this -> children) {
         child->create_scope_hierarchy();
+    }
+}
+
+bool node::isClassScope(string scope) {
+    for(const auto (&c) : scope){
+        if(c == '/'){
+            return false;
+        }
+    }
+    return true;
+}
+
+// WALK 2
+void node::populate_and_check() {
+    if(this -> name == "LocalVariableDeclaration") {
+        symbol_table *cnt_table = get_symbol_table();
+
+        if(!cnt_table) {
+            cout << "Unknown error! Aborting..." << endl;
+            exit(1);
+        }
+
+        for(auto &entry : this -> entry_list) {
+            st_entry* tmp = cnt_table -> look_up(entry -> name);
+            if(tmp) {
+                if(this -> isClassScope(tmp -> table -> scope)) { // add the entry if the variable is already declared AS A FIELD variable
+                    cnt_table->add_entry(entry);
+                }
+                else {
+                    cout << "Error: Variable " << entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
+                    exit(1);
+                }
+            }
+            else {
+                cnt_table->add_entry(entry);
+            }
+        }
+    }
+
+    // @TODO checking of expressions
+
+
+    for(auto &child : this -> children) {
+        child -> populate_and_check();
     }
 }

@@ -5,12 +5,15 @@
 typedef unsigned long long ull;
 using namespace std;
 
+struct symbol_table;
+
 struct st_entry{
     // One entry of a symbol table
     // From assignment: Type, source file, line number, size, offset
 
     string name;
     string type;
+    symbol_table* table;
     ull line_no;
     ull stmt_no;
     ull size;
@@ -58,6 +61,7 @@ struct symbol_table_func : public symbol_table {
 struct symbol_table_class : public symbol_table {
     // Stores member variables and a list of Function-Symbol tables for member functions 
     vector<symbol_table_func* > member_funcs;
+    vector<st_entry*> member_fields; 
 
     symbol_table_class(string class_name);
 

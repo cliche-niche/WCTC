@@ -62,6 +62,7 @@ int main(int argc, char* argv[]) {
     root->make_dot(output_file);
 
     root->create_scope_hierarchy();
+    root->populate_and_check();
 
     fclose(program);
 }
