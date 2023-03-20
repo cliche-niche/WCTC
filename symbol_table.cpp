@@ -5,18 +5,7 @@
 typedef unsigned long long ull;
 using namespace std;
 
-// ull num_scopes = 0;
-
-// map<string, int> type_to_size = {
-//     {"byte", 1},
-//     {"short", 2},
-//     {"int", 4},
-//     {"long", 8},
-//     {"float", 4},
-//     {"double", 8},
-//     {"boolean", 1},
-//     {"char", 2}
-// };
+extern ull num_scopes;
 
 struct st_entry{
     // One entry of a symbol table
@@ -179,7 +168,5 @@ struct symbol_table_class : public symbol_table {
     vector<symbol_table_func* > member_funcs;
 
 };
-
-// vector<symbol_table_class> main_table;
 
 #endif 

@@ -5,8 +5,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// extern ull num_scopes;
-// extern map<string, int> type_to_size;
+extern ull num_scopes;
+extern map<string, int> type_to_size;
 
 struct node{
     string name = "";   // stores the lexeme if terminal or the name of the non terminal otherwise

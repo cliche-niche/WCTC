@@ -11,9 +11,12 @@
 
     extern "C" int yylex();
     extern "C" int yylineno;
+    ull num_scopes;
     unsigned long long int count_semicolon;
     void yyerror(const char* s);
     void add_child(node* parent, node* child);
+
+    
 
     node* root;     // contains the root node of the parse tree
 %}
@@ -264,7 +267,41 @@
         ;
 
     NormalClassDeclaration:
-        Modifiers KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody { }
+        Modifiers KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody { 
+            {
+                int ppp_count = 0, snf_count = 0, af_count = 0;
+                for(auto entry : $1 -> entry_list){
+                    ppp_count += (entry->name == "public");
+                    ppp_count += (entry->name == "private");
+                    ppp_count += (entry->name == "protected");
+                    snf_count += (entry->name == "sealed");
+                    snf_count += (entry->name == "non-sealed");
+                    snf_count += (entry->name == "final");
+                    af_count += (entry->name == "final");
+                    af_count += (entry->name == "abstract");
+                    if(!(entry->name=="public"||entry->name=="private"||entry->name=="protected"||entry->name=="sealed"||entry->name=="non-sealed"||entry->name=="final"||entry->name=="static"||entry->name=="abstract")){
+                        cout <<"ERROR: The Modifier " << entry->name << "is not allowed for ClassDeclaration.\n";
+                        exit(1);
+                    }
+                }
+                if(ppp_count > 1){
+                    cout<<"ERROR in line " << yylineno << ": NormalClassDeclaration should be ONE of public, private, OR protected.\n";
+                    exit(1);
+                }
+                if(snf_count > 1){
+                    cout<<"ERROR in line " << yylineno << ": NormalClassDeclaration should be ONE of sealed, non-sealed, OR final.\n";
+                    exit(1);
+                }
+                if(af_count > 1){
+                    cout<<"ERROR in line " << yylineno << ": NormalClassDeclaration should be ONE of abstract, OR final.\n";
+                    exit(1);
+                }
+            }
+            // Need to check funcs from classbody whether they are abstract for an abstract class and final for a final class
+            // Need to check qExtends: if non-sealed class has a sealed superclass
+            // If superclass is non-sealed, then class must not be non-sealed
+            // If superclass is sealed, then class snf_count must be at least (exactly) one 
+        }
         | KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody { }
         ;
 
@@ -319,9 +356,53 @@
 
     FieldDeclaration: 
         Modifiers UnannType VariableDeclaratorList DELIM_semicolon { 
+            int ppp_count = 0, fv_count = 0;
+            for(auto entry : $1 -> entry_list){
+                ppp_count += (entry->name == "public");
+                ppp_count += (entry->name == "private");
+                ppp_count += (entry->name == "protected");
+                fv_count += (entry->name == "final");
+                fv_count += (entry->name == "volatile");
+                
+                if(!(entry->name=="public"||entry->name=="private"||entry->name=="protected"||entry->name=="final"||entry->name=="static"||entry->name=="transient"||entry->name=="volatile")){
+                    cout <<"ERROR: The Modifier " << entry->name << "is not allowed for Field Declaration.\n";
+                    exit(1);
+                }
+            }
+            if(ppp_count > 1){
+                cout<<"ERROR: FieldDeclaration modifier should be ONE of public, private, OR protected.\n";
+                exit(1);
+            }
+            if(fv_count > 1){
+                cout<<"ERROR: FieldDeclaration modifier should be ONE of final or volatile.\n";
+                exit(1);
+            }
+            // Need to check assignment of final static/non-static fields
+
+            $$ -> entry_list = $3 -> entry_list;
+            $3 -> entry_list . clear();
+            string type = $$ -> get_name($2);
+            for(auto (&entry) : $$ -> entry_list) {
+                entry -> update_type(type);
+                entry -> dimensions = $2 -> sym_tab_entry -> dimensions;
+
+                cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+            }
+
             count_semicolon++;
         }
-        | UnannType VariableDeclaratorList DELIM_semicolon { 
+        | UnannType VariableDeclaratorList DELIM_semicolon {
+
+            $$ -> entry_list = $2 -> entry_list;
+            $2 -> entry_list . clear();
+            string type = $$ -> get_name($1);
+            for(auto (&entry) : $$ -> entry_list) {
+                entry -> update_type(type);
+                entry -> dimensions = $1 -> sym_tab_entry -> dimensions;
+
+                cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+            }
+
             count_semicolon++;
         }
     // ! Annotation removed
@@ -404,6 +485,64 @@
 
     MethodDeclaration: 
         Modifiers MethodHeader MethodBody { 
+            {
+                // Modifiers check
+                bool flag = false;
+                
+                for(auto (&entry) : ($1 -> entry_list)){
+                    if(!(entry->name=="public" || entry->name=="private" || entry->name=="protected" || entry->name=="final" || entry->name=="static" || entry->name=="abstract" || entry->name=="synchronized" || entry->name=="native" || entry->name=="strictfp")){
+                        cout <<"ERROR in line " << yylineno << ": The Modifier " << entry->name << "is not allowed for Field Declaration.\n";
+                        exit(1);
+                    }
+                }
+                flag = false;
+
+                for(auto (&entry) : ($1 -> entry_list)){
+                // Modifier can be one of public, protected, private
+                    if(entry->name == "public" || entry->name == "private" || entry->name == "protected"){
+                        if(flag){
+                            cout<<"ERROR in line " << yylineno << ": MethodDeclaration should be ONE of public, private, OR protected.\n";
+                            exit(1);
+                        }
+                        flag = true;
+                    }
+                }
+                flag = false;
+
+                // If modifier has abstract, it cannot have private, static, final, native, strictfp, or synchronized
+                for(auto (&entry) : ($1 -> entry_list)){
+                    flag |= (entry->name == "abstract");
+                }
+                if(flag){ // Modifier list has abstract
+                    flag = false;
+                    for(auto (&entry) : ($1 -> entry_list)){
+                        if(entry->name == "private" || entry->name == "static" || entry->name == "final"){
+                            cout<<"ERROR in line " << yylineno << ": Illegal Modifier " << entry->name << " used with abstract MethodDeclaration.\n";
+                            exit(1);
+                        }
+                        if(entry->name == "native" || entry->name == "strictfp" || entry->name == "synchronized"){
+                            cout<<"ERROR in line " << yylineno << ": Illegal Modifier " << entry->name << " used with abstract MethodDeclaration.\n";
+                            exit(1);
+                        }
+                    }
+                }else{
+                    flag = false;
+                    
+                    // If modifier has native, cannot have strictfp
+                    for(auto (&entry) : ($1 -> entry_list)){
+                        flag |= (entry->name == "native");
+                    }
+                    if(flag){ // Modifier list has native
+                        for(auto (&entry) : ($1 -> entry_list)){
+                            if(entry->name == "strictfp"){
+                                cout<<"ERROR in line " << yylineno << ": native MethodDeclaration cannot have strictfp modifier in list.\n";
+                                exit(1);
+                            }
+                        }
+                    }
+                }
+            }
+
             $$ -> sym_tab_entry = $2 -> sym_tab_entry;
             $$ -> entry_list = $2 -> entry_list;
 
@@ -492,9 +631,12 @@
             $$ -> entry_list = $1 -> entry_list;
         }
         ;
-    FormalParameter: 
+    FormalParameter:
         Modifiers UnannType VariableDeclaratorId { 
-            // Modifier can only be a single final
+            if($1 -> entry_list.size() != 1 || ($1 -> entry_list)[0] -> name != "final"){
+                cout<<"ERROR in line " << yylineno << ": FormalParameter Modifier list must contain only final.\n";
+                exit(1);
+            }
             $$ -> sym_tab_entry = $3 -> sym_tab_entry;
             $$ -> sym_tab_entry -> update_type($2 -> sym_tab_entry -> name);
             $$ -> sym_tab_entry -> dimensions = $2 -> sym_tab_entry -> dimensions + $3 -> sym_tab_entry -> dimensions;
@@ -517,7 +659,10 @@
     // ! sAnnotation and Annotation removed
     VariableArityParameter: 
         Modifiers UnannType DELIM_ellipsis Identifier { 
-            // Modifier can only be a single final
+            if($1 -> entry_list.size() != 1 || ($1 -> entry_list)[0] -> name != "final"){
+                cout<<"ERROR in line " << yylineno << ": VariableArityParameter Modifier list must contain only final.\n";
+                exit(1);
+            }
         }
         | UnannType DELIM_ellipsis Identifier { }
         ;
@@ -546,7 +691,12 @@
         ;
 
     ConstructorDeclaration: 
-        Modifiers ConstructorDeclarator qThrows ConstructorBody { }
+        Modifiers ConstructorDeclarator qThrows ConstructorBody { 
+            if($1 -> entry_list.size() != 1 || (($1 -> entry_list)[0] -> name != "public" && ($1 -> entry_list)[0] -> name != "private" && ($1 -> entry_list)[0] -> name != "protected")){
+                cout<<"ERROR in line " << yylineno << ": Constructor Declaration Modifier list must only contain one of pubilc OR private OR protected.\n";
+                exit(1);
+            }
+        }
         | ConstructorDeclarator qThrows ConstructorBody { }
         ;
     // ! Annotation removed
@@ -646,7 +796,19 @@
         ;
     LocalVariableDeclaration:
         Modifiers LocalVariableType VariableDeclaratorList { 
-            // Modifier can only be a single final
+            if($1 -> entry_list.size() != 1 || ($1 -> entry_list)[0] -> name != "final"){
+                cout<<"ERROR in line " << yylineno << ": LocalVariableDeclaration Modifier list must contain only final.\n";
+                exit(1);
+            }
+            $$ -> entry_list = $2 -> entry_list;
+            $2 -> entry_list . clear();
+            string type = $$ -> get_name($1);
+            for(auto (&entry) : $$ -> entry_list) {
+                entry -> update_type(type);
+                entry -> dimensions = ($1 -> sym_tab_entry ? $1 -> sym_tab_entry -> dimensions : 0);
+
+                cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+            }
         }
         | LocalVariableType VariableDeclaratorList { 
             $$ -> entry_list = $2 -> entry_list;
@@ -844,7 +1006,10 @@
         ;
     CatchFormalParameter:
         Modifiers CatchType VariableDeclaratorId { 
-            // Modifier can only be a single final
+            if($1 -> entry_list.size() != 1 || ($1 -> entry_list)[0] -> name != "final"){
+                cout<<"ERROR in line " << yylineno << ": CatchFormalParameter Modifier list must contain only final.\n";
+                exit(1);
+            }
         }    
         |   CatchType VariableDeclaratorId { }
         ;
