@@ -6,6 +6,7 @@ typedef unsigned long long ull;
 using namespace std;
 
 ull num_scopes = 0;
+symbol_table_global *main_table = new symbol_table_global;
 map<string, int> type_to_size = {
         {"byte", 1},
         {"short", 2},
@@ -16,6 +17,20 @@ map<string, int> type_to_size = {
         {"boolean", 1},
         {"char", 2}
 };
+
+// enum MODIFIER {
+//     M_PUBLIC,
+//     M_PRIVATE,
+//     M_PROTECTED,
+//     M_STATIC,
+//     M_ABSTRACT,
+//     M_NATIVE,
+//     M_SYNCHRONIZED,
+//     M_TRANSIENT,
+//     M_VOLATILE,
+//     M_FINAL,
+//     COUNT
+// };
 
 st_entry::st_entry(){;}
 
@@ -40,13 +55,25 @@ void st_entry::update_type(string type){
     this->size = type_to_size[type];
 }
 
-symbol_table::symbol_table(){
-    scope = "";
-    name = scope;
+void st_entry::update_modifiers(vector<st_entry*> modifiers){
+    for(auto entry : modifiers){
+        if(entry -> name == "public")       this -> modifier_bv [M_PUBLIC]          = true;
+        if(entry -> name == "private")      this -> modifier_bv [M_PRIVATE]         = true;
+        if(entry -> name == "protected")    this -> modifier_bv [M_PROTECTED]       = true;
+        if(entry -> name == "static")       this -> modifier_bv [M_STATIC]          = true;
+        if(entry -> name == "abstract")     this -> modifier_bv [M_ABSTRACT]        = true;
+        if(entry -> name == "native")       this -> modifier_bv [M_NATIVE]          = true;
+        if(entry -> name == "synchronized") this -> modifier_bv [M_SYNCHRONIZED]    = true;
+        if(entry -> name == "transient")    this -> modifier_bv [M_TRANSIENT]       = true;
+        if(entry -> name == "volatile")     this -> modifier_bv [M_VOLATILE]        = true;
+        if(entry -> name == "final")        this -> modifier_bv [M_FINAL]           = true;
+    }
 }
 
-symbol_table::symbol_table(string name) {
-    this->name = name;
+symbol_table::symbol_table(){
+    this -> scope = "";
+    this -> name = "";
+    this -> symbol_table_category = 'B';
 }
 
 void symbol_table::add_scope(symbol_table* st){
@@ -107,7 +134,8 @@ st_entry* symbol_table::look_up(string name, ull line_no){
 
 symbol_table_func::symbol_table_func(string func_name, vector<st_entry* > (&params)){
     this->name = func_name;
-    this->params = params;    
+    this->params = params;
+    this->symbol_table_category = 'M';  
 }
 
 void symbol_table_func::add_entry(st_entry* new_entry) {
@@ -129,6 +157,21 @@ void symbol_table_func::add_entry(st_entry* new_entry) {
     new_entry -> table = this;
 }
 
+void symbol_table_func::update_modifiers(vector<st_entry*> modifiers){
+    for(auto entry : modifiers){
+        if(entry -> name == "public")       this -> modifier_bv [M_PUBLIC]          = true;
+        if(entry -> name == "private")      this -> modifier_bv [M_PRIVATE]         = true;
+        if(entry -> name == "protected")    this -> modifier_bv [M_PROTECTED]       = true;
+        if(entry -> name == "static")       this -> modifier_bv [M_STATIC]          = true;
+        if(entry -> name == "abstract")     this -> modifier_bv [M_ABSTRACT]        = true;
+        if(entry -> name == "native")       this -> modifier_bv [M_NATIVE]          = true;
+        if(entry -> name == "synchronized") this -> modifier_bv [M_SYNCHRONIZED]    = true;
+        if(entry -> name == "transient")    this -> modifier_bv [M_TRANSIENT]       = true;
+        if(entry -> name == "volatile")     this -> modifier_bv [M_VOLATILE]        = true;
+        if(entry -> name == "final")        this -> modifier_bv [M_FINAL]           = true;
+    }
+}
+
 bool symbol_table_func::operator == (const symbol_table_func& other){
     if(this->name == other.name){
         if((this->params).size() == other.params.size()){
@@ -145,6 +188,7 @@ bool symbol_table_func::operator == (const symbol_table_func& other){
 
 symbol_table_class::symbol_table_class(string class_name) {
     this -> name = class_name;
+    this -> symbol_table_category = 'C';
 }
 
 void symbol_table_class::add_entry(symbol_table_func* new_func){
@@ -164,3 +208,25 @@ void symbol_table_class::add_entry(symbol_table_func* new_func){
     }
     this->member_funcs.push_back(new_func);
 }
+
+void symbol_table_class::update_modifiers(vector<st_entry*> modifiers){
+    for(auto entry : modifiers){
+        if(entry -> name == "public")       this -> modifier_bv [M_PUBLIC]          = true;
+        if(entry -> name == "private")      this -> modifier_bv [M_PRIVATE]         = true;
+        if(entry -> name == "protected")    this -> modifier_bv [M_PROTECTED]       = true;
+        if(entry -> name == "static")       this -> modifier_bv [M_STATIC]          = true;
+        if(entry -> name == "abstract")     this -> modifier_bv [M_ABSTRACT]        = true;
+        if(entry -> name == "native")       this -> modifier_bv [M_NATIVE]          = true;
+        if(entry -> name == "synchronized") this -> modifier_bv [M_SYNCHRONIZED]    = true;
+        if(entry -> name == "transient")    this -> modifier_bv [M_TRANSIENT]       = true;
+        if(entry -> name == "volatile")     this -> modifier_bv [M_VOLATILE]        = true;
+        if(entry -> name == "final")        this -> modifier_bv [M_FINAL]           = true;
+    }
+}
+
+symbol_table_global::symbol_table_global() {
+    this -> name = "__GlobalSymbolTable__";
+    this -> scope = "";
+    this -> symbol_table_category = 'G';
+}
+

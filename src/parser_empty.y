@@ -14,9 +14,6 @@
     unsigned long long int count_semicolon;
     void yyerror(const char* s);
     void add_child(node* parent, node* child);
-
-    // extern ull num_scopes;
-    // extern node* root;
 %}
 %define parse.error verbose
 
@@ -37,7 +34,7 @@
 %token<strval> OPERATOR_assignment
 %token LITERAL_null 
 
-%token KEYWORD_class KEYWORD_extends KEYWORD_super KEYWORD_package KEYWORD_public KEYWORD_private KEYWORD_abstract KEYWORD_static KEYWORD_final KEYWORD_sealed KEYWORD_nonsealed KEYWORD_strictfp KEYWORD_implements KEYWORD_import KEYWORD_permits KEYWORD_transient KEYWORD_volatile KEYWORD_synchronized KEYWORD_native KEYWORD_void KEYWORD_this KEYWORD_enum KEYWORD_if KEYWORD_else KEYWORD_assert KEYWORD_while KEYWORD_for KEYWORD_break KEYWORD_yield KEYWORD_continue KEYWORD_return KEYWORD_throw KEYWORD_try KEYWORD_catch KEYWORD_finally KEYWORD_boolean KEYWORD_new KEYWORD_var KEYWORD_byte KEYWORD_short KEYWORD_int KEYWORD_long KEYWORD_char KEYWORD_float KEYWORD_double KEYWORD_protected KEYWORD_throws
+%token KEYWORD_class KEYWORD_extends KEYWORD_super KEYWORD_package KEYWORD_public KEYWORD_private KEYWORD_abstract KEYWORD_static KEYWORD_final KEYWORD_sealed KEYWORD_nonsealed KEYWORD_strictfp KEYWORD_implements KEYWORD_import KEYWORD_permits KEYWORD_transient KEYWORD_volatile KEYWORD_synchronized KEYWORD_native KEYWORD_void KEYWORD_this KEYWORD_enum KEYWORD_if KEYWORD_else KEYWORD_assert KEYWORD_while KEYWORD_for KEYWORD_break KEYWORD_yield KEYWORD_continue KEYWORD_return KEYWORD_throw KEYWORD_try KEYWORD_catch KEYWORD_finally KEYWORD_boolean KEYWORD_new KEYWORD_var KEYWORD_byte KEYWORD_short KEYWORD_int KEYWORD_long KEYWORD_char KEYWORD_float KEYWORD_double KEYWORD_protected KEYWORD_throws KEYWORD_do
 %token<strval> Identifier
 %token DELIM_semicolon DELIM_period DELIM_lpar DELIM_rpar DELIM_lsq DELIM_rsq DELIM_lcurl DELIM_rcurl DELIM_comma DELIM_ellipsis DELIM_proportion DELIM_attherate 
 
@@ -75,7 +72,7 @@
 %right UNARY_minus UNARY_plus OPERATOR_not OPERATOR_bitwisecomp
 %nonassoc OPERATOR_increment OPERATOR_decrement
 
-%type<treenode> IntegralType FloatingPointType PrimitiveType NumericType ArrayType Dims qDims Name Modifiers CompilationUnit OrdinaryCompilationUnit Modifier sCommaName NameList AdditionalBound pAdditionalBound ArrayInitializer qComma sCommaVariableInitializer VariableInitializerList qVariableInitializerList sImportDeclaration ImportDeclaration importName  PackageDeclaration sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration ClassExtends qClassExtends ClassImplements qClassImplements Block qBlockStatements BlockStatements BlockStatement LocalClassOrInterfaceDeclaration LocalVariableDeclarationStatement LocalVariableDeclaration LocalVariableType Statement StatementNoShortIf StatementWithoutTrailingSubstatement EmptyStatement LabeledStatement LabeledStatementNoShortIf ExpressionStatement StatementExpression IfThenStatement IfThenElseStatement IfThenElseStatementNoShortIf AssertStatement WhileStatement WhileStatementNoShortIf ForStatement ForStatementNoShortIf BasicForStatement BasicForStatementNoShortIf qForInit qForUpdate ForInit ForUpdate StatementExpressionList sCommaStatementExpression EnhancedForStatement EnhancedForStatementNoShortIf BreakStatement qIdentifier YieldStatement ContinueStatement ReturnStatement qExpression ThrowStatement SynchronizedStatement TryStatement qCatches pCatches Catches CatchClause CatchFormalParameter CatchType sOrName Finally TryWithResourcesStatement qFinally ResourceSpecification qSemicolon ResourceList ssemicolonResource Resource VariableAccess Pattern TypePattern NormalClassDeclaration ClassPermits qClassPermits ClassBody qClassBody ClassBodyDeclaration sClassBodyDeclaration ClassMemberDeclaration FieldDeclaration VariableDeclaratorList sCommaVariableDeclarator VariableDeclarator VariableDeclaratorId qEqualVariableInitializer VariableInitializer UnannType MethodDeclaration MethodHeader MethodDeclarator ReceiverParameterComma ReceiverParameter IdentifierDot qIdentifierDot FormalParameterList qFormalParameterList FormalParameter sCommaFormalParameter VariableArityParameter Throws qThrows MethodBody InstanceInitializer StaticInitializer ConstructorDeclaration ConstructorDeclarator ConstructorBody ExplicitConstructorInvocation BracketArgumentList UnaryExpression PreIncrementExpression UnaryExpressionNotPlusMinus PostfixExpression Primary PrimaryNoNewArray Literal ClassLiteral ClassInstanceCreationExpression UnqualifiedClassInstanceCreationExpression qArgumentList ArgumentList sCommaExpression FieldAccess ArrayAccess MethodInvocation MethodReference ArrayCreationExpression DimExprs DimExpr PostIncrementExpression PostDecrementExpression CastExpression InstanceofExpression Assignment LeftHandSide Expression AssignmentExpression ConditionalExpression ConditionalOrExpression ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression PreDecrementExpression BooleanDims NumericTypeDims 
+%type<treenode> DoStatement IntegralType FloatingPointType PrimitiveType NumericType ArrayType Dims qDims Name Modifiers CompilationUnit OrdinaryCompilationUnit Modifier sCommaName NameList AdditionalBound pAdditionalBound ArrayInitializer qComma sCommaVariableInitializer VariableInitializerList qVariableInitializerList sImportDeclaration ImportDeclaration importName  PackageDeclaration sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration ClassExtends qClassExtends ClassImplements qClassImplements Block qBlockStatements BlockStatements BlockStatement LocalClassOrInterfaceDeclaration LocalVariableDeclarationStatement LocalVariableDeclaration LocalVariableType Statement StatementNoShortIf StatementWithoutTrailingSubstatement EmptyStatement LabeledStatement LabeledStatementNoShortIf ExpressionStatement StatementExpression IfThenStatement IfThenElseStatement IfThenElseStatementNoShortIf AssertStatement WhileStatement WhileStatementNoShortIf ForStatement ForStatementNoShortIf BasicForStatement BasicForStatementNoShortIf qForInit qForUpdate ForInit ForUpdate StatementExpressionList sCommaStatementExpression EnhancedForStatement EnhancedForStatementNoShortIf BreakStatement qIdentifier YieldStatement ContinueStatement ReturnStatement qExpression ThrowStatement SynchronizedStatement TryStatement qCatches pCatches Catches CatchClause CatchFormalParameter CatchType sOrName Finally TryWithResourcesStatement qFinally ResourceSpecification qSemicolon ResourceList ssemicolonResource Resource VariableAccess Pattern TypePattern NormalClassDeclaration ClassPermits qClassPermits ClassBody qClassBody ClassBodyDeclaration sClassBodyDeclaration ClassMemberDeclaration FieldDeclaration VariableDeclaratorList sCommaVariableDeclarator VariableDeclarator VariableDeclaratorId qEqualVariableInitializer VariableInitializer UnannType MethodDeclaration MethodHeader MethodDeclarator ReceiverParameterComma ReceiverParameter IdentifierDot qIdentifierDot FormalParameterList qFormalParameterList FormalParameter sCommaFormalParameter VariableArityParameter Throws qThrows MethodBody InstanceInitializer StaticInitializer ConstructorDeclaration ConstructorDeclarator ConstructorBody ExplicitConstructorInvocation BracketArgumentList UnaryExpression PreIncrementExpression UnaryExpressionNotPlusMinus PostfixExpression Primary PrimaryNoNewArray Literal ClassLiteral ClassInstanceCreationExpression UnqualifiedClassInstanceCreationExpression qArgumentList ArgumentList sCommaExpression FieldAccess ArrayAccess MethodInvocation MethodReference ArrayCreationExpression DimExprs DimExpr PostIncrementExpression PostDecrementExpression CastExpression InstanceofExpression Assignment LeftHandSide Expression AssignmentExpression ConditionalExpression ConditionalOrExpression ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression PreDecrementExpression BooleanDims NumericTypeDims 
 
 %start CompilationUnit
 
@@ -88,13 +85,12 @@
         | KEYWORD_long { }
         | KEYWORD_char { }
         ;
+    
     FloatingPointType:
         KEYWORD_float { }
         | KEYWORD_double { }
         ;
-    // ! sAnnotation and Annotation removed 
-    // sAnnotation: | sAnnotation Annotation ;
-    // ! sAnnotation removed
+    
     PrimitiveType:
         NumericType { }
         | KEYWORD_boolean { }
@@ -113,44 +109,28 @@
         IntegralType { }
         | FloatingPointType { }
         ;
-    // ReferenceType: ArrayType ; // ClassOrInterfaceType is same as ClassType
-    // ClassOrInterfaceType: ClassType | InterfaceType
-    // ! sAnnotation removed
-    // ClassType: Identifier | Name DELIM_period Identifier | ClassType DELIM_period Identifier // We ignore TypeArguments and replace ClassType with Name everywhere
-    // InterfaceType: ClassType
-    // TypeIdentifier: Identifier // Replaced by Identifier
-    // ! sAnnotation
-    // TypeVariable: TypeIdentifier ; // TypeIdentifier is same as Identifier, therefore TypeVariable just replaced by Identifier
+    
     ArrayType:
         Name Dims { }
-        ; // Java style array declarations ignored
-    // ! sAnnotation
+        ;
+    
     Dims:
         DELIM_lsq DELIM_rsq       %prec PREC_reduce_Dims { }
         | DELIM_lsq DELIM_rsq Dims  %prec PREC_shift_Dims { }
         ;
+    
     qDims: { }
         | Dims { }
         ;
-    
-    // TypeParameter: sAnnotation TypeIdentifier qTypeBound ;
-    // TypeParameterModifier: Annotation //TypeParameterModifier is same as Annotation
-    // TypeBound: KEYWORD_extends TypeVariable | KEYWORD_extends ClassType sAdditionalBound ; // useless symbol
-    // qTypeBound: | TypeBound ; // useless symbol
+        
     AdditionalBound:
         OPERATOR_bitwiseand Name { }                                      
         ;
+    
     pAdditionalBound:
         AdditionalBound { }
         | pAdditionalBound AdditionalBound { }
         ;
-    // TypeArgumentList: TypeArgument sCommaTypeArgument ; // useless symbol
-    // sCommaTypeArgument: | sCommaTypeArgument DELIM_comma TypeArgument ; // useless symbol
-    // TypeArgument: ReferenceType | Wildcard ; // useless symbol
-    // ! sAnnotation
-    // Wildcard: OPERATOR_ternaryquestion qWildcardBounds ; // useless symbol
-    // WildcardBounds: KEYWORD_extends ReferenceType | KEYWORD_super ReferenceType ; // useless symbol
-    // qWildcardBounds: | WildcardBounds; // useless symbol
 
     /****************** NAMES  ******************/
     Name:
@@ -168,13 +148,14 @@
     CompilationUnit:
         OrdinaryCompilationUnit { 
             root = $$;
-            root -> sym_tab = new symbol_table("Global");
+            root -> sym_tab = main_table;
 
             for(auto &entry : $1 -> entry_list) {
                 root -> sym_tab -> add_entry(entry);
             }
         }
-        ; // used to be OrdinaryCompilationUnit | ModularCompilationUnit;
+        ;
+    
     OrdinaryCompilationUnit:
         sImportDeclaration sTopLevelClassOrInterfaceDeclaration {
             // checking duplicate class names
@@ -206,17 +187,18 @@
                 $$ -> entry_list = $3 -> entry_list;
                 $3 -> entry_list . clear();
             }
-
         }
         ;
     
     sImportDeclaration: { }
         |  sImportDeclaration ImportDeclaration { }
         ;
+    
     ImportDeclaration:  KEYWORD_import importName DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     importName: KEYWORD_static Name { }
         | KEYWORD_static Name DELIM_period OPERATOR_multiply { }
         | Name DELIM_period OPERATOR_multiply { }
@@ -239,6 +221,7 @@
             $$ -> entry_list.push_back($2 -> sym_tab_entry);
         }
         ;
+    
     TopLevelClassOrInterfaceDeclaration:
         NormalClassDeclaration { 
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
@@ -246,26 +229,10 @@
         | DELIM_semicolon { 
             count_semicolon++;
         }
-        ; // ClassDeclaration is the same as NormalClassDeclaration
-   
-    // ModularCompilationUnit: ModuleDeclaration;
-    // ModuleDeclaration: sAnnotation qopen KEYWORD_module Identifier sDotIdentifier DELIM_lcurl sModuleDirective DELIM_rcurl ;
-    // qopen: KEYWORD_open | ;
-    // sDotIdentifier: | sDotIdentifier DELIM_period Identifier;
-    // sModuleDirective: | sModuleDirective ModuleDirective;
-    // ModuleDirective:
-        // KEYWORD_requires sRequiresModifier ModuleName ";"
-        // | KEYWORD_exports PackageName qVeryWeirdThing ";"
-        // | KEYWORD_opens PackageName qVeryWeirdThing ";"
-        // | KEYWORD_uses TypeName;
-    // provides TypeName with TypeName { } ;
-    // RequiresModifier:
-    // (one of)
-    // transitive static
+        ; 
     
     /****************** CLASSES  ******************/
-    // ClassDeclaration: NormalClassDeclaration | EnumDeclaration | RecordDeclaration we only implement Normal Class Declaration
-
+    
     Modifiers:
         Modifier { 
             $$ -> entry_list.push_back($1 -> sym_tab_entry);
@@ -275,7 +242,7 @@
             $1 -> entry_list.clear();
             for(auto entry : $$ -> entry_list){
                 if(entry->name == $2 -> sym_tab_entry -> name){
-                    cout << "Error: The modifier " << entry->name << " has been used more than once in the same declaration." << endl;
+                    cout << "ERROR: The modifier " << entry->name << " has been used more than once in the same declaration." << endl;
                     exit(1);
                 }
             }
@@ -351,52 +318,59 @@
             // If superclass is non-sealed, then class must not be non-sealed
             // If superclass is sealed, then class snf_count must be at least (exactly) one
 
-            $$ -> sym_tab = new symbol_table_class($3);
-            $$ -> sym_tab_entry = new st_entry($3, $1 -> entry_list[0] -> line_no, count_semicolon, $3);
+            $$ -> sym_tab = new symbol_table_class($3);     // Class symbol table created
+            ((symbol_table_class*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
+            $$ -> sym_tab_entry = new st_entry($3, $1 -> entry_list[0] -> line_no, count_semicolon, $3);    // Symbol table entry for the global symbol table
+            ($$ -> sym_tab_entry) -> update_modifiers($1 -> entry_list);
         }
         | KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody { 
 
-            $$ -> sym_tab = new symbol_table_class($2);
-            $$ -> sym_tab_entry = new st_entry($2, yylineno, count_semicolon, $2);
+            $$ -> sym_tab = new symbol_table_class($2);     // Class symbol table created
+            $$ -> sym_tab_entry = new st_entry($2, yylineno, count_semicolon, $2);      // Symbol table entry for the global symbol table
         }
         ;
-
-    // ClassModifier: KEYWORD_public | KEYWORD_private | KEYWORD_abstract | KEYWORD_static | KEYWORD_final | KEYWORD_sealed | KEYWORD_nonsealed | KEYWORD_strictfp ;
-    // sClassModifier: | sClassModifier ClassModifier ;
 
     ClassExtends:
         KEYWORD_extends Name { }
         ;
+    
     qClassExtends: { }
-    | ClassExtends { }
-    ;
+        | ClassExtends { }
+        ;
+    
     ClassImplements:
         KEYWORD_implements NameList { }
         ;
+    
     qClassImplements: { }
         | ClassImplements { }
         ;
-    // InterfaceTypeList: Name sCommaName ; // replaced by NameList
+        
     ClassPermits:
         KEYWORD_permits Name sCommaName { }
         ;
+    
     qClassPermits: 
         { }
         | ClassPermits { }
         ;
+    
     ClassBody:
         DELIM_lcurl sClassBodyDeclaration DELIM_rcurl { }
         ;
+    
     qClassBody:
         { }
         | ClassBody { }
         ;
+    
     ClassBodyDeclaration: 
         ClassMemberDeclaration { }
         | InstanceInitializer { }
         | StaticInitializer { }
         | ConstructorDeclaration { }
         ;
+    
     sClassBodyDeclaration: { }
         | sClassBodyDeclaration ClassBodyDeclaration { }
         ;
@@ -408,7 +382,7 @@
         | DELIM_semicolon { 
             count_semicolon++;
         }
-        ; // ClassDeclaration is the same as NormalClassDeclaration, removed InterfaceDeclaration
+        ;
 
     FieldDeclaration: 
         Modifiers UnannType VariableDeclaratorList DELIM_semicolon { 
@@ -441,8 +415,8 @@
             for(auto (&entry) : $$ -> entry_list) {
                 entry -> update_type(type);
                 entry -> dimensions = $2 -> sym_tab_entry -> dimensions;
-
-                // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
+                entry -> update_modifiers($1 -> entry_list);
+                entry -> initialized = true;    // field variables are initialized with default values
             }
 
             count_semicolon++;
@@ -455,15 +429,13 @@
             for(auto (&entry) : $$ -> entry_list) {
                 entry -> update_type(type);
                 entry -> dimensions = $1 -> sym_tab_entry -> dimensions;
-
+                entry -> initialized = true;    // field variables are initialized with default values
                 // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
 
             count_semicolon++;
         }
-    // ! Annotation removed
-    // FieldModifier: KEYWORD_public | KEYWORD_private | KEYWORD_static | KEYWORD_final | KEYWORD_transient | KEYWORD_volatile ; 
-    // sFieldModifier: | sFieldModifier FieldModifier ;
+        ;
     
     VariableDeclaratorList: 
         VariableDeclarator sCommaVariableDeclarator        %prec PREC_reduce_VariableDeclaratorList {
@@ -479,6 +451,7 @@
             }
         }
         ;
+    
     sCommaVariableDeclarator: { }
         | sCommaVariableDeclarator DELIM_comma VariableDeclarator    %prec DELIM_comma { 
             if($1 != NULL){
@@ -488,20 +461,24 @@
             $$ -> entry_list.push_back($3 -> sym_tab_entry);    
         }
         ;
+    
     VariableDeclarator: VariableDeclaratorId qEqualVariableInitializer { 
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
         }
         ;
+    
     VariableDeclaratorId: Identifier qDims { 
             $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
             $$ -> sym_tab_entry -> dimensions = $$ -> get_dims($2);
         }
         ;
+    
     qEqualVariableInitializer: { }
         | OPERATOR_equal VariableInitializer { 
             $$->exp_applicable = true;
         }
         ;
+    
     VariableInitializer: 
         Expression { }
         | ArrayInitializer { }
@@ -529,16 +506,6 @@
         }
         ;   
     
-    // UnannPrimitiveType: NumericType | KEYWORD_boolean ; // ? literal
-    // UnannReferenceType: Name | ArrayType ; //UnannInterfaceType is same as UnannClassType
-    // UnannClassOrInterfaceType: UnannClassType | UnannIn  erfaceType ;
-    
-    // ! sAnnotation
-    // UnannClassType: Identifier | Name DELIM_period Identifier | UnannClassType DELIM_period Identifier ; // Replaced by Name
-    // UnannInterfaceType: UnannClassType
-    // UnannTypeVariable: Identifier // ? Do we remove this? ################## // Replaced by Identifier everywhere
-    // UnannArrayType: PrimitiveType Dims | Name Dims
-
     MethodDeclaration: 
         Modifiers MethodHeader MethodBody { 
             {
@@ -600,9 +567,11 @@
             }
 
             $$ -> sym_tab_entry = $2 -> sym_tab_entry;
+            ($$ -> sym_tab_entry) -> update_modifiers($1 -> entry_list);
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
 
             // cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
             // cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
@@ -630,11 +599,6 @@
         }
         ;
 
-    // ! Annotation removed
-    // MethodModifier: KEYWORD_public | KEYWORD_private | KEYWORD_abstract | KEYWORD_static | KEYWORD_final | KEYWORD_synchronized | KEYWORD_native | KEYWORD_strictfp ;
-    // sMethodModifier: | sMethodModifier MethodModifier ;
-
-    //  ! Removing this rule: | TypeParameters sAnnotation Result MethodDeclarator qThrows
     MethodHeader: 
         UnannType MethodDeclarator qThrows { 
             $$ -> sym_tab_entry = $2 -> sym_tab_entry;
@@ -657,21 +621,22 @@
             }
         }   
         | Identifier DELIM_lpar ReceiverParameterComma qFormalParameterList DELIM_rpar qDims {  
-
+            
         } 
-        ; // qreceiverparametercomma was here
+        ;
+    
     ReceiverParameterComma: 
         ReceiverParameter DELIM_comma { }
         ;
-    // ! sAnnotation
+    
     ReceiverParameter: 
         UnannType qIdentifierDot KEYWORD_this { }
         ;
-    // qReceiverParameterComma: | ReceiverParameterComma ;
+    
     IdentifierDot: 
-        Identifier DELIM_period {
-        }
+        Identifier DELIM_period { }
         ;
+    
     qIdentifierDot: { }
         | IdentifierDot { }
         ;
@@ -690,11 +655,13 @@
             }
         }
         ;
+    
     qFormalParameterList: { }
         | FormalParameterList { 
             $$ -> entry_list = $1 -> entry_list;
         }
         ;
+    
     FormalParameter:
         Modifiers UnannType VariableDeclaratorId { 
             if($1 -> entry_list.size() != 1 || ($1 -> entry_list)[0] -> name != "final"){
@@ -704,6 +671,7 @@
             $$ -> sym_tab_entry = $3 -> sym_tab_entry;
             $$ -> sym_tab_entry -> update_type($2 -> sym_tab_entry -> name);
             $$ -> sym_tab_entry -> dimensions = $2 -> sym_tab_entry -> dimensions + $3 -> sym_tab_entry -> dimensions;
+            $$ -> sym_tab_entry -> update_modifiers($1 -> entry_list);
         }
         | UnannType VariableDeclaratorId { 
             $$ -> sym_tab_entry = $2 -> sym_tab_entry;
@@ -712,15 +680,16 @@
         }         
         | VariableArityParameter { } 
         ;
+    
     sCommaFormalParameter: { }
         | sCommaFormalParameter DELIM_comma FormalParameter {
             if($1) {
                 $$ -> entry_list = $1 -> entry_list;
             }
             $$ -> entry_list.push_back($3 -> sym_tab_entry);
-    ;
         }
-    // ! sAnnotation and Annotation removed
+        ;
+    
     VariableArityParameter: 
         Modifiers UnannType DELIM_ellipsis Identifier { 
             if($1 -> entry_list.size() != 1 || ($1 -> entry_list)[0] -> name != "final"){
@@ -734,11 +703,11 @@
     Throws: 
         KEYWORD_throws NameList { }
         ;
+    
     qThrows: 
         { }
         |  Throws  { }
         ;
-    // ExceptionTypeList: Name sCommaName ; // Replaced by NameList
     
     MethodBody: 
         Block { }
@@ -750,6 +719,7 @@
     InstanceInitializer: 
         Block { }
         ;
+    
     StaticInitializer: 
         KEYWORD_static Block { }
         ;
@@ -762,9 +732,11 @@
             }
             
             $$ -> sym_tab_entry = $2 -> sym_tab_entry;
+            $$ -> sym_tab_entry -> update_modifiers($1 -> entry_list);
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
         }
         | ConstructorDeclarator qThrows ConstructorBody { 
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
@@ -773,9 +745,6 @@
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
         }
         ;
-    // ! Annotation removed
-    // ConstructorModifier: KEYWORD_public | KEYWORD_private ;
-    // sConstructorModifier: | sConstructorModifier ConstructorModifier ;
 
     ConstructorDeclarator: 
         Identifier DELIM_lpar qFormalParameterList DELIM_rpar { 
@@ -806,75 +775,70 @@
             count_semicolon++;
         }
         ;
-    // qExplicitConstructorInvocation: | ExplicitConstructorInvocation ;
+    
     BracketArgumentList: DELIM_lpar qArgumentList DELIM_rpar { }
         ;
-    // qBracketArgumentList: | BracketArgumentList ; // useless symbol
-
-    // EnumDeclaration: sClassModifier KEYWORD_enum TypeIdentifier qClassImplements EnumBody ; // useless symbol
-    // EnumBody: DELIM_lcurl qEnumConstantList qComma qEnumBodyDeclarations DELIM_rcurl ; // useless symbol
-
-    // EnumConstantList: EnumConstant sCommaEnumConstant ; // useless symbol
-    // qEnumConstantList: | EnumConstantList ; // useless symbol
-
-    // EnumConstant: Identifier qBracketArgumentList qClassBody ; // useless symbol
-    // CommaEnumConstant: DELIM_comma EnumConstant ; // useless symbol
-    // sCommaEnumConstant: | sCommaEnumConstant CommaEnumConstant ; // useless symbol
-
-
-    // EnumBodyDeclarations: DELIM_semicolon sClassBodyDeclaration ; // useless symbol
-    // qEnumBodyDeclarations: | EnumBodyDeclarations ; // useless symbol
-
-    //CompactConstructorDeclaration: sConstructorModifier SimpleTypeName ConstructorBody ;  @TODO
 
     /************** ARRAYS  ******************/
+
     ArrayInitializer: 
         DELIM_lcurl qVariableInitializerList qComma DELIM_rcurl { }
         ;
+    
     qComma:
         { }
         | DELIM_comma { }
         ;
+    
     sCommaVariableInitializer: 
         { }
         | sCommaVariableInitializer DELIM_comma VariableInitializer %prec DELIM_comma { }
         ;
+    
     VariableInitializerList: 
         VariableInitializer sCommaVariableInitializer %prec PREC_reduce_VariableInitializerList { }
         ;
+    
     qVariableInitializerList: 
         { }                          
         | VariableInitializerList { }
         ;
 
     /************** BLOCKS ******************/
+
     Block:
         DELIM_lcurl DELIM_rcurl { }
         | DELIM_lcurl BlockStatements DELIM_rcurl {
             $$ -> sym_tab = new symbol_table();
         }
         ;
+    
     qBlockStatements: 
         { }
         |   BlockStatements { }
         ;
+    
     BlockStatements:
         BlockStatement { }
         |   BlockStatement BlockStatements { }
         ;
+    
     BlockStatement:
         LocalClassOrInterfaceDeclaration { }
         |   LocalVariableDeclarationStatement { }
         |   Statement { }
         ;
+    
     LocalClassOrInterfaceDeclaration:
         NormalClassDeclaration { }
-        ; // NormalInterfaceDeclaration was removed
+        ;
+    
     LocalVariableDeclarationStatement:
         LocalVariableDeclaration DELIM_semicolon {
             count_semicolon++;  // declaration statement, hence statement count increased
         }
         ;
+    
     LocalVariableDeclaration:
         Modifiers LocalVariableType VariableDeclaratorList { 
             if($1 -> entry_list.size() != 1 || ($1 -> entry_list)[0] -> name != "final"){
@@ -887,7 +851,7 @@
             for(auto (&entry) : $$ -> entry_list) {
                 entry -> update_type(type);
                 entry -> dimensions = ($1 -> sym_tab_entry ? $1 -> sym_tab_entry -> dimensions : 0);
-
+                entry -> update_modifiers($1 -> entry_list);
                 // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
         }
@@ -903,6 +867,7 @@
             }
         }
         ;
+    
     LocalVariableType:
         UnannType {
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
@@ -911,6 +876,7 @@
             
         }
         ;
+    
     Statement:
         StatementWithoutTrailingSubstatement { }
         |   LabeledStatement { }
@@ -919,6 +885,7 @@
         |   WhileStatement { }
         |   ForStatement { }
         ;
+    
     StatementNoShortIf:
         StatementWithoutTrailingSubstatement { }
         |   LabeledStatementNoShortIf { }
@@ -926,11 +893,13 @@
         |   WhileStatementNoShortIf { }
         |   ForStatementNoShortIf { }
         ;
+    
     StatementWithoutTrailingSubstatement:
         Block { }
         |   EmptyStatement { }
         |   ExpressionStatement { }
         |   AssertStatement { }
+        |   DoStatement { }
         |   BreakStatement { }
         |   ContinueStatement { }
         |   ReturnStatement { }
@@ -939,22 +908,27 @@
         |   TryStatement { }
         |   YieldStatement { }
         ;
+    
     EmptyStatement:
         DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     LabeledStatement:
         Identifier OPERATOR_ternarycolon Statement { }
         ;
+    
     LabeledStatementNoShortIf:
         Identifier OPERATOR_ternarycolon StatementNoShortIf { }
         ;
+    
     ExpressionStatement:
         StatementExpression DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     StatementExpression:
         Assignment { }
         |   PreIncrementExpression { }
@@ -964,15 +938,19 @@
         |   MethodInvocation { }
         |   ClassInstanceCreationExpression { }
         ;
+    
     IfThenStatement:
         KEYWORD_if DELIM_lpar Expression DELIM_rpar Statement { }
         ;
+    
     IfThenElseStatement:
         KEYWORD_if DELIM_lpar Expression DELIM_rpar StatementNoShortIf KEYWORD_else Statement { }
         ;
+    
     IfThenElseStatementNoShortIf:
         KEYWORD_if DELIM_lpar Expression DELIM_rpar StatementNoShortIf KEYWORD_else StatementNoShortIf { }
         ;
+    
     AssertStatement:
         KEYWORD_assert Expression DELIM_semicolon { 
             count_semicolon++;
@@ -981,225 +959,275 @@
             count_semicolon++;
         }
         ;
-    // CaseConstant: ConditionalExpression ; // useless symbol
+    
     WhileStatement:
         KEYWORD_while DELIM_lpar Expression DELIM_rpar Statement { }
         ;
+    
     WhileStatementNoShortIf:
         KEYWORD_while DELIM_lpar Expression DELIM_rpar StatementNoShortIf { }
         ;
+    
+    DoStatement:
+        KEYWORD_do Statement KEYWORD_while DELIM_lpar Expression DELIM_rpar DELIM_semicolon { }
+        ;
+        
     ForStatement:
         BasicForStatement { }
         |   EnhancedForStatement { }
         ;
+    
     ForStatementNoShortIf:
         BasicForStatementNoShortIf { }
         |   EnhancedForStatementNoShortIf { }
         ;
+    
     BasicForStatement:
         KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar Statement { 
             $$ -> sym_tab = new symbol_table();
         }
         ;
+    
     BasicForStatementNoShortIf:
         KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar StatementNoShortIf { 
             $$ -> sym_tab = new symbol_table();
         }
         ;
+    
     qForInit:     
         { }
         |   ForInit { }
         ;
+    
     qForUpdate:
         { }
         |   ForUpdate { }
         ;
+    
     ForInit:
         StatementExpressionList { }
         |   LocalVariableDeclaration { }
         ;
+    
     ForUpdate:
         StatementExpressionList { }
         ;
+    
     StatementExpressionList:
         StatementExpression sCommaStatementExpression { }
         ;
+    
     sCommaStatementExpression:
         { }
         |   sCommaStatementExpression DELIM_comma StatementExpression { }
         ;
+    
     EnhancedForStatement:
         KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar Statement { 
             $$ -> sym_tab = new symbol_table();
         }
         ;
+    
     EnhancedForStatementNoShortIf:
         KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar StatementNoShortIf {
             $$ -> sym_tab = new symbol_table();
          }
         ;
+    
     BreakStatement:
         KEYWORD_break qIdentifier DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     qIdentifier:   
         { }
         |   Identifier { }
         ;
+    
     YieldStatement:
         KEYWORD_yield Expression DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     ContinueStatement:
         KEYWORD_continue qIdentifier DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     ReturnStatement:
         KEYWORD_return qExpression DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     qExpression:   
         { }
         |   Expression { }
         ;
+    
     ThrowStatement:
         KEYWORD_throw Expression DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     SynchronizedStatement:
         KEYWORD_synchronized DELIM_lpar Expression DELIM_rpar Block { }
         ;
+    
     TryStatement:
         KEYWORD_try Block Catches { }
         |   KEYWORD_try Block qCatches Finally { }
         |   TryWithResourcesStatement { }
         ;
+    
     qCatches: 
         { }
         |   Catches { }
         ;
+    
     pCatches:
         CatchClause { }
         |   pCatches CatchClause { }
         ;
+    
     Catches:
         pCatches { }
         ;
+    
     CatchClause:
         KEYWORD_catch DELIM_lpar CatchFormalParameter DELIM_rpar Block { }
         ;
+    
     CatchFormalParameter:
         Modifiers CatchType VariableDeclaratorId { 
             if($1 -> entry_list.size() != 1 || ($1 -> entry_list)[0] -> name != "final"){
                 cout<<"ERROR in line " << yylineno << ": CatchFormalParameter Modifier list must contain only final.\n";
                 exit(1);
             }
+            $3 -> sym_tab_entry -> update_modifiers($1 -> entry_list);
         }    
         |   CatchType VariableDeclaratorId { }
         ;
+    
     CatchType:
         Name sOrName { }
         ;
-    // sorClasstype:
-    //     |   sorClasstype OPERATOR_bitwiseor Name
-    //     ;
+    
     sOrName:  
         { }
         | sOrName OPERATOR_bitwiseor Name { } 
         ;
+    
     Finally:
         KEYWORD_finally Block { }
         ;
+    
     TryWithResourcesStatement:
         KEYWORD_try ResourceSpecification Block qCatches qFinally { }
         ;
+    
     qFinally: 
         { }
         |   Finally { }
         ;
+    
     ResourceSpecification:
         DELIM_lpar ResourceList qSemicolon DELIM_rpar { }
         ;
+    
     qSemicolon: 
         { }
         | DELIM_semicolon { 
             count_semicolon++;
         }
         ;
+    
     ResourceList:
         Resource ssemicolonResource     %prec PREC_reduce_ResourceList { }
         ;
+    
     ssemicolonResource:                                                             
         { }
         | ssemicolonResource DELIM_semicolon Resource     %prec DELIM_semicolon { 
             count_semicolon++;
         } // shift over reduce
         ;
+    
     Resource:
         LocalVariableDeclaration { }
         |   VariableAccess { }
         ;
+    
     VariableAccess:
         Name { }
         | FieldAccess { }
         ;
+    
     Pattern:
         TypePattern { }
         ;
+    
     TypePattern:
         LocalVariableDeclaration { }
         ;
 
-
     /****************** EXPRESSIONS (ASSIGNMENT) ******************/
+
     Expression:
         AssignmentExpression { }
         ;
+
     AssignmentExpression:
         ConditionalExpression { }
         |   Assignment { }
         ;
+    
     ConditionalExpression:
         ConditionalOrExpression         %prec PREC_cond_to_condor { }
         |   ConditionalOrExpression OPERATOR_ternaryquestion Expression OPERATOR_ternarycolon ConditionalExpression { 
             $$->exp_applicable = true;
         }
         ;
+
     ConditionalOrExpression:
         ConditionalAndExpression        %prec PREC_condor_to_condand { }
         |   ConditionalOrExpression OPERATOR_logicalor ConditionalAndExpression { 
             $$->exp_applicable = true;
         }
         ;
+
     ConditionalAndExpression:
         InclusiveOrExpression           %prec PREC_condand_to_incor { }
         |   ConditionalAndExpression OPERATOR_logicaland InclusiveOrExpression { 
             $$->exp_applicable = true;
         }
         ;
+
     InclusiveOrExpression:
             ExclusiveOrExpression       %prec PREC_incor_to_excor { }
         |   InclusiveOrExpression OPERATOR_bitwiseor ExclusiveOrExpression { 
             $$->exp_applicable = true;
         }
         ;
+
     ExclusiveOrExpression:
         AndExpression               %prec PREC_excor_to_and { }
         |   ExclusiveOrExpression OPERATOR_xor AndExpression { 
             $$->exp_applicable = true;
         }
         ;
+
     AndExpression:
         EqualityExpression          %prec PREC_and_to_equality { }
         |   AndExpression OPERATOR_bitwiseand EqualityExpression { 
             $$->exp_applicable = true;
         }
         ;
+
     EqualityExpression: 
         RelationalExpression    %prec PREC_equality_to_relational { }
         |   EqualityExpression OPERATOR_logicalequal RelationalExpression { 
@@ -1209,6 +1237,7 @@
             $$->exp_applicable = true;
         }
         ;
+
     RelationalExpression:
         ShiftExpression { }
         |   RelationalExpression OPERATOR_lt ShiftExpression { 
@@ -1225,6 +1254,7 @@
         }
         |   InstanceofExpression { }
         ;
+
     ShiftExpression:
         AdditiveExpression { }
         |   ShiftExpression OPERATOR_leftshift AdditiveExpression { 
@@ -1237,6 +1267,7 @@
             $$->exp_applicable = true;
         }
         ;
+
     AdditiveExpression:
         MultiplicativeExpression { }
         |   AdditiveExpression OPERATOR_plus MultiplicativeExpression { 
@@ -1246,6 +1277,7 @@
             $$->exp_applicable = true;
         }
         ;
+
     MultiplicativeExpression:
         UnaryExpression { }
         |   MultiplicativeExpression OPERATOR_multiply UnaryExpression { 
@@ -1258,6 +1290,7 @@
             $$->exp_applicable = true;
         }
         ;
+
     UnaryExpression:
         PreIncrementExpression { }
         |   PreDecrementExpression { }
@@ -1269,12 +1302,15 @@
         }
         |   UnaryExpressionNotPlusMinus { }
         ;
+
     PreIncrementExpression:
         OPERATOR_increment UnaryExpression { }
         ;
+
     PreDecrementExpression:
         OPERATOR_decrement UnaryExpression { }
         ;
+    
     UnaryExpressionNotPlusMinus:
         Name { }
         |   PostfixExpression { }
@@ -1285,16 +1321,19 @@
             $$->exp_applicable = true;
         }
         |   CastExpression { }
-        ;   // can also include SwitchExpression
+        ;
+    
     PostfixExpression:
         Primary { }
         |   PostIncrementExpression { }
         |   PostDecrementExpression { }
         ;
+    
     Primary:
         PrimaryNoNewArray { }
         |   ArrayCreationExpression { }
         ;
+    
     PrimaryNoNewArray:
         Literal { }
         |   ClassLiteral { }
@@ -1307,6 +1346,7 @@
         |   MethodInvocation { }
         |   MethodReference { }
         ;
+    
     Literal : 
         LITERAL_integer { }
         | LITERAL_floatingpoint { }
@@ -1316,6 +1356,7 @@
         | LITERAL_textblock { }
         | LITERAL_null { }
         ;
+    
     ClassLiteral:
         Name DELIM_period KEYWORD_class { }
         |   Name Dims qDims DELIM_period KEYWORD_class { }
@@ -1323,45 +1364,49 @@
         |   KEYWORD_boolean qDims DELIM_period KEYWORD_class { }
         |   KEYWORD_void DELIM_period KEYWORD_class { }
         ;
+    
     ClassInstanceCreationExpression:
         UnqualifiedClassInstanceCreationExpression { }
         |   Name DELIM_period UnqualifiedClassInstanceCreationExpression { }
         |   Primary DELIM_period UnqualifiedClassInstanceCreationExpression { }
         ;
+    
     UnqualifiedClassInstanceCreationExpression:
         KEYWORD_new Name BracketArgumentList qClassBody { }
         ;
-        
-    // ! sAnnotation
-    // ClassOrInterfaceTypeToInstantiate: Name ;
-    //     Identifier sDotIdentifier;
-    // sDotIdentifier: | sDotIdentifier DELIM_period Identifier;
+    
     qArgumentList:
         { } 
         | ArgumentList { }
         ;
+    
     ArgumentList: 
         Expression sCommaExpression { }
         ;
+    
     sCommaExpression:                                               
         { }
         | DELIM_comma Expression sCommaExpression { } 
         ;
+    
     FieldAccess:
         Primary DELIM_period Identifier { }
         |   KEYWORD_super DELIM_period Identifier { }
         |   Name DELIM_period KEYWORD_super DELIM_period Identifier { }
         ;
+    
     ArrayAccess:
         Name DELIM_lsq Expression DELIM_rsq { }
         |   PrimaryNoNewArray DELIM_lsq Expression DELIM_rsq { }
         ;
+    
     MethodInvocation:
         Name BracketArgumentList { }
         |   Primary DELIM_period Identifier BracketArgumentList { }
         |   KEYWORD_super DELIM_period  Identifier BracketArgumentList { }
         |   Name DELIM_period KEYWORD_super DELIM_period Identifier BracketArgumentList { }
         ; 
+    
     MethodReference:
         Name DELIM_proportion Identifier { }
         |   Primary DELIM_proportion Identifier { }
@@ -1371,42 +1416,46 @@
         |   Name DELIM_proportion KEYWORD_new { }
         |   ArrayType DELIM_proportion KEYWORD_new { }
         ;
+    
     ArrayCreationExpression:
         KEYWORD_new PrimitiveType DimExprs qDims { }
         |   KEYWORD_new Name DimExprs qDims { }
         |   KEYWORD_new PrimitiveType Dims ArrayInitializer { }
         |   KEYWORD_new Name Dims ArrayInitializer { }
-        ; // ClassOrInterfaceType is same as ClassType
+        ;
+    
     DimExprs: 
-        DimExpr { } // DimExprs is equivalent to pDimExpr
+        DimExpr { }
         | DimExprs DimExpr { }
         ;
-    // ! sAnnotation
+    
     DimExpr: 
         DELIM_lsq Expression DELIM_rsq { } 
         ;
+    
     PostIncrementExpression: 
         Name OPERATOR_increment { } 
         | PostfixExpression OPERATOR_increment { } 
-            ;
+        ;
+    
     PostDecrementExpression: 
         Name OPERATOR_decrement { }                          
         | PostfixExpression OPERATOR_decrement { } 
         ; 
+    
     // Partial implementation of casting. Cannot cast classes
     CastExpression:     
         DELIM_lpar PrimitiveType DELIM_rpar UnaryExpression { }
         |   DELIM_lpar ArrayType DELIM_rpar UnaryExpressionNotPlusMinus { }
         |   DELIM_lpar ArrayType pAdditionalBound DELIM_rpar UnaryExpressionNotPlusMinus { }
-        // |   DELIM_lpar Name pAdditionalBound DELIM_rpar UnaryExpressionNotPlusMinus
-        // |   DELIM_lpar Name DELIM_rpar UnaryExpressionNotPlusMinus
         ;
-    // will have to define SwitchExpression: for bonus
+    
     InstanceofExpression:
         RelationalExpression KEYWORD_instanceof ArrayType { }
         |   RelationalExpression KEYWORD_instanceof Name { }
         |   RelationalExpression KEYWORD_instanceof Pattern { }
-        ;        
+        ;
+           
     Assignment:
         LeftHandSide OPERATOR_assignment Expression { 
             $$->exp_applicable = true;
@@ -1415,6 +1464,7 @@
             $$->exp_applicable = true;
         }
         ;
+    
     LeftHandSide:
         Name { }
         |   FieldAccess { }
@@ -1424,6 +1474,6 @@
 
 void yyerror(const char *error)
 {
-    printf("Line Number:%d, Error:%s\n", yylineno, error);
+    printf("ERROR:%s in line number: %d\n", error, yylineno);
     exit(0);
 }

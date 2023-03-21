@@ -63,10 +63,25 @@ void node::remove_lexeme_policy(string lex) {
 node* node::one_child_policy(int idx){     
     // Ensures that each Node in the AST with one child is replaced by the child; deletes the parent afterwards
     // idx is the index of the current node in its parent's list. The node's child shall occupy this index after killing its parent
-    assert(this->parent != NULL);
+    if(this->parent == NULL) {
+        cout << "ERROR: Only call one_child_policy from root! Aborting..." << endl;
+        exit(1);
+    }
     if((this->children).size() == 1){
-        this->kill_parent(idx);
-        return this;
+        if(this->name != "Expression"){
+            this->kill_parent(idx);
+            return this;
+        }else{
+            node* v = NULL;
+            while((this->children).size() == 1){
+                v = (this->children)[0]->one_child_policy(0);
+                if(v){
+                    delete v;
+                }else{
+                    break;
+                }
+            }
+        }
     }else{
         node* v = NULL;
         for(int x = 0; x < (this->children).size(); x++){
@@ -76,8 +91,8 @@ node* node::one_child_policy(int idx){
                 x--;
             }
         }
-        return NULL;
     }
+    return NULL;
 }
 
 void node::kill_parent(int idx, int child_idx /*= 0*/){
@@ -223,14 +238,14 @@ symbol_table* node::get_symbol_table() {
     }
     if(this -> name == "MethodDeclaration") {
         if(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name) {
-            cout << "Error: Constructor cannot have a return type at line number: " << this -> sym_tab_entry -> line_no << endl;
+            cout << "ERROR: Constructor cannot have a return type at line number: " << this -> sym_tab_entry -> line_no << endl;
             exit(1);
         }
         ((symbol_table_class*) temp_node -> sym_tab) -> add_entry((symbol_table_func*) this -> sym_tab);
     }
     else if(this -> name == "ConstructorDeclaration") {
         if(!(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name)) {
-            cout << "Error: Constructor name does not match simple class name at line number: " << this -> sym_tab_entry -> line_no << endl;
+            cout << "ERROR: Constructor name does not match simple class name at line number: " << this -> sym_tab_entry -> line_no << endl;
             exit(1);
         }
 
@@ -255,8 +270,9 @@ void node::create_scope_hierarchy() {
             this -> sym_tab -> parent_st = temp_st;
             (temp_st -> sub_scopes)++;
             this->sym_tab->scope = ((temp_st->scope != "") ? temp_st->scope + "/" : "") + (this->sym_tab->name) + "#" + to_string(temp_st->sub_scopes);
-            cout << "Current scope: " << this -> sym_tab -> scope << endl;
-            cout << "Parent scope: " << temp_st -> scope << endl; 
+            
+            // cout << "Current scope: " << this -> sym_tab -> scope << endl;
+            // cout << "Parent scope: " << temp_st -> scope << endl; 
         }    
     }
 
@@ -265,19 +281,94 @@ void node::create_scope_hierarchy() {
     }
 }
 
-bool node::isClassScope(string scope) {
-    for(const auto (&c) : scope){
-        if(c == '/'){
-            return false;
+// WALK 2
+
+void node::validate_expression() {
+    if(this -> name == "Expression") {
+        this -> validate_expression();
+        if(this -> parent && this -> parent -> name == "=") {
+            // TYPE 1 INITIALIZATION - WITH DECLARATION
+
+            if(this -> parent -> parent) {
+                if(this -> parent -> parent -> name == "VariableDeclarator") {
+                    this -> parent -> parent -> sym_tab_entry -> initialized = true;    // the RHS of the expression is initialized and hence the LHS as well
+                    return;
+                }
+            }
+
+            // TYPE 2 INITIALIZATION - NO DECLARATION ASSOCIATED
+
+            if(this -> parent -> children.size() > 0)  {
+                if(this -> parent -> children[0] -> type == "ID") {
+                    symbol_tab *cnt_table = this -> get_symbol_table();
+
+                    if(!cnt_table) {
+                        cout << "Unknown error, symbol table not found! Aborting..." << endl;
+                        exit(1);
+                    }
+
+                    st_entry* tmp = cnt_table -> look_up(this -> name); // look up the identifier in the symbol table
+                    if(!tmp) {
+                        cout << "ERROR: Unknown identifier " << this -> name << " at line number " << endl;
+                        exit(1);
+                    }
+                    else {
+                        tmp -> initialized = true;
+                        return;
+                    }
+                }
+            }
+        }
+        
+        return;
+    }
+    if(this -> type == "ID") {  // Identifiers have type ID
+        symbol_table *cnt_table = this -> get_symbol_table();
+
+        if(!cnt_table) {
+            cout << "Unknown error! Aborting..." << endl;
+            exit(1);
+        }
+
+        st_entry* tmp = cnt_table -> look_up(this -> name); // look up the identifier in the symbol table
+        if(!tmp) {
+            cout << "ERROR: Unknown identifier " << this -> name << " at line number " << endl;
+            exit(1);
+        }
+        else {
+            if(!(tmp -> initialized)) {
+                cout << "ERROR: Variable " << tmp -> name << " has not been initialized at line number " << tmp -> line_no << endl;
+                exit(1);
+            }
         }
     }
-    return true;
+
+    for(auto &child : this -> children) {
+        child -> validate_expression();
+    }
 }
 
-// WALK 2
 void node::populate_and_check() {
-    if(this -> name == "LocalVariableDeclaration") {
-        symbol_table *cnt_table = get_symbol_table();
+    if(this -> name == "FieldDeclaration") {
+        symbol_table *cnt_table = this -> get_symbol_table();
+        if(!cnt_table) {
+            cout << "Unknown error! Aborting..." << endl;
+            exit(1);
+        }
+
+        for(auto &entry : this -> entry_list) {
+            st_entry* tmp = cnt_table -> look_up(entry -> name);
+            if(tmp) {
+                cout << "ERROR: Field member " << entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
+                exit(1);
+            }
+            else {
+                cnt_table->add_entry(entry);
+            }
+        }
+    }
+    else if(this -> name == "LocalVariableDeclaration") {
+        symbol_table *cnt_table = this -> get_symbol_table();
 
         if(!cnt_table) {
             cout << "Unknown error! Aborting..." << endl;
@@ -287,11 +378,11 @@ void node::populate_and_check() {
         for(auto &entry : this -> entry_list) {
             st_entry* tmp = cnt_table -> look_up(entry -> name);
             if(tmp) {
-                if(this -> isClassScope(tmp -> table -> scope)) { // add the entry if the variable is already declared AS A FIELD variable
+                if(tmp -> table -> symbol_table_category == 'C') { // add the entry if the variable is already declared AS A FIELD variable
                     cnt_table->add_entry(entry);
                 }
                 else {
-                    cout << "Error: Variable " << entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
+                    cout << "ERROR: Variable " << entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
                     exit(1);
                 }
             }
@@ -300,8 +391,18 @@ void node::populate_and_check() {
             }
         }
     }
+    // else if(this -> name == "Expression") {
+    //     validate_expression();
+    //     if(this -> parent) {
+    //         if(this -> parent -> name == "=" && this -> parent -> parent) {
+    //             if(this -> parent -> parent -> name == "VariableDeclarator") {
+    //                 this -> parent -> parent -> sym_tab_entry -> initialized = true;    // the RHS of the expression is initialized and hence the LHS as well
+    //             }
+    //         }
+    //     }
 
-    // @TODO checking of expressions
+    //     return;
+    // }
 
 
     for(auto &child : this -> children) {

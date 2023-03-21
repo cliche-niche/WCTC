@@ -6,18 +6,24 @@
 #include "node.hpp"
 
 extern unsigned long long int num_scopes;
-extern vector<symbol_table_class> main_table;
 
-extern map<string, int> type_to_size; /*= {
-        {"byte", 1},
-        {"short", 2},
-        {"int", 4},
-        {"long", 8},
-        {"float", 4},
-        {"double", 8},
-        {"boolean", 1},
-        {"char", 2}
-};*/
+extern symbol_table_global *main_table;
+
+extern map<string, int> type_to_size;
+
+enum MODIFIER {
+    M_PUBLIC,
+    M_PRIVATE,
+    M_PROTECTED,
+    M_STATIC,
+    M_ABSTRACT,
+    M_NATIVE,
+    M_SYNCHRONIZED,
+    M_TRANSIENT,
+    M_VOLATILE,
+    M_FINAL,
+    COUNT
+};
 
 extern node* root;     // contains the root node of the parse tree
 

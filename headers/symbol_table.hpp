@@ -19,12 +19,16 @@ struct st_entry{
     ull size;
     ull offset = 0; // what is this
     ull dimensions = 0;
+    bool modifier_bv[10] = {0}; 
+    bool initialized = false;   // FIELD DECLARATIONS are initialized with default values
 
     st_entry();
     st_entry(string name, ull line_no, ull semicolon_no, string type = "int");
     st_entry(string name, st_entry (&other));
 
     void update_type(string type);
+
+    void update_modifiers(vector<st_entry*> modifiers);
 };
 
 struct symbol_table {
@@ -32,9 +36,9 @@ struct symbol_table {
     string scope, name;
     symbol_table* parent_st = NULL;
     int sub_scopes = 0;
+    char symbol_table_category = 'O';     // GLOBAL : G || CLASS : C || METHOD : M || BLOCK : B || OTHER : O
 
     symbol_table();
-    symbol_table(string name);
 
     void add_scope(symbol_table* st);
 
@@ -50,10 +54,13 @@ struct symbol_table_func : public symbol_table {
     // Along with other entries in a typical symbol table
     vector<st_entry* > params;
     string func_name;
+    bool modifier_bv[10] = {0};
     
     symbol_table_func(string func_name, vector<st_entry* > (&params));
 
     void add_entry(st_entry* new_entry);
+
+    void update_modifiers(vector<st_entry*> modifiers);
 
     bool operator == (const symbol_table_func& other);
 };
@@ -61,11 +68,19 @@ struct symbol_table_func : public symbol_table {
 struct symbol_table_class : public symbol_table {
     // Stores member variables and a list of Function-Symbol tables for member functions 
     vector<symbol_table_func* > member_funcs;
-    vector<st_entry*> member_fields; 
-
+    bool modifier_bv[10] = {0};
+    
     symbol_table_class(string class_name);
 
     void add_entry(symbol_table_func* func);
+
+    void update_modifiers(vector<st_entry*> modifiers);
+};
+
+struct symbol_table_global : public symbol_table {
+    // Stores classes 
+    
+    symbol_table_global();
 };
 
 #endif 

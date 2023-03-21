@@ -9,3 +9,5 @@ NormalClassDeclaration has some notes
 Read oracle docs for strictfp as well // strictfp wont be dealt with // oh, ab to likh diya, ch h 
 Field/MethodDeclaration ka OOPS ka kachra bacha hua hai, regarding sub/superclasses
 Add Modifiers to Sym_table - sub/super class rules
+
+Line numbers for all identifiers

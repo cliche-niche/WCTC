@@ -41,9 +41,9 @@ struct node{
 
     symbol_table* get_symbol_table();
     void create_scope_hierarchy();
-    void populate_and_check();
 
-    bool isClassScope(string scope);
+    void validate_expression();
+    void populate_and_check();
 };
 
 #endif
