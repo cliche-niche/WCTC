@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
-#include "../headers/global_vars.hpp"
-#include "../headers/symbol_table.hpp"
+#include "../include/global_vars.hpp"
+#include "../include/symbol_table.hpp"
 
 typedef unsigned long long ull;
 using namespace std;
@@ -83,7 +83,7 @@ void symbol_table::add_scope(symbol_table* st){
 }
 
 void symbol_table::add_entry(st_entry* new_entry){
-    for(const auto (&entry) : entries){
+    for(auto (&entry) : entries){
         if(new_entry->name == entry->name){
             cout << "ERROR: Variable " << new_entry->name << " is already declared at line number " << entry->line_no << " in the same scope.\n";
             exit(1);
@@ -107,26 +107,13 @@ void symbol_table::delete_entry(string name){
 
 st_entry* symbol_table::look_up(string name){
     for(ull idx = 0; idx < entries.size(); idx++){
-        if(entries[idx]->name == name)
+        if(entries[idx]->name == name){
             return entries[idx];
+        }
     }
     
     if(this->parent_st){
         return this->parent_st->look_up(name);
-    }
-
-    return NULL;
-}
-
-st_entry* symbol_table::look_up(string name, ull line_no){
-    for(ull idx = 0; idx < entries.size(); idx++){
-        if(entries[idx]->name == name && entries[idx]->line_no <= line_no){
-            return entries[idx];
-        }
-    }
-
-    if(this->parent_st){
-        return this->parent_st->look_up(name, line_no);
     }
 
     return NULL;
@@ -209,6 +196,29 @@ void symbol_table_class::add_entry(symbol_table_func* new_func){
     this->member_funcs.push_back(new_func);
 }
 
+
+// @TODO fix this function
+symbol_table_func* symbol_table_class::look_up_function(string &name, vector<string> &params) {
+    bool flag = false;
+    for(ull idx = 0; idx < this -> member_funcs.size(); idx++) {
+        if(name == member_funcs[idx] -> name && params.size() ) {
+            flag = false;
+            for(ull idx2 = 0; idx2 < params.size(); idx2++) {
+                if(params[idx2] != member_funcs[idx] -> params[idx2] -> type) {
+                    flag = true;
+                    break;
+                }
+            }
+        }
+
+        if(!flag) {
+            return member_funcs[idx];
+        }
+    }
+
+    return NULL;
+}
+
 void symbol_table_class::update_modifiers(vector<st_entry*> modifiers){
     for(auto entry : modifiers){
         if(entry -> name == "public")       this -> modifier_bv [M_PUBLIC]          = true;
@@ -228,5 +238,16 @@ symbol_table_global::symbol_table_global() {
     this -> name = "__GlobalSymbolTable__";
     this -> scope = "";
     this -> symbol_table_category = 'G';
+    this -> parent_st = NULL;
 }
 
+void symbol_table_global::add_entry(symbol_table_class* new_cls) {
+    for(auto &cls : this -> classes) {
+        if(new_cls -> name == cls -> name) {
+            cout << "ERROR: Duplicate class " << new_cls -> name << " at line number " << new_cls -> scope_start_line_no << endl;
+            exit(1);
+        }
+    }
+
+    this -> classes . push_back(new_cls);
+}

@@ -27,6 +27,8 @@ struct node{
 
     void clean_tree();  // applies various policies to convert parse tree to AST
 
+    void copy(const node other); 
+
     void remove_lexeme_policy(string lex);
     node* one_child_policy(int idx);
     void kill_parent(int idx, int child_idx = 0);

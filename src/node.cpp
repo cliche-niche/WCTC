@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#include "../headers/global_vars.hpp" // Includes node.hpp
+#include "../include/global_vars.hpp" // Includes node.hpp
 using namespace std;
 
 node *root;
@@ -68,7 +68,7 @@ node* node::one_child_policy(int idx){
         exit(1);
     }
     if((this->children).size() == 1){
-        if(this->name != "Expression"){
+        if(this->name != "Expression" && this->name != "VariableDeclarator" && this->name != "Assignment"){
             this->kill_parent(idx);
             return this;
         }else{
@@ -105,32 +105,63 @@ void node::expression_policy(){
     if(this->exp_applicable){            
         if((this->children).size() == 2) {
             node* child = (this->children)[0];
-            this->name = child->name;
-            this->type = child->type;
-            this->terminal = child->terminal;
-            this->exp_applicable = child->exp_applicable;
-            (this->children).erase((this->children).begin(), (this->children).begin() + 1);  
-            delete child;
+            if(this->name == "Expression" || this->name == "Assignment"){
+                child->add_child((this->children)[1]);
+                this->children.clear();
+                this->add_child(child);
+            }else{
+                this->copy(*child);
+                (this->children).erase((this->children).begin() + 0, (this->children).begin() + 1);  
+                delete child;
+            }
+            
+            // this->name = child->name;
+            // this->type = child->type;
+            // this->terminal = child->terminal;
+            // this->exp_applicable = child->exp_applicable;
+            // (this->children).erase((this->children).begin(), (this->children).begin() + 1);  
         } else if((this->children).size() == 3){
             node* child = (this->children)[1];
-            this->name = child->name;
-            this->type = child->type;
-            this->terminal = child->terminal;
-            this->exp_applicable = child->exp_applicable;
-            (this->children).erase((this->children).begin() + 1, (this->children).begin() + 2);  
-            delete child;
+            if(this->name == "Expression" || this->name == "Assignment"){
+                child->add_child((this->children)[0]);
+                child->add_child((this->children)[2]);
+                this->children.clear();
+                this->add_child(child);
+            }else{
+                this->copy(*child);
+                (this->children).erase((this->children).begin() + 1, (this->children).begin() + 2);  
+                delete child;
+            }
+            // this->name = child->name;
+            // this->type = child->type;
+            // this->terminal = child->terminal;
+            // this->exp_applicable = child->exp_applicable;
+            // (this->children).erase((this->children).begin() + 1, (this->children).begin() + 2);  
+            // delete child;
         } else if((this->children).size() == 5){
-            node* child = (this->children)[1];
-            this->name = "?:";
-            this->type = "OPERATOR";
-            this->terminal = child->terminal;
-            this->exp_applicable = child->exp_applicable;
-            child = (this->children)[3];
-            (this->children).erase((this->children).begin() + 3, (this->children).begin() + 4);  
-            delete child;
-            child = (this->children)[1];
-            (this->children).erase((this->children).begin() + 1, (this->children).begin() + 2);  
-            delete child;
+            if(this->name == "Expression" || this->name == "Assignment"){
+                node* child = new node("?:", true, "OPERATOR");
+                child->add_child(this->children[0]);
+                child->add_child(this->children[2]);
+                child->add_child(this->children[4]);
+                delete this->children[1];
+                delete this->children[3];
+                this->children.clear();
+                this->add_child(child);
+            }else{
+                node* child;
+                child = (this->children)[1];
+                this->name = "?:";
+                this->type = "OPERATOR";
+                this->terminal = child->terminal;
+                this->exp_applicable = child->exp_applicable;
+                child = (this->children)[3];
+                (this->children).erase((this->children).begin() + 3, (this->children).begin() + 4);  
+                delete child;
+                child = (this->children)[1];
+                (this->children).erase((this->children).begin() + 1, (this->children).begin() + 2);  
+                delete child;
+            }
         }
     }
 
@@ -224,6 +255,18 @@ int node::get_dims(node* v){
                 return 1 + get_dims(v->children[2]);
             }
         }
+        else if(v->name == "DimExprs"){
+            if(v->children.size()==1){
+                return get_dims(v->children[0]);
+            }
+            else{
+                return get_dims(v->children[0]) + get_dims(v->children[1]);
+            }
+        }
+        else if(v->name == "DimExpr"){
+            return 1;
+        }
+
     }
     return 0;
 }
@@ -235,6 +278,9 @@ symbol_table* node::get_symbol_table() {
     }
     if(temp_node == NULL) {
         return NULL;
+    }
+    if(temp_node -> sym_tab -> symbol_table_category == 'G') {  // if it is a global symbol table, it must have been called from a symbol_table_class
+        ((symbol_table_global *) temp_node -> sym_tab) -> add_entry((symbol_table_class*) this -> sym_tab);
     }
     if(this -> name == "MethodDeclaration") {
         if(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name) {
@@ -268,6 +314,7 @@ void node::create_scope_hierarchy() {
         symbol_table* temp_st = this -> get_symbol_table();
         if(temp_st) { 
             this -> sym_tab -> parent_st = temp_st;
+            temp_st -> children_st . push_back(this -> sym_tab);
             (temp_st -> sub_scopes)++;
             this->sym_tab->scope = ((temp_st->scope != "") ? temp_st->scope + "/" : "") + (this->sym_tab->name) + "#" + to_string(temp_st->sub_scopes);
             
@@ -284,128 +331,279 @@ void node::create_scope_hierarchy() {
 // WALK 2
 
 void node::validate_expression() {
-    if(this -> name == "Expression") {
-        this -> validate_expression();
-        if(this -> parent && this -> parent -> name == "=") {
-            // TYPE 1 INITIALIZATION - WITH DECLARATION
+    if(this->type == "ID"){
+        symbol_table *cnt_table = this -> get_symbol_table();
+        if(!cnt_table) {
+            cout << "Unknown error, symbol table not found! Aborting..." << endl;
+            exit(1);
+        }
 
-            if(this -> parent -> parent) {
-                if(this -> parent -> parent -> name == "VariableDeclarator") {
-                    this -> parent -> parent -> sym_tab_entry -> initialized = true;    // the RHS of the expression is initialized and hence the LHS as well
-                    return;
+        if(this -> parent && this -> parent -> name == "MethodInvocation") {    // If the identifier is a method
+            while(cnt_table -> symbol_table_category != 'C') {
+                cnt_table = cnt_table -> parent_st;
+            }
+
+            bool flag = false;
+            for(auto &funcs : ((symbol_table_class *) cnt_table) -> member_funcs) {
+                if(funcs -> name == this -> name) {
+                    flag = true;
+                    break;
                 }
             }
 
-            // TYPE 2 INITIALIZATION - NO DECLARATION ASSOCIATED
-
-            if(this -> parent -> children.size() > 0)  {
-                if(this -> parent -> children[0] -> type == "ID") {
-                    symbol_tab *cnt_table = this -> get_symbol_table();
-
+            if(!flag) {
+                cout << "ERROR: Unknown method identifier " << this -> name << " at line number " << endl;
+                exit(1);
+            }
+        }
+        else if(this -> parent && this -> parent -> name == "UnqualifiedClassInstanceCreationExpression") { // If the identifier is a constructor
+            // // Verification of this will be done in the third walk (type checking walking)
+            node *tmp1 = this -> parent, *tmp2;
+            if(tmp1 -> parent && tmp1 -> parent -> name == "Expression" && tmp1 -> parent -> parent && tmp1 -> parent -> parent -> name == "="){
+                tmp1 = tmp1 -> parent -> parent;
+                if(tmp1 -> children.size() == 1){
+                    if(tmp1 -> parent && tmp1 -> parent -> name == "VariableDeclarator"){
+                        tmp1 = tmp1 -> parent;
+                        if(tmp1 -> sym_tab_entry -> type == this -> name){
+                            tmp1 -> sym_tab_entry -> initialized = true;
+                        }else{
+                            cout<<"Error: Conflicting types for object \"" << tmp1 -> sym_tab_entry -> name <<"\": " << tmp1 -> sym_tab_entry -> type << " & " << this -> name << " at line number " << tmp1 -> sym_tab_entry -> line_no << endl;
+                            exit(1);
+                        }
+                    }
+                }
+                else if(tmp1 -> children.size() == 2){
+                    tmp2 = tmp1 -> children[0];
+                    symbol_table *cnt_table = this -> get_symbol_table();
                     if(!cnt_table) {
                         cout << "Unknown error, symbol table not found! Aborting..." << endl;
                         exit(1);
                     }
+                    
+                    st_entry* tmp = cnt_table -> look_up(tmp2 -> name); // look up the identifier in the symbol table
 
-                    st_entry* tmp = cnt_table -> look_up(this -> name); // look up the identifier in the symbol table
                     if(!tmp) {
-                        cout << "ERROR: Unknown identifier " << this -> name << " at line number " << endl;
+                        cout << "ERROR: Unknown identifier " << tmp2 -> name << " at line number " << endl;
                         exit(1);
                     }
-                    else {
-                        tmp -> initialized = true;
-                        return;
+                    else{
+                        if(this -> name == tmp -> type){
+                            tmp -> initialized = true;
+                        }else{
+                            cout << "Error: Conflicting types for the object \"" << tmp -> name << "\": " << tmp -> type << " (Line No. " << tmp -> line_no << ") & " << this -> name << endl;
+                            exit(1);
+                        }  
                     }
                 }
             }
         }
-        
-        return;
-    }
-    if(this -> type == "ID") {  // Identifiers have type ID
-        symbol_table *cnt_table = this -> get_symbol_table();
-
-        if(!cnt_table) {
-            cout << "Unknown error! Aborting..." << endl;
-            exit(1);
-        }
-
-        st_entry* tmp = cnt_table -> look_up(this -> name); // look up the identifier in the symbol table
-        if(!tmp) {
-            cout << "ERROR: Unknown identifier " << this -> name << " at line number " << endl;
-            exit(1);
-        }
-        else {
-            if(!(tmp -> initialized)) {
-                cout << "ERROR: Variable " << tmp -> name << " has not been initialized at line number " << tmp -> line_no << endl;
+        else {    // Identifier is a variable
+            st_entry* tmp = cnt_table -> look_up(this -> name); // look up the identifier in the symbol table
+            if(!tmp) {
+                cout << "ERROR: Unknown identifier " << this -> name << " at line number " << endl;
                 exit(1);
+            }
+            else {
+                if(!(tmp -> initialized)) {
+                    cout << "ERROR: Variable " << tmp -> name << " has not been initialized at line number " << tmp -> line_no << endl;
+                    exit(1);
+                }
             }
         }
     }
+    else if(this -> name == "=" && this -> children.size() >= 1 && this -> children[0] -> type == "ID") { // initialization expression inside expressions 
+        bool first_child = true;
 
+        for(auto &child : this -> children){
+            if(first_child){
+                first_child = false;
+            }else{
+                child -> validate_expression();
+            }
+        }
+
+        symbol_table *cnt_table = this -> get_symbol_table();
+        if(!cnt_table) {
+            cout << "Unknown error, symbol table not found! Aborting..." << endl;
+            exit(1);
+        }
+        
+        st_entry* tmp = cnt_table -> look_up(this -> children[0] -> name); // look up the identifier in the symbol table
+
+        if(!tmp) {
+            cout << "ERROR: Unknown identifier " << this -> children[0] -> name << " at line number " << endl;
+            exit(1);
+        }
+        else {
+            tmp -> initialized = true;
+            return;     // validate_expression already called on the second child of "=" hence need not be called     
+        }
+    }
+    
+    if(this -> name == "Expression" && this -> children[0] -> name == "ArrayCreationExpression" && this -> parent -> children.size() > 1){
+        auto array = this -> parent -> children[0];
+        if(array){
+            symbol_table* cnt_table = this -> get_symbol_table();
+            if(!cnt_table) {
+                cout << "Unknown error, symbol table not found! Aborting..." << endl;
+                exit(1);
+            }
+
+            st_entry* tmp = cnt_table -> look_up(array -> name);
+            if(!tmp) {
+                cout << "Unknown array identifier " << array -> name << " found at line number " << endl; 
+            }
+            else {
+                if(tmp -> dimensions == this -> children[0] -> sym_tab_entry -> dimensions){
+                    tmp -> initialized = true;
+                }
+                else{
+                    cout << "ERROR: Dimensions do not match for array " << tmp -> name << " declared at line number " << tmp -> line_no << '\n'; 
+                    exit(1);
+                }
+            }
+        }else{
+            cout << "Unknown error occurred...\n";
+            exit(1);
+        }
+    }
+
+    if(this -> type == "OPERATOR" && this -> name == "="){
+        if(this -> children.size() && this -> children[0] -> name == "Expression"){
+            node* tmp1 = this -> children[0];
+            if(tmp1 -> children.size() == 1 && tmp1 -> children[0] -> name == "ArrayCreationExpression"){
+                tmp1 = tmp1 -> children[0];
+                node* tmp2 = this;
+                if(tmp2 -> parent -> name == "VariableDeclarator"){
+                    tmp2 = tmp2 -> parent;
+                    if(tmp2 -> children.size() > 1 && tmp2 -> children[tmp2 -> children.size()-2] -> name == "VariableDeclaratorId"){
+                        tmp2 = tmp2 -> children[tmp2 -> children.size()-2];
+                        if(tmp2 -> children[0] -> type == "ID"){
+                            tmp2 = tmp2 -> children[0];
+                            
+                            symbol_table* cnt_table = this -> get_symbol_table();
+                            if(!cnt_table) {
+                                cout << "Unknown error, symbol table not found! Aborting..." << endl;
+                                exit(1);
+                            }
+
+                            st_entry* tmp = cnt_table -> look_up(tmp2->name);
+                            if(!tmp) {
+                                cout << "Unknown array identifier " << tmp2 -> name << " found at line number " << endl; 
+                            }
+                            else {
+                                if(tmp -> dimensions == tmp1 -> sym_tab_entry -> dimensions){
+                                    tmp -> initialized = true;
+                                }
+                                else{
+                                    cout << "ERROR: Dimensions do not match for array " << tmp -> name << " declared at line number " << tmp -> line_no << '\n'; 
+                                    exit(1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     for(auto &child : this -> children) {
         child -> validate_expression();
     }
 }
 
+// void node::validate_array(){
+//     if(this->parent && this->parent->children.size() && this->children.size() && this->children[0]->children.size()){
+//         symbol_table *cnt_table = this -> get_symbol_table();
+//         if(!cnt_table) {
+//             cout << "Unknown error, symbol table not found! Aborting..." << endl;
+//             exit(1);
+//         }
+
+//         st_entry* tmp = cnt_table -> look_up(this -> parent -> children[0] -> name); // look up the array name in the symbol table
+
+//         if(!tmp){
+//             cout << "ERROR: Unknown identifier " << this -> parent -> children[0] -> name << " at line number " << endl;
+//             exit(1);
+//         }
+//         else {
+//             if(tmp -> dimensions == this -> children[0] -> children[this->children[0]->children.size()-1] -> dimensions)
+//             tmp -> initialized = true;
+//             return;     // validate_expression already called on the second child of "=" hence need not be called     
+//         }
+//     }
+// }
+
+
 void node::populate_and_check() {
-    if(this -> name == "FieldDeclaration") {
+    if(this -> name == "VariableDeclarator") {
         symbol_table *cnt_table = this -> get_symbol_table();
+        bool isField = false;
+
         if(!cnt_table) {
-            cout << "Unknown error! Aborting..." << endl;
+            cout << "Unknown error, symbol table not found! Aborting..." << endl;
             exit(1);
         }
+        
+        isField = (this -> parent) && (this -> parent -> name == "FieldDeclaration");   // check if the current variable is a field declaration
 
-        for(auto &entry : this -> entry_list) {
-            st_entry* tmp = cnt_table -> look_up(entry -> name);
-            if(tmp) {
-                cout << "ERROR: Field member " << entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
+        st_entry* tmp = cnt_table -> look_up(this -> sym_tab_entry -> name);
+        if(tmp) {
+            if(tmp -> table -> symbol_table_category == 'C' && !isField) {
+                cnt_table -> add_entry(this -> sym_tab_entry);
+            }
+            else if(!isField){
+                cout << "ERROR: Variable " << this -> sym_tab_entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
                 exit(1);
             }
             else {
-                cnt_table->add_entry(entry);
+                cout << "ERROR: Field member " << this -> sym_tab_entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
+                exit(1);
+            }
+        }
+        else {
+            // cout << "Variable " << this -> sym_tab_entry -> name << " added to scope " << cnt_table -> scope << endl;
+
+            cnt_table -> add_entry(this -> sym_tab_entry);
+        }
+
+        for(auto &child : this -> children){
+            if(child->name == "="){
+                child->validate_expression();
+
+                this -> sym_tab_entry -> initialized = true;
+                return;     // validate_expression already called on the child, and all population and checks are done simultaneously
+            }
+            else if(child->type == "OPERATOR" && child->name[child->name.size()-1] == '='){
+                child->validate_expression();
+
+                this -> sym_tab_entry -> initialized = true;
+                return;     // validate_expression already called on the child, and all population and checks are done simultaneously
             }
         }
     }
-    else if(this -> name == "LocalVariableDeclaration") {
-        symbol_table *cnt_table = this -> get_symbol_table();
-
-        if(!cnt_table) {
-            cout << "Unknown error! Aborting..." << endl;
-            exit(1);
-        }
-
-        for(auto &entry : this -> entry_list) {
-            st_entry* tmp = cnt_table -> look_up(entry -> name);
-            if(tmp) {
-                if(tmp -> table -> symbol_table_category == 'C') { // add the entry if the variable is already declared AS A FIELD variable
-                    cnt_table->add_entry(entry);
-                }
-                else {
-                    cout << "ERROR: Variable " << entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
-                    exit(1);
-                }
-            }
-            else {
-                cnt_table->add_entry(entry);
-            }
-        }
+    else if(this->name == "Expression" || this->name == "Assignment") {
+        this -> validate_expression();
+        return;     // validate_expression already walked the subtree
     }
-    // else if(this -> name == "Expression") {
-    //     validate_expression();
-    //     if(this -> parent) {
-    //         if(this -> parent -> name == "=" && this -> parent -> parent) {
-    //             if(this -> parent -> parent -> name == "VariableDeclarator") {
-    //                 this -> parent -> parent -> sym_tab_entry -> initialized = true;    // the RHS of the expression is initialized and hence the LHS as well
-    //             }
-    //         }
-    //     }
-
-    //     return;
-    // }
-
 
     for(auto &child : this -> children) {
         child -> populate_and_check();
     }
+}
+
+// WALK 3 - TYPE-CHECKING
+
+
+
+void node::copy(const node other){
+    this -> name = other.name;
+    this -> terminal = other.terminal;
+    this -> exp_applicable = other.exp_applicable;
+    this -> type = other.type;
+    
+    // this -> sym_tab = other -> sym_tab;
+    // this -> sym_tab_entry = other -> sym_tab_entry;
+    // this -> entry_list = other -> entry_list;
+
+    // parent and children set manually
 }

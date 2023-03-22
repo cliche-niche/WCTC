@@ -34,8 +34,12 @@ struct st_entry{
 struct symbol_table {
     vector<st_entry*> entries;
     string scope, name;
+
     symbol_table* parent_st = NULL;
+    vector<symbol_table*> children_st;
+
     int sub_scopes = 0;
+    int scope_start_line_no = 0;
     char symbol_table_category = 'O';     // GLOBAL : G || CLASS : C || METHOD : M || BLOCK : B || OTHER : O
 
     symbol_table();
@@ -46,14 +50,12 @@ struct symbol_table {
     void delete_entry(string name);
 
     st_entry* look_up(string name);
-    st_entry* look_up(string name, ull line_no);
 };
 
 struct symbol_table_func : public symbol_table {
     // Additionally stores the types of parameters expected in the function
     // Along with other entries in a typical symbol table
     vector<st_entry* > params;
-    string func_name;
     bool modifier_bv[10] = {0};
     
     symbol_table_func(string func_name, vector<st_entry* > (&params));
@@ -73,14 +75,18 @@ struct symbol_table_class : public symbol_table {
     symbol_table_class(string class_name);
 
     void add_entry(symbol_table_func* func);
+    void look_up(string name);
+    symbol_table_func* look_up_function(string &name, vector<string> &params);
 
     void update_modifiers(vector<st_entry*> modifiers);
 };
 
 struct symbol_table_global : public symbol_table {
     // Stores classes 
-    
+    vector<symbol_table_class* > classes;
+
     symbol_table_global();
+    void add_entry(symbol_table_class* new_cls);
 };
 
 #endif 

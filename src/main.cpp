@@ -1,6 +1,6 @@
 #include <iostream>
 #include "parser.tab.h"
-#include "../headers/global_vars.hpp"
+#include "../include/global_vars.hpp"
 
 using namespace std;
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 
     root->create_scope_hierarchy();
     root->populate_and_check();
-
+    
     fclose(program);
 }
 

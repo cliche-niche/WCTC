@@ -1,29 +1,40 @@
 class MatrixMultiplication {
-    // int field_1;
-    // char field_2;
-    // int a;
-    // // static final int field_3;
-    // public void /*int[][]*/ fun1(/* int a[], int b[][], String[][] c[][][][][] */) {
-    //     // final int[] A = new int[5];
-    //     // int i = (double) 5;
-    //     // System.out.println("Value of factorial(" + i + "): " + fact);
+    int B(int x, int y, char ch) {
 
-    //     // int a = 5;
-    // }
-    // string another_one(int b, float c){
-    //     do {
-    //         int lmao = "bhaijaan";
-    //     } while (a > 5) ;
-    // }
-    int c = 2/c;
+        // int c = 5;
+        // int A[] = new int[10];
+        // System.out.println(B[3]);
+        // int B[];
+        // B = new int[10];
 
-    MatrixMultiplication(){
-        int a = 5, b = 7, c = a / (c=2);
-        int e;
-        e = 5 + 4 / 9;
+        // MatrixMultiplication obj = new MatrixMultiplication();
+        // MatrixMultiplication obj2;
+        // obj2 = new MatrixMultiplication();
+        // int b;
+        // int A[];
+		// A = new int[3];
+        // int a;
+        // a = 3;
+        
+        final int A[];
+        int s;
+        int b;
+        A = new int[5];
+        // final int c[] = new int[3];
+        // final int b[][] = new int[3][2];
+        final MatrixMultiplication obj3, obj4 = new MatrixMultiplication(), bj, obj = new MatrixMultiplication();
+        MatrixMultiplication obj2;
+        obj2 = new MatrixMultiplication();
+        obj2 = new uhoh();
+        
+        // int C[][];
+		// C = new int[]{1, 2, 3};
+        
     }
+
+    // MatrixMultiplication() { }
 }
 
-class A2 {
-    int c;
-}
+// class MatrixMultiplication {
+
+// }

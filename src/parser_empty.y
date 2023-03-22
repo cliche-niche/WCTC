@@ -4,7 +4,7 @@
     #include <iostream>
     #include <vector>
     #include <stdio.h>
-    #include "../headers/global_vars.hpp"
+    #include "../include/global_vars.hpp"
 
     using namespace std;
 
@@ -115,12 +115,23 @@
         ;
     
     Dims:
-        DELIM_lsq DELIM_rsq       %prec PREC_reduce_Dims { }
-        | DELIM_lsq DELIM_rsq Dims  %prec PREC_shift_Dims { }
+        DELIM_lsq DELIM_rsq       %prec PREC_reduce_Dims { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = 1;
+        }
+        | DELIM_lsq DELIM_rsq Dims  %prec PREC_shift_Dims { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = 1 + $3 -> sym_tab_entry -> dimensions;
+            delete ($3 -> sym_tab_entry);
+        }
         ;
     
     qDims: { }
-        | Dims { }
+        | Dims { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = $1 -> sym_tab_entry -> dimensions;
+            delete ($1 -> sym_tab_entry);
+        }
         ;
         
     AdditionalBound:
@@ -150,43 +161,18 @@
             root = $$;
             root -> sym_tab = main_table;
 
-            for(auto &entry : $1 -> entry_list) {
-                root -> sym_tab -> add_entry(entry);
-            }
+            // for(auto &entry : $1 -> entry_list) {
+            //     root -> sym_tab -> add_entry(entry);
+            // }
         }
         ;
     
     OrdinaryCompilationUnit:
         sImportDeclaration sTopLevelClassOrInterfaceDeclaration {
-            // checking duplicate class names
-            if($2) {
-                map<string, int> count_class;
-                for(auto &entry : $2 -> entry_list) {
-                    count_class[entry -> name]++;
-                    if(count_class[entry -> name] > 1) {
-                        cout << "ERROR: Duplicate class " << entry -> name << " at line number " << entry -> line_no << endl;
-                        exit(1);
-                    }
-                }
-                $$ -> entry_list = $2 -> entry_list;
-                $2 -> entry_list . clear();
-            }
 
         }
         | PackageDeclaration sImportDeclaration sTopLevelClassOrInterfaceDeclaration { 
 
-            if($3) {
-                map<string, int> count_class;
-                for(auto &entry : $3 -> entry_list) {
-                    count_class[entry -> name]++;
-                    if(count_class[entry -> name] > 1) {
-                        cout << "ERROR: Duplicate class " << entry -> name << " at line number " << entry -> line_no << endl;
-                        exit(1);
-                    }
-                }
-                $$ -> entry_list = $3 -> entry_list;
-                $3 -> entry_list . clear();
-            }
         }
         ;
     
@@ -213,18 +199,13 @@
     
     sTopLevelClassOrInterfaceDeclaration: { }
         | sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration { 
-            if($1 && $1 -> entry_list . size() > 0) {
-                $$ -> entry_list = $1 -> entry_list;
-                $1 -> entry_list . clear();
-            }
-
-            $$ -> entry_list.push_back($2 -> sym_tab_entry);
+        
         }
         ;
     
     TopLevelClassOrInterfaceDeclaration:
         NormalClassDeclaration { 
-            $$ -> sym_tab_entry = $1 -> sym_tab_entry;
+        
         }
         | DELIM_semicolon { 
             count_semicolon++;
@@ -319,6 +300,8 @@
             // If superclass is sealed, then class snf_count must be at least (exactly) one
 
             $$ -> sym_tab = new symbol_table_class($3);     // Class symbol table created
+            $$ -> sym_tab -> scope_start_line_no = yylineno;
+
             ((symbol_table_class*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
             $$ -> sym_tab_entry = new st_entry($3, $1 -> entry_list[0] -> line_no, count_semicolon, $3);    // Symbol table entry for the global symbol table
             ($$ -> sym_tab_entry) -> update_modifiers($1 -> entry_list);
@@ -326,6 +309,8 @@
         | KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody { 
 
             $$ -> sym_tab = new symbol_table_class($2);     // Class symbol table created
+            $$ -> sym_tab -> scope_start_line_no = yylineno;
+
             $$ -> sym_tab_entry = new st_entry($2, yylineno, count_semicolon, $2);      // Symbol table entry for the global symbol table
         }
         ;
@@ -414,7 +399,7 @@
             string type = $$ -> get_name($2);
             for(auto (&entry) : $$ -> entry_list) {
                 entry -> update_type(type);
-                entry -> dimensions = $2 -> sym_tab_entry -> dimensions;
+                entry -> dimensions += $2 -> sym_tab_entry -> dimensions;
                 entry -> update_modifiers($1 -> entry_list);
                 entry -> initialized = true;    // field variables are initialized with default values
             }
@@ -428,7 +413,7 @@
             string type = $$ -> get_name($1);
             for(auto (&entry) : $$ -> entry_list) {
                 entry -> update_type(type);
-                entry -> dimensions = $1 -> sym_tab_entry -> dimensions;
+                entry -> dimensions += $1 -> sym_tab_entry -> dimensions;
                 entry -> initialized = true;    // field variables are initialized with default values
                 // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
@@ -444,7 +429,7 @@
             }
             else {
                 $$ -> entry_list . push_back($1 -> sym_tab_entry);
-                for(const auto (&entry) : $2 -> entry_list){
+                for(auto (&entry) : $2 -> entry_list){
                     $$ -> entry_list . push_back(entry);
                 }
                 $2 -> entry_list . clear();
@@ -570,7 +555,9 @@
             ($$ -> sym_tab_entry) -> update_modifiers($1 -> entry_list);
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
+
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            $$ -> sym_tab -> scope_start_line_no = yylineno;
             ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
 
             // cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
@@ -587,6 +574,7 @@
             $$ -> entry_list = $1 -> entry_list;
             $1 -> entry_list . clear();
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            $$ -> sym_tab -> scope_start_line_no = yylineno;
 
             // cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
             // cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
@@ -736,6 +724,8 @@
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            $$ -> sym_tab -> scope_start_line_no = yylineno;
+
             ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
         }
         | ConstructorDeclarator qThrows ConstructorBody { 
@@ -743,6 +733,7 @@
             $$ -> entry_list = $1 -> entry_list;
             $1 -> entry_list . clear();
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            $$ -> sym_tab -> scope_start_line_no = yylineno;
         }
         ;
 
@@ -845,12 +836,12 @@
                 cout<<"ERROR in line " << yylineno << ": LocalVariableDeclaration Modifier list must contain only final.\n";
                 exit(1);
             }
-            $$ -> entry_list = $2 -> entry_list;
-            $2 -> entry_list . clear();
-            string type = $$ -> get_name($1);
+            $$ -> entry_list = $3 -> entry_list;
+            $3 -> entry_list . clear();
+            string type = $$ -> get_name($2);
             for(auto (&entry) : $$ -> entry_list) {
                 entry -> update_type(type);
-                entry -> dimensions = ($1 -> sym_tab_entry ? $1 -> sym_tab_entry -> dimensions : 0);
+                entry -> dimensions += ($2 -> sym_tab_entry ? $2 -> sym_tab_entry -> dimensions : 0);
                 entry -> update_modifiers($1 -> entry_list);
                 // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
@@ -861,7 +852,7 @@
             string type = $$ -> get_name($1);
             for(auto (&entry) : $$ -> entry_list) {
                 entry -> update_type(type);
-                entry -> dimensions = ($1 -> sym_tab_entry ? $1 -> sym_tab_entry -> dimensions : 0);
+                entry -> dimensions += ($1 -> sym_tab_entry ? $1 -> sym_tab_entry -> dimensions : 0);
 
                 // cout << entry -> name << " " << entry -> line_no << " " << entry -> stmt_no << " " << entry -> type << " " << entry -> dimensions << '\n'; 
             }
@@ -1178,7 +1169,10 @@
     /****************** EXPRESSIONS (ASSIGNMENT) ******************/
 
     Expression:
-        AssignmentExpression { }
+        AssignmentExpression { 
+            $$ -> sym_tab_entry = new st_entry("Expression", yylineno, count_semicolon);
+            $$ -> sym_tab_entry -> update_type("UNDEFINED");
+        }
         ;
 
     AssignmentExpression:
@@ -1348,13 +1342,38 @@
         ;
     
     Literal : 
-        LITERAL_integer { }
-        | LITERAL_floatingpoint { }
-        | LITERAL_boolean { }
-        | LITERAL_char { } 
-        | LITERAL_string { }
-        | LITERAL_textblock { }
-        | LITERAL_null { }
+        LITERAL_integer { 
+            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            // string s2($1);
+            // if(s2[(int)(s2.size()) - 1] == 'l' || s2[(int)(s2.size()) - 1] == 'L') $$ -> sym_tab_entry -> update_type("long");
+            // else $$ -> sym_tab_entry -> update_type("int");
+        }
+        | LITERAL_floatingpoint { 
+            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            // string s2($1);
+            // if(s2[(int)(s2.size()) - 1] == 'f' || s2[(int)(s2.size()) - 1] == 'F') $$ -> sym_tab_entry -> update_type("float");
+            // else $$ -> sym_tab_entry -> update_type("double");
+        }
+        | LITERAL_boolean { 
+            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            // $$ -> sym_tab_entry -> update_type("boolean");
+        }
+        | LITERAL_char { 
+            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            // $$ -> sym_tab_entry -> update_type("char");
+        } 
+        | LITERAL_string { 
+            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            // $$ -> sym_tab_entry -> update_type("string");
+        }
+        | LITERAL_textblock { 
+            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
+            // $$ -> sym_tab_entry -> update_type("string");
+        }
+        | LITERAL_null { 
+            // $$ -> sym_tab_entry = new st_entry("null_literal", yylineno, count_semicolon);
+            // $$ -> sym_tab_entry -> update_type("null");
+        }
         ;
     
     ClassLiteral:
@@ -1418,15 +1437,46 @@
         ;
     
     ArrayCreationExpression:
-        KEYWORD_new PrimitiveType DimExprs qDims { }
-        |   KEYWORD_new Name DimExprs qDims { }
-        |   KEYWORD_new PrimitiveType Dims ArrayInitializer { }
-        |   KEYWORD_new Name Dims ArrayInitializer { }
+        KEYWORD_new PrimitiveType DimExprs qDims { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = $3 -> sym_tab_entry -> dimensions;
+            if ($4 && $4 -> sym_tab_entry){
+                $$ -> sym_tab_entry -> dimensions += $4 -> sym_tab_entry -> dimensions;
+                delete ($4 -> sym_tab_entry);
+            } 
+            delete ($3 -> sym_tab_entry);
+        }
+        |   KEYWORD_new Name DimExprs qDims { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = $3 -> sym_tab_entry -> dimensions;
+            if ($4 && $4 -> sym_tab_entry){
+                $$ -> sym_tab_entry -> dimensions += $4 -> sym_tab_entry -> dimensions;
+                delete ($4 -> sym_tab_entry);
+            } 
+            delete ($3 -> sym_tab_entry);
+        }
+        |   KEYWORD_new PrimitiveType Dims ArrayInitializer { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = $3 -> sym_tab_entry -> dimensions;
+            delete ($3 -> sym_tab_entry);
+        }
+        |   KEYWORD_new Name Dims ArrayInitializer { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = $3 -> sym_tab_entry -> dimensions;
+            delete ($3 -> sym_tab_entry);
+        }
         ;
     
     DimExprs: 
-        DimExpr { }
-        | DimExprs DimExpr { }
+        DimExpr { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = 1;
+        }
+        | DimExprs DimExpr { 
+            $$ -> sym_tab_entry = new st_entry();
+            $$ -> sym_tab_entry -> dimensions = $1 -> sym_tab_entry -> dimensions + 1 /* Thanks to DimExpr*/ ;
+            delete ($1 -> sym_tab_entry);
+        }
         ;
     
     DimExpr: 
@@ -1458,10 +1508,14 @@
            
     Assignment:
         LeftHandSide OPERATOR_assignment Expression { 
-            $$->exp_applicable = true;
+            $$ -> exp_applicable = true;
+            $$ -> sym_tab_entry = new st_entry("Assignment", yylineno, count_semicolon);
+            $$ -> sym_tab_entry -> update_type("UNDEFINED");  
         }
         | LeftHandSide OPERATOR_equal Expression { 
-            $$->exp_applicable = true;
+            $$ -> exp_applicable = true;
+            $$ -> sym_tab_entry = new st_entry("Assignment", yylineno, count_semicolon);  
+            $$ -> sym_tab_entry -> update_type("UNDEFINED");  
         }
         ;
     
