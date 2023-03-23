@@ -300,18 +300,18 @@
             // If superclass is sealed, then class snf_count must be at least (exactly) one
 
             $$ -> sym_tab = new symbol_table_class($3);     // Class symbol table created
-            $$ -> sym_tab -> scope_start_line_no = yylineno;
+            $$ -> sym_tab -> scope_start_line_no = $$ -> children[2] -> line_no;
 
             ((symbol_table_class*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
-            $$ -> sym_tab_entry = new st_entry($3, $1 -> entry_list[0] -> line_no, count_semicolon, $3);    // Symbol table entry for the global symbol table
+            $$ -> sym_tab_entry = new st_entry($3, $$ -> children[2] -> line_no, count_semicolon, $3);    // Symbol table entry for the global symbol table
             ($$ -> sym_tab_entry) -> update_modifiers($1 -> entry_list);
         }
         | KEYWORD_class Identifier qClassExtends qClassImplements qClassPermits ClassBody { 
 
             $$ -> sym_tab = new symbol_table_class($2);     // Class symbol table created
-            $$ -> sym_tab -> scope_start_line_no = yylineno;
+            $$ -> sym_tab -> scope_start_line_no = $$ -> children[1] -> line_no;
 
-            $$ -> sym_tab_entry = new st_entry($2, yylineno, count_semicolon, $2);      // Symbol table entry for the global symbol table
+            $$ -> sym_tab_entry = new st_entry($2, $$ -> children[1] -> line_no, count_semicolon, $2);      // Symbol table entry for the global symbol table
         }
         ;
 
@@ -556,7 +556,7 @@
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> type);
-            $$ -> sym_tab -> scope_start_line_no = yylineno;
+            $$ -> sym_tab -> scope_start_line_no = $2 -> line_no;
             ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
 
             // cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
@@ -573,7 +573,7 @@
             $$ -> entry_list = $1 -> entry_list;
             $1 -> entry_list . clear();
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> type);
-            $$ -> sym_tab -> scope_start_line_no = yylineno;
+            $$ -> sym_tab -> scope_start_line_no = $1 -> line_no;
 
             // cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
             // cout << "Method return type: " << $$ -> sym_tab_entry -> type << endl;
@@ -722,8 +722,8 @@
             $$ -> sym_tab_entry -> update_modifiers($1 -> entry_list);
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
-            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, "");   // no return type of constructors
-            $$ -> sym_tab -> scope_start_line_no = yylineno;
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> name);   // return type of constructors is the class object
+            $$ -> sym_tab -> scope_start_line_no = $2 -> line_no;
 
             ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
         }
@@ -731,8 +731,8 @@
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
             $$ -> entry_list = $1 -> entry_list;
             $1 -> entry_list . clear();
-            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, "");   // no return type of constructors 
-            $$ -> sym_tab -> scope_start_line_no = yylineno;
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> name);   // return type of constructors is the class object
+            $$ -> sym_tab -> scope_start_line_no = $1 -> line_no;
         }
         ;
 
@@ -797,9 +797,11 @@
     /************** BLOCKS ******************/
 
     Block:
-        DELIM_lcurl DELIM_rcurl { }
+        DELIM_lcurl DELIM_rcurl { 
+            $$ -> sym_tab = new symbol_table("Block");
+        }
         | DELIM_lcurl BlockStatements DELIM_rcurl {
-            $$ -> sym_tab = new symbol_table();
+            $$ -> sym_tab = new symbol_table("Block");
         }
         ;
     
@@ -974,13 +976,13 @@
     
     BasicForStatement:
         KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar Statement { 
-            $$ -> sym_tab = new symbol_table();
+            $$ -> sym_tab = new symbol_table("ForStatement");
         }
         ;
     
     BasicForStatementNoShortIf:
         KEYWORD_for DELIM_lpar qForInit DELIM_semicolon qExpression DELIM_semicolon qForUpdate DELIM_rpar StatementNoShortIf { 
-            $$ -> sym_tab = new symbol_table();
+            $$ -> sym_tab = new symbol_table("ForStatement");
         }
         ;
     
@@ -1014,13 +1016,13 @@
     
     EnhancedForStatement:
         KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar Statement { 
-            $$ -> sym_tab = new symbol_table();
+            $$ -> sym_tab = new symbol_table("ForStatement");
         }
         ;
     
     EnhancedForStatementNoShortIf:
         KEYWORD_for DELIM_lpar LocalVariableDeclaration OPERATOR_ternarycolon Expression DELIM_rpar StatementNoShortIf {
-            $$ -> sym_tab = new symbol_table();
+            $$ -> sym_tab = new symbol_table("ForStatement");
          }
         ;
     
@@ -1661,7 +1663,14 @@
                 string s($1);
                 if(s[(int)(s.size()) - 1] == 'l' || s[(int)(s.size()) - 1] == 'L') $$ -> datatype = "long";
                 else $$ -> datatype = "int";
-                $$ -> exp_int_val = stoll(s);
+                if(s.size() > 1 && (s[1] == 'x' || s[1] == 'X')){
+                    s = s.substr(2, s.size() - 2);
+                    $$ -> exp_int_val = stoll(s, 0, 16);
+                }else if(s[0] == '0'){
+                    $$ -> exp_int_val = stoll(s, 0, 8);
+                }else{
+                    $$ -> exp_int_val = stoll(s);
+                }
             }
         }
         | LITERAL_floatingpoint { 

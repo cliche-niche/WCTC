@@ -43,6 +43,7 @@ struct symbol_table {
     char symbol_table_category = 'O';     // GLOBAL : G || CLASS : C || METHOD : M || BLOCK : B || OTHER : O
 
     symbol_table();
+    symbol_table(string name);
 
     void add_scope(symbol_table* st);
 
@@ -50,6 +51,9 @@ struct symbol_table {
     void delete_entry(string name);
 
     st_entry* look_up(string name);
+
+    void make_csv(string filename = "symbol_table.csv");
+    void make_csv_wrapper(string filename);
 };
 
 struct symbol_table_func : public symbol_table {
@@ -66,6 +70,8 @@ struct symbol_table_func : public symbol_table {
     void update_modifiers(vector<st_entry*> modifiers);
 
     bool operator == (const symbol_table_func& other);
+
+    void make_csv(string filename);
 };
 
 struct symbol_table_class : public symbol_table {
@@ -75,11 +81,12 @@ struct symbol_table_class : public symbol_table {
     
     symbol_table_class(string class_name);
 
-    void add_entry(symbol_table_func* func);
-    void look_up(string name);
+    void add_func(symbol_table_func* func);
     symbol_table_func* look_up_function(string &name, vector<string> &params);
 
     void update_modifiers(vector<st_entry*> modifiers);
+
+    void make_csv(string filename);
 };
 
 struct symbol_table_global : public symbol_table {
@@ -88,6 +95,9 @@ struct symbol_table_global : public symbol_table {
 
     symbol_table_global();
     void add_entry(symbol_table_class* new_cls);
+    symbol_table_class* look_up_class(string &cls_name);
+
+    void make_csv(string filename);
 };
 
 #endif 

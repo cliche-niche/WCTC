@@ -61,6 +61,8 @@ struct node{
     st_entry* get_and_look_up();
     void create_scope_hierarchy();
 
+    void populate_default_constructors();
+
     void validate_expression();
     void populate_and_check();
     void type_check();

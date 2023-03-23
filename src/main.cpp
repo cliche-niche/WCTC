@@ -11,6 +11,7 @@ extern FILE *yyout;
 FILE *program;  // the input to the compiler
 string input_file = "test.java";
 string output_file = "tree.gv"; 
+string st_file = "symbol_table.csv";
 
 void print_help_page();
 
@@ -61,9 +62,14 @@ int main(int argc, char* argv[]) {
     root->clean_tree();
     root->make_dot(output_file);
 
-    root->create_scope_hierarchy();
+    root->create_scope_hierarchy();             // walk 1
+
+    root->populate_default_constructors();      // walk 2
     root->populate_and_check();
-    root->chill_traversal();
+
+    root->chill_traversal();                    // walk 3
+
+    main_table->make_csv_wrapper(st_file);    
     
     fclose(program);
 }

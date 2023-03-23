@@ -69,7 +69,7 @@ node* node::one_child_policy(int idx){
         exit(1);
     }
     if((this->children).size() == 1){
-        if(this->name != "Expression" && this->name != "VariableDeclarator" && this->name != "Assignment" || this->name == "Block"){
+        if(this->name != "Expression" && this->name != "VariableDeclarator" && this->name != "Assignment" && this->name != "Block" && this->name != "VariableDeclaratorId" && this->name != "ReturnStatement" && this->name != "ArrayCreationExpression"){
             this->kill_parent(idx);
             return this;
         }else{
@@ -275,45 +275,16 @@ int node::get_dims(node* v){
 }
 
 symbol_table* node::get_symbol_table() {
-    node* temp_node = this -> parent;
-    while(temp_node && !(temp_node -> sym_tab)){
+    node* temp_node = this;
+    
+    while(temp_node && !(temp_node -> sym_tab)) {
         temp_node = temp_node->parent;
     }
     if(temp_node == NULL) {
         return NULL;
     }
-    if(temp_node -> sym_tab -> symbol_table_category == 'G') {  // if it is a global symbol table, it must have been called from a symbol_table_class
-        ((symbol_table_global *) temp_node -> sym_tab) -> add_entry((symbol_table_class*) this -> sym_tab);
-    }
-    if(this -> name == "MethodDeclaration") {
-        if(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name) {
-            // cout << "ERROR: Constructor cannot have a return type at line number: " << this -> sym_tab_entry -> line_no << endl;
-            // EXPERIMENTAL
-            cout << "ERROR: Constructor cannot have a return type. Found a return type at line number: " << this -> line_no << endl;
-            exit(1);
-        }
-        
-        ((symbol_table_class*) temp_node -> sym_tab) -> add_entry((symbol_table_func*) this -> sym_tab);
-    }
-    else if(this -> name == "ConstructorDeclaration") {
-        if(!(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name)) {
-            // cout << "ERROR: Constructor name does not match simple class name at line number: " << this -> sym_tab_entry -> line_no << endl;
-            // EXPERIMENTAL
-            cout << "ERROR: Constructor name does not match simple class name at line number: " << this -> line_no << endl;
-            exit(1);
-        }
-        (((symbol_table_func*) this -> sym_tab)-> return_type) = temp_node -> sym_tab -> name;  // setting the return type of the constructor as the class name  
-        ((symbol_table_class*) temp_node -> sym_tab) -> add_entry((symbol_table_func*) this -> sym_tab);
-    }
-    if (/*temp_node -> name == "BasicForStatement" ||
-        temp_node -> name == "BasicForStatementNoShortIf" || 
-        temp_node -> name == "EnhancedForStatement" || 
-        temp_node -> name == "EnhancedForStatementNoShortIf" ||*/
-        temp_node -> name == "MethodDeclaration" ) {
-        this -> sym_tab = temp_node -> sym_tab;
-        return NULL;    
-    }
-    return (temp_node -> sym_tab);
+    
+    return temp_node -> sym_tab;
 }
 
 symbol_table_class* node::get_symbol_table_class() {
@@ -348,21 +319,101 @@ st_entry* node::get_and_look_up() {
 // WALK 1
 
 void node::create_scope_hierarchy() {
-    if(this -> sym_tab) {
-        symbol_table* temp_st = this -> get_symbol_table();
-        if(temp_st) { 
-            this -> sym_tab -> parent_st = temp_st;
-            temp_st -> children_st . push_back(this -> sym_tab);
-            (temp_st -> sub_scopes)++;
-            this->sym_tab->scope = ((temp_st->scope != "") ? temp_st->scope + "/" : "") + (this->sym_tab->name) + "#" + to_string(temp_st->sub_scopes);
-            
-            // cout << "Current scope: " << this -> sym_tab -> scope << endl;
-            // cout << "Parent scope: " << temp_st -> scope << endl; 
-        }    
+    if(this -> name == "FieldDeclaration") {
+        symbol_table* tmp_st = this -> get_symbol_table();
+        if(tmp_st -> symbol_table_category != 'C') {
+            cout << "Unknown error! Scope of Field member is not class. Aborting...";
+            exit(1);
+        }
+        for(auto &entry : this -> entry_list) {
+            st_entry* tmp = tmp_st -> look_up(entry -> name);
+            if(tmp) {
+                cout << "ERROR: Field member " << entry -> name << " is already declared at line number: " << entry -> line_no << endl;
+                exit(1);
+            }
+            else {
+                tmp_st -> add_entry(entry);
+            }
+        }
+        return;
     }
+    if(this -> sym_tab && this -> parent) {
+        symbol_table* temp_parent_st;
+        node* temp_node = this -> parent;
+        while(temp_node && !(temp_node -> sym_tab)) {
+            temp_node = temp_node -> parent;
+        }
+        if(!temp_node) {
+            temp_parent_st = NULL;
+        }
+        else {
+            temp_parent_st = temp_node -> sym_tab;
+        }
+        if(temp_parent_st) {
+            if(temp_parent_st -> symbol_table_category == 'G') { // if the parent is the global table, then the current table is a class table
+                ((symbol_table_global*) temp_parent_st) -> add_entry((symbol_table_class *) this -> sym_tab);
+            }
+            else if(this -> name == "MethodDeclaration") { // if the current node is a method declaration, then the parent table is a class table
+                if(this -> sym_tab_entry -> name == temp_parent_st -> name) {
+                    cout << "ERROR: Constructor cannot have a return type. Found a return type at line number: " << this -> line_no << endl;
+                    exit(1);
+                }
+
+                ((symbol_table_class*) temp_parent_st) -> add_func((symbol_table_func*) this -> sym_tab);
+            }
+            else if(this -> name == "ConstructorDeclaration") {
+                if(this -> sym_tab_entry -> name != temp_parent_st -> name) {
+                    cout << "ERROR: Constructor name does not match simple class name at line number: " << this -> line_no << endl;
+                    exit(1);
+                }
+
+                ((symbol_table_class*) temp_parent_st) -> add_func((symbol_table_func*) this -> sym_tab);
+            }
+
+            if( temp_node -> name == "MethodDeclaration" || 
+                temp_node -> name == "ConstructorDeclaration" ||
+                temp_node -> name == "BasicForStatement" ||
+                temp_node -> name == "EnhancedForStatement" ||
+                temp_node -> name == "BasicForStatementNoShortIf" ||
+                temp_node -> name == "EnhancedForStatementNoShortIf") {  
+                this -> sym_tab = temp_parent_st;   // situations to merge the scope
+            }
+            else {
+                this -> sym_tab -> parent_st = temp_parent_st;
+                temp_parent_st -> children_st . push_back(this -> sym_tab);
+                (temp_parent_st -> sub_scopes)++;
+                this -> sym_tab -> scope = ((temp_parent_st->scope != "") ? temp_parent_st->scope + "/" : "") + (this->sym_tab->name) + "#" + to_string(temp_parent_st->sub_scopes);
+                
+                // cout << "Current scope: " << this -> sym_tab -> scope << endl;
+                // cout << "Parent scope: " << temp_parent_st -> scope << endl; 
+            }
+        }
+    }
+    
+    
 
     for(auto &child : this -> children) {
         child->create_scope_hierarchy();
+    }
+}
+
+// BEFORE WALK 2 ADD DEFAULT CONSTRUCTORS TO ALL CLASSES AS NECESSARY
+void node::populate_default_constructors() {
+    for(auto &cls : main_table -> classes) {
+        bool flag = false;
+        for(auto &func : cls -> member_funcs) {
+            if(func -> name == cls -> name) {       // a user defined constructor already exists
+                flag = true;
+            }
+        }
+        
+        if(flag) continue;                          // no need to add default constructor
+        
+        vector<string> empty_params;
+        vector<st_entry*> empty_formal_params;
+        if(!(cls -> look_up_function(cls->name, empty_params))) {
+            cls -> add_func(new symbol_table_func(cls->name, empty_formal_params, cls->name));
+        }
     }
 }
 
@@ -401,7 +452,7 @@ void node::validate_expression() {
             node *tmp1 = this -> parent, *tmp2;
             if(tmp1 -> parent && tmp1 -> parent -> name == "Expression" && tmp1 -> parent -> parent && tmp1 -> parent -> parent -> name == "="){
                 tmp1 = tmp1 -> parent -> parent;
-                if(tmp1 -> children.size() == 1){
+                if(tmp1 -> children.size() == 1){        //     constructor initialization with declaration
                     if(tmp1 -> parent && tmp1 -> parent -> name == "VariableDeclarator"){
                         tmp1 = tmp1 -> parent;
                         if(tmp1 -> sym_tab_entry -> type == this -> name){
@@ -412,7 +463,7 @@ void node::validate_expression() {
                         }
                     }
                 }
-                else if(tmp1 -> children.size() == 2){
+                else if(tmp1 -> children.size() == 2){      //  constructor initialization after declaration
                     tmp2 = tmp1 -> children[0];
                     symbol_table *cnt_table = this -> get_symbol_table();
                     if(!cnt_table) {
@@ -441,16 +492,20 @@ void node::validate_expression() {
         else {    // Identifier is a variable
             st_entry* tmp = cnt_table -> look_up(this -> name); // look up the identifier in the symbol table
             if(!tmp) {
-                cout << "ERROR: Unknown identifier " << this -> name << " at line number " << this -> sym_tab_entry -> line_no << endl;
+                cout << "ERROR: hmm Unknown identifier " << this -> name << " at line number " << this -> sym_tab_entry -> line_no << endl;
                 exit(1);
             }
             else {
                 if(!(tmp -> initialized)) {
-                    cout << "ERROR: Variable " << tmp -> name << " has not been initialized, but used at line number " << tmp -> line_no << endl;
+                    cout << "ERROR: Variable " << tmp -> name << " has not been initialized, but used at line number " << this -> line_no << endl;
                     exit(1);
                 }
             }
         }
+    }
+    else if(this -> name == "Name") {
+        this -> children[0] -> validate_expression();
+        return;
     }
     else if(this -> name == "=" && this -> children.size() >= 1 && this -> children[0] -> type == "ID") { // initialization expression inside expressions 
         bool first_child = true;
@@ -564,6 +619,21 @@ void node::populate_and_check() {
         
         isField = (this -> parent) && (this -> parent -> name == "FieldDeclaration");   // check if the current variable is a field declaration
 
+        bool flag = false;
+        if(primitive_types.find(this -> sym_tab_entry -> type) == primitive_types.end()) {
+            for(auto &cls : main_table -> classes) {
+                if(cls -> name == this -> sym_tab_entry -> type) {
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag) {
+                cout << "ERROR: Unknown object type " << this -> sym_tab_entry -> type << " at line number: " << this -> line_no << endl;
+                exit(1);
+            }
+        }
+        
+        
         st_entry* tmp = cnt_table -> look_up(this -> sym_tab_entry -> name);
         if(tmp) {
             if(tmp -> table -> symbol_table_category == 'C' && !isField) {
@@ -573,25 +643,17 @@ void node::populate_and_check() {
                 cout << "ERROR: Variable " << this -> sym_tab_entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
                 exit(1);
             }
-            else {
-                cout << "ERROR: Field member " << this -> sym_tab_entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
-                exit(1);
-            }
+            // else {
+            //     cout << "ERROR: Field member " << this -> sym_tab_entry -> name << " is already declared at line number: " << tmp -> line_no << endl;
+            //     exit(1);
+            // }
         }
-        else {
-            // cout << "Variable " << this -> sym_tab_entry -> name << " added to scope " << cnt_table -> scope << endl;
-
+        else if(!isField){
             cnt_table -> add_entry(this -> sym_tab_entry);
         }
 
         for(auto &child : this -> children){
             if(child->name == "="){
-                child->validate_expression();
-
-                this -> sym_tab_entry -> initialized = true;
-                return;     // validate_expression already called on the child, and all population and checks are done simultaneously
-            }
-            else if(child->type == "OPERATOR" && child->name[child->name.size()-1] == '='){
                 child->validate_expression();
 
                 this -> sym_tab_entry -> initialized = true;
@@ -612,7 +674,7 @@ void node::populate_and_check() {
 // WALK 3 - TYPE-CHECKING
 
 char node::get_datatype_category() {
-    if(this -> datatype == "long" || this -> datatype == "int" || this -> datatype == "char") {
+    if(this -> datatype == "long" || this -> datatype == "int" || this -> datatype == "char" || this -> datatype == "short" || this -> datatype == "byte") {
         return 'I';
     }
     else if(this -> datatype == "boolean") {
@@ -630,12 +692,15 @@ char node::get_datatype_category() {
     else if(this -> datatype == "UNDEFINED") {
         return 'U';
     }
+    else {
+        return 'R';     // REFERENCE TYPE (Arrays and Objects)
+    }
 
     return 0;
 }
 
 char node::get_datatype_category(string dt) {
-    if(dt == "long" || dt == "int" || dt == "char") {
+    if(dt == "long" || dt == "int" || dt == "char" || dt == "short" || dt == "byte") {
         return 'I';
     }
     else if(dt == "boolean") {
@@ -652,6 +717,9 @@ char node::get_datatype_category(string dt) {
     }
     else if(dt == "UNDEFINED") {
         return 'U';
+    }
+    else {
+        return 'R';     // REFERENCE TYPE (Array and Objects)
     }
 
     return 0;
@@ -670,11 +738,17 @@ string node::get_maxtype(string dt1, string dt2) {  // numeric type promotions (
     else if(dt1 == "long" || dt2 == "long") { 
         return "long"; 
     }
-    else if(dt1 == "int" || dt2 == "int"){ 
+    else if(dt1 == "int" || dt2 == "int") { 
         return "int";     
     }
-    else if(dt1 == "char" || dt2 == "char"){ 
+    else if(dt1 == "char" || dt2 == "char") { 
         return "char";    
+    }
+    else if(dt1 == "short" || dt2 == "short") {
+        return "short";
+    }
+    else if(dt1 == "byte" || dt2 == "byte") {
+        return "byte";
     }
     else {
         return "ERROR";
@@ -1529,12 +1603,16 @@ void node::calc_datatype(node* child1, node* child2, string op){
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char" && dt1 != "String") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char" && dt2 != "String")) {
             this -> datatype = "ERROR";
             // REPORT ERROR HERE ONLY
-            this -> datatype = "ERROR";
             cout << "ERROR: Illegal use of '+' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
-
-        this -> datatype = this->get_maxtype(dt1, dt2);
+        this -> datatype = this -> get_maxtype(dt1, dt2);
+        if(dt1 != this->datatype){
+            child1 -> typecast_to = this -> datatype;
+        }
+        if(dt2 != this->datatype){
+            child2 -> typecast_to = this -> datatype;
+        }
         return;
     }
     else if(op == "-") {
@@ -1545,6 +1623,12 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         
         this -> datatype = this->get_maxtype(dt1, dt2);
+        if(dt1 != this->datatype){
+            child1 -> typecast_to = this -> datatype;
+        }
+        if(dt2 != this->datatype){
+            child2 -> typecast_to = this -> datatype;
+        }
         return;
     }
     else if(op == "*") {
@@ -1555,6 +1639,12 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
 
         this -> datatype = this->get_maxtype(dt1, dt2);
+        if(dt1 != this->datatype){
+            child1 -> typecast_to = this -> datatype;
+        }
+        if(dt2 != this->datatype){
+            child2 -> typecast_to = this -> datatype;
+        }
         return;
     }
     else if(op == "/") {
@@ -1565,6 +1655,12 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
 
         this -> datatype = this->get_maxtype(dt1, dt2);
+        if(dt1 != this->datatype){
+            child1 -> typecast_to = this -> datatype;
+        }
+        if(dt2 != this->datatype){
+            child2 -> typecast_to = this -> datatype;
+        }
         return;
     }
     else if(op == "%") {
@@ -1575,6 +1671,12 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
 
         this -> datatype = this -> get_maxtype(dt1, dt2);
+        if(dt1 != this->datatype){
+            child1 -> typecast_to = this -> datatype;
+        }
+        if(dt2 != this->datatype){
+            child2 -> typecast_to = this -> datatype;
+        }
         return;
     }
     else if(op == "++" || op == "--") {
@@ -1641,7 +1743,15 @@ void node::calc_datatype(node* child1, node* child2, string op){
             cout << "ERROR: Illegal use of '>' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
+
         this -> datatype = "boolean";
+        string tmp = get_maxtype(dt1, dt2);
+        if(dt1 != tmp){
+            child1 -> typecast_to = tmp;
+        }
+        if(dt2 != tmp){
+            child2 -> typecast_to = tmp;
+        }
         return;
     }
     else if(op == "<") {
@@ -1652,6 +1762,13 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
 
         this -> datatype = "boolean";
+        string tmp = get_maxtype(dt1, dt2);
+        if(dt1 != tmp){
+            child1 -> typecast_to = tmp;
+        }
+        if(dt2 != tmp){
+            child2 -> typecast_to = tmp;
+        }
         return;
     }
     else if(op == ">=") {
@@ -1662,6 +1779,13 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
 
         this -> datatype = "boolean";
+        string tmp = get_maxtype(dt1, dt2);
+        if(dt1 != tmp){
+            child1 -> typecast_to = tmp;
+        }
+        if(dt2 != tmp){
+            child2 -> typecast_to = tmp;
+        }
         return;
     }
     else if(op == "<=") {
@@ -1672,13 +1796,31 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
 
         this -> datatype = "boolean";
+        string tmp = get_maxtype(dt1, dt2);
+        if(dt1 != tmp){
+            child1 -> typecast_to = tmp;
+        }
+        if(dt2 != tmp){
+            child2 -> typecast_to = tmp;
+        }
         return;
     }
     else if(op == "==") {
-        if((C1 == 'B' && C2 == 'B') || ((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) || (C1 == 'N' && C2 == 'N')) {
+        if(C1 == 'B' && C2 == 'B') {
             this -> datatype = "boolean";
             return;
-        }   
+        }
+        else if(((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) || (C1 == 'N' && C2 == 'N')){
+            this -> datatype = "boolean";
+            string tmp = get_maxtype(dt1, dt2);
+            if(dt1 != tmp){
+                child1 -> typecast_to = tmp;
+            }
+            if(dt2 != tmp){
+                child2 -> typecast_to = tmp;
+            }
+            return;
+        }
         else {
             this -> datatype = "ERROR";
             cout << "ERROR: Illegal use of '==' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
@@ -1686,13 +1828,24 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
     }
     else if(op == "!=") {
-        if((C1 == 'B' && C2 == 'B') || ((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) || (C1 == 'N' && C2 == 'N')) {
+        if(C1 == 'B' && C2 == 'B') {
             this -> datatype = "boolean";
+            return;
+        }
+        else if(((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) || (C1 == 'N' && C2 == 'N')){
+            this -> datatype = "boolean";
+            string tmp = get_maxtype(dt1, dt2);
+            if(dt1 != tmp){
+                child1 -> typecast_to = tmp;
+            }
+            if(dt2 != tmp){
+                child2 -> typecast_to = tmp;
+            }
             return;
         }   
         else {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '%' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
+            cout << "ERROR: Illegal use of '!=' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
     }
@@ -1703,6 +1856,12 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         else if ((C1 == 'I' && C2 == 'I')) {
             this -> datatype = this -> get_maxtype(dt1, dt2);
+            if(dt1 != this -> datatype){
+                child1 -> typecast_to = this -> datatype;
+            }
+            if(dt2 != this -> datatype){
+                child2 -> typecast_to = this -> datatype;
+            }
             return;
         }
         else {
@@ -1718,6 +1877,12 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         else if ((C1 == 'I' && C2 == 'I')) {
             this -> datatype = this -> get_maxtype(dt1, dt2);
+            if(dt1 != this -> datatype){
+                child1 -> typecast_to = this -> datatype;
+            }
+            if(dt2 != this -> datatype){
+                child2 -> typecast_to = this -> datatype;
+            }
             return;
         }
         else {
@@ -1733,6 +1898,12 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         else if ((C1 == 'I' && C2 == 'I')) {
             this -> datatype = this -> get_maxtype(dt1, dt2);
+            if(dt1 != this -> datatype){
+                child1 -> typecast_to = this -> datatype;
+            }
+            if(dt2 != this -> datatype){
+                child2 -> typecast_to = this -> datatype;
+            }
             return;
         }
         else {
@@ -1762,6 +1933,65 @@ void node::calc_datatype(node* child1, node* child2, string op){
             cout << "ERROR: Illegal use of '||' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
+    }
+    else if(op == "=") {
+        if((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) {
+            if(get_maxtype(dt1, dt2) != dt1) {
+                cout << "ERROR: Lossy conversion from (" << dt2 << ") to (" << dt1 << ") at line number: " << this -> line_no << endl;
+                exit(1); 
+            }
+            child2 -> typecast_to = child1 -> datatype;
+        }
+        else {
+            if(dt1 != dt2) {
+                cout << "ERROR: Invalid conversion from (" << dt2 << ") to (" << dt1 << ") at line number: " << this -> line_no << endl;
+                exit(1);
+            }
+        }
+    }
+    else if(op == "+=") {
+        this -> calc_datatype(child1, child2, "+");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == "-=") {
+        this -> calc_datatype(child1, child2, "-");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == "*=") {
+        this -> calc_datatype(child1, child2, "*");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == "/=") {
+        this -> calc_datatype(child1, child2, "/");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == "%=") {
+        this -> calc_datatype(child1, child2, "%");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == "<<=") {
+        this -> calc_datatype(child1, child2, "<<");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == ">>=") {
+        this -> calc_datatype(child1, child2, ">>");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == ">>>=") {
+        this -> calc_datatype(child1, child2, ">>>");
+        child2 -> typecast_to = child1 -> datatype;
+    }   
+    else if(op == "&=") {
+        this -> calc_datatype(child1, child2, "&");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == "^=") {
+        this -> calc_datatype(child1, child2, "^");
+        child2 -> typecast_to = child1 -> datatype;
+    }
+    else if(op == "|=") {
+        this -> calc_datatype(child1, child2, "|");
+        child2 -> typecast_to = child1 -> datatype;
     }
 }
 
@@ -1815,6 +2045,61 @@ void node::type_check() {
             }
         }
     }
+    else if(this -> name == "Name") {
+        symbol_table_class* cls = NULL;
+        st_entry* entry = NULL;
+
+        int idx = 0;
+
+        cls = this -> get_symbol_table_class();
+        entry = cls -> look_up(this -> children[idx] -> name);
+        if(!entry){
+            cout << "ERROR: (" << this -> children[idx] <<") was not declared in this scope." << endl;
+            exit(1); 
+        }
+        cls = main_table -> look_up_class(entry -> type);
+        
+        for(idx = 0; idx + 3 <= this -> children.size(); idx += 2){
+            if(idx + 3 < this -> children.size()){
+                entry = cls -> look_up(this -> children[idx + 2] -> name);
+                if(!entry){
+                    cout << "ERROR: (" << this -> children[idx] -> name << ") does not have (" << this -> children[idx + 2] -> name << ") as a member. Line number: " << this -> children[idx] -> line_no << endl;
+                    exit(1);
+                }
+                cls = main_table -> look_up_class(entry -> type);
+                if(!cls){
+                    cout << "Unknown type error occurred due to ";
+                    for(int i = 0; i <= idx + 2; i++){
+                        cout << this -> children[i] -> name;
+                    }
+                    cout << " at line number " << this -> children[idx + 2] -> line_no << endl;
+                    exit(1);
+                }
+                this -> children[idx + 2] -> datatype = entry -> type;
+            }else{
+                if(this -> parent -> name == "MethodInvocation"){
+                    vector<string> params = this -> parent -> children[1] ->get_function_parameters();
+                    symbol_table_func* func = ((symbol_table_class* ) cls) -> look_up_function(this -> children[idx + 2] -> name, params);
+                    if(!func){
+                        cout << "ERROR: (" << this -> children[idx] -> name << ") does not have (" << this -> children[idx + 2] -> name << ") as a member. Line number: " << this -> children[idx] -> line_no << endl;
+                        exit(1);
+                    }
+                    this -> children[idx + 2] -> datatype = func -> return_type;
+                }
+                else{
+                    entry = cls -> look_up(this -> children[idx + 2] -> name);
+                    if(!entry){
+                        cout << "ERROR: (" << this -> children[idx] -> name << ") does not have (" << this -> children[idx + 2] -> name << ") as a member. Line number: " << this -> children[idx] -> line_no << endl;
+                        exit(1);
+                    }
+                    this -> children[idx + 2] -> datatype = entry -> type;
+                }
+            }
+        }
+
+        this -> datatype = this -> children[idx + 2] -> datatype;
+        return;
+    }
     else if(this -> name == "ArrayAccess") {        // checking array accesses
         for(auto &child : this -> children) {
             if(child -> name == "Expression") {
@@ -1859,17 +2144,6 @@ void node::type_check() {
             }
         }
     }
-    else if(this -> type == "OPERATOR") {
-        if(this -> children.size() == 1){
-            this -> calc_datatype(this -> children[0]);
-        }
-        else if(this -> children.size() == 2){
-            this -> calc_datatype(this -> children[0], this -> children[1], this -> name);
-        }
-        else if(this -> children.size() == 3){
-            // TERNARY TO BE DEALT WITH
-        }
-    }
     else if(this -> name == "PreIncrementExpression" || this -> name == "PreDecrementExpression") {
         if(!(this -> children[1] -> type == "ID" || this -> children[1] -> name == "Name")) {
             cout << "ERROR: '"<< this -> children[0] -> name <<"' can only operate on variables at line number: " << this -> children[0] -> line_no << endl;
@@ -1900,20 +2174,92 @@ void node::type_check() {
     }
     else if(this -> name == "MethodInvocation") {   // method invocation parameter checking
         // only tackling Identifier BracketArgumentList for now
+        vector<string> func_params;
+        string func_name;
+        symbol_table_class* class_table;
+        
+        for(auto &child : this -> children) {
+            if(child -> name == "BracketArgumentList") {
+                func_params = child -> get_function_parameters();
+            }
+            else if(child -> name == "Name") {
+                // Assuming that it is valid, just need to get the function's return type
+                // symbol_table_class* cls = NULL;
+                // st_entry* entry = NULL;
+                
+                // // Checking for membership of variables
+                // cls = main_table -> look_up_class(this -> children[0] -> datatype);
 
-        string func_name = this -> children[0] -> name;
-        vector<string> func_params = this -> children[1] -> get_function_parameters();
+                // if(cls == NULL){
+                //     cout << "ERROR: Unknown type error occurred due to (" << this -> children[0] -> name << ") at line number: " << this -> children[0] -> line_no << endl;
+                //     exit(0);
+                // }
 
-        symbol_table_class* class_table = this -> get_symbol_table_class();
+                // int idx = 0;
+                // for(idx = 0; idx + 3 < this -> children.size(); idx += 2){
+                //     entry = cls -> look_up(this -> children[idx + 2] -> name);
+
+                //     if(entry == NULL){
+                //         cout<<"ERROR: (" << this -> children[idx] -> name << ") has no member named (" << this -> children[idx + 2] -> name << ") at line number: " << this ->children[idx] -> line_no << endl;
+                //         exit(1);
+                //     }else{
+                //         cnt_class = main_table -> look_up_class(this -> children[idx + 2] -> datatype);
+
+                //         if(cnt_class == NULL){
+                //             cout << "ERROR: Unknown type error occurred due to (" << this -> children[0] -> name << ") at line number: " << this -> children[0] -> line_no << endl;
+                //             exit(0);
+                //         }
+                //     }
+                // }
+                // return;
+
+                class_table = main_table -> look_up_class(child -> children[0] -> datatype);
+
+                if(class_table == NULL){
+                    cout << "ERROR: Unknown Error occurred at line number: " << child -> children[0] -> line_no << endl;
+                    exit(1);
+                }
+
+                int idx;
+                for(idx = 0; idx + 3 < child -> children.size(); idx += 2){
+                    st_entry* found_entry = class_table -> look_up(child -> children[idx + 2] -> name);
+
+                    if(found_entry == NULL){
+                        cout << "ERROR: Could not find (" << child -> children[idx + 2] -> name << ") in (" << child -> children[idx] -> name << ")'s members. Line number: " << child -> children[idx] -> line_no << endl;
+                        exit(1);
+                    }else{
+                        class_table = main_table -> look_up_class(found_entry -> type);
+                        if(class_table == NULL){
+                            cout << "ERROR: Unknown Error occurred at line number: " << child -> children[idx] -> line_no << endl;
+                            exit(1);
+                        }
+                    }
+                }
+                func_name = child -> children[idx + 2] -> name;
+            }
+            else if(child -> type == "ID") {
+                func_name = child -> name;
+                class_table = this -> get_symbol_table_class();
+            }
+        }
+
         bool match_found = false;
         for(auto &func : class_table -> member_funcs) {
             bool flag = true;
             if(func -> name == func_name && func_params.size() == func -> params.size()) {
                 flag = false;
                 for(int idx = 0; idx < func_params.size(); idx++) {
-                    if(func_params[idx] != func -> params[idx] -> type) {
-                        flag = true;
-                        break;
+                    if((this -> get_datatype_category(func_params[idx]) == 'I' || this -> get_datatype_category(func_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
+                        if(this -> get_maxtype(func_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                    else {
+                        if(func_params[idx] != func -> params[idx] -> type) {
+                            flag = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -1939,6 +2285,136 @@ void node::type_check() {
                 }
             }
             cout <<") at line number: " << this->line_no << endl; // ! Tanwar print parameters
+            exit(1);
+        }
+    }
+    else if (this -> name == "UnqualifiedClassInstanceCreationExpression") {
+        vector<string> constructor_params;
+        string class_name;
+        symbol_table_class* class_table;
+        
+        for(auto &child : this -> children) {
+            if(child -> name == "BracketArgumentList") {
+                constructor_params = child -> get_function_parameters();
+            }
+            else if(child -> name == "Name") {
+                // @TODO Tanwar
+            }
+            else if(child -> type == "ID") {
+                class_name = child -> name;  // should be class name for constructor
+                class_table = main_table -> look_up_class(class_name);
+                if(!class_table) {
+                    cout << "ERROR: Unknown call to constructor at line number: " << child -> line_no << endl;
+                    exit(1);
+                }
+            }
+        }
+
+        bool match_found = false;
+        for(auto &func : class_table -> member_funcs) {
+            bool flag = true;
+            if(class_name == func -> name && constructor_params.size() == func -> params.size()) {
+                flag = false;
+                for(int idx = 0; idx < constructor_params.size(); idx++) {
+                    if((this -> get_datatype_category(constructor_params[idx]) == 'I' || this -> get_datatype_category(constructor_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
+                        if(this -> get_maxtype(constructor_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                    else {
+                        if(constructor_params[idx] != func -> params[idx] -> type) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if(!flag) {
+                match_found = true;
+                this -> datatype = func -> return_type;
+                break;
+            }
+        }
+
+        if(!match_found) {
+            cout << "ERROR: Unknown constructor invocation of class (" << class_name << ") with arg-types (";
+            {
+                bool first = true;
+                for(const auto (&param) : constructor_params){
+                    if(first){
+                        cout << param;
+                        first = false;
+                    }
+                    else{
+                        cout << ", " << param;
+                    }
+                }
+            }
+            cout <<") at line number: " << this->line_no << endl;
+            exit(1);
+        }
+    }
+    else if (this -> name == "VariableDeclarator") {        // Variable declaration and initialization
+        if(this -> children[1] && this -> children[1] -> name == "=") {     // Declaration and initialization
+            if((get_datatype_category(this -> sym_tab_entry -> type) == 'I' || get_datatype_category(this -> sym_tab_entry -> type) == 'D') && (get_datatype_category(this -> children[1] -> datatype) == 'I' || get_datatype_category(this -> children[1] -> datatype) == 'D')) {
+                if(get_maxtype(this -> sym_tab_entry -> type, this -> children[1] -> datatype) != this -> sym_tab_entry -> type) {
+                    cout << "ERROR: Lossy conversion between " << this -> sym_tab_entry -> type << " and " << this -> children[1] -> datatype << " at line number: " << this -> line_no << endl;
+                    exit(1);
+                }
+            }
+            else if(this -> sym_tab_entry -> type != this -> children[1] -> datatype) {
+                cout << "ERROR: Type mismatch between " << this -> sym_tab_entry -> type << " and " << this -> children[1] -> datatype << " at line number: " << this -> line_no << endl;
+                exit(1);
+            } 
+        }
+    }
+    else if(this -> type == "OPERATOR") {
+        if(this -> children.size() == 1){
+            if(this -> name == "=") {
+                this -> datatype = this -> children[0] -> datatype;
+            }
+            else {
+                this -> calc_datatype(this -> children[0]);
+            }
+        }
+        else if(this -> children.size() == 2){
+            this -> calc_datatype(this -> children[0], this -> children[1], this -> name);
+        }
+        else if(this -> children.size() == 3){
+            // TERNARY TO BE DEALT WITH
+        }
+    }
+    else if(this -> name == "IfThenStatement" || this -> name == "IfThenElseStatement" || this -> name == "IfThenElseStatementNoShortIf") {
+        if(this -> children[2] && this -> children[2] -> datatype != "boolean") {
+            cout << "ERROR: Expression inside if statement should be boolean but received " << this -> children[2] -> datatype << " instead. Line number: " << this -> children[2] -> line_no << endl;
+            exit(1);
+        }
+    }
+    else if(this -> name == "BasicForStatement" || this -> name == "BasicForStatementNoShortIf") {
+        for(const auto &child : this -> children) {
+            if(child -> name == "Expression" || child -> name == "qExpression") {
+                if(child -> datatype != "boolean") {
+                    cout << "ERROR: Expression inside updation of for statement should be boolean but received " << this -> children[2] -> datatype << " instead. Line number: " << this -> children[2] -> line_no << endl;
+                    exit(1);
+                }
+            }
+        }
+    }
+    else if(this -> name == "EnhancedForStatement" || this -> name == "EnhancedForStatementNoShortIf") {
+        this -> calc_datatype(this -> children[2], this -> children[4], "=");
+        // First Side Effect : this -> children[4] now possibly has typecast_to field set
+        this -> datatype = "UNDEFINED";     // Second Side Effect
+    }
+    else if(this -> name == "WhileStatement" || this -> name == "WhileStatementNoShortIf") {
+        if(this -> children[2] -> datatype != "boolean"){
+            cout << "ERROR: Expression inside updation of while statement should be boolean but received " << this -> children[2] -> datatype << " instead. Line number: " << this -> children[2] -> line_no << endl;
+            exit(1);
+        }
+    }
+    else if(this -> name == "DoStatement") {
+        if(this -> children[4] -> datatype != "boolean"){
+            cout << "ERROR: Expression inside updation of do-while statement should be boolean but received " << this -> children[2] -> datatype << " instead. Line number: " << this -> children[2] -> line_no << endl;
             exit(1);
         }
     }

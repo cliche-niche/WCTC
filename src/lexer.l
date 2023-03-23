@@ -235,19 +235,19 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 {DEC}                   { 
                             long long int x = stoll(yytext); 
                             string s = to_string(x); 
-                            yylval.strval  = strdup(s.c_str()); 
+                            yylval.strval  = strdup(yytext); 
                             return (LITERAL_integer); 
                         }
 {HEX}                   { 
                             long long int x = stoll(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 16); 
                             string s = to_string(x); 
-                            yylval.strval = strdup(s.c_str()); 
+                            yylval.strval = strdup(yytext); 
                             return (LITERAL_integer); 
                         }
 {OCT}                   { 
-                            long long int x = stoll(yytext, 0, 8); 
-                            string s = to_string(x); 
-                            yylval.strval  = strdup(s.c_str()); 
+                            // long long int x = stoll(yytext, 0, 8); 
+                            // string s = to_string(x); 
+                            yylval.strval  = strdup(yytext); 
                             return (LITERAL_integer); 
                         }
 {BIN}                   { 
@@ -256,12 +256,18 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
                             yylval.strval  = strdup(s.c_str()); 
                             return (LITERAL_integer); 
                         }
-{DECFLOAT}|{HEXFLOAT}   { 
+{DECFLOAT}   { 
                             long double x = stold(yytext); 
                             string s = to_string(x); 
-                            yylval.strval  = strdup(s.c_str()); 
+                            yylval.strval  = strdup(yytext);
                             return (LITERAL_floatingpoint); 
                         }
+{HEXFLOAT}              {
+                            long double x = stold(yytext); 
+                            string s = to_string(x); 
+                            yylval.strval  = strdup(s.c_str());    // TODO DEAL WITH HEXADECIMAL FLOATS
+                            return (LITERAL_floatingpoint); 
+                        }   
 {BOOL}                  { 
                             yylval.strval = strdup(yytext); 
                             return (LITERAL_boolean); 
