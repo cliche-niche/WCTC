@@ -9,6 +9,7 @@ node::node(string name /*= ""*/, bool terminal /*= false*/, string type /* = "" 
     this->name = name;
     this->terminal = terminal;
     this->type = type;
+    this->line_no = yylineno;
 }
 
 void node::print_tree(int tab){
@@ -50,7 +51,7 @@ void node::remove_lexeme_policy(string lex) {
     for(int x = 0; x < (this->children).size(); x++) {
         node *tmp = (this -> children)[x];
         if(tmp->name == lex) {
-            (this->children).erase((this->children).begin() + x, (this->children).begin() + x + 1);  
+            (this->children).erase((this->children).begin() + x, (this->children).begin() + x + 1);
             delete tmp;
             x--;
         }
@@ -68,7 +69,7 @@ node* node::one_child_policy(int idx){
         exit(1);
     }
     if((this->children).size() == 1){
-        if(this->name != "Expression" && this->name != "VariableDeclarator" && this->name != "Assignment"){
+        if(this->name != "Expression" && this->name != "VariableDeclarator" && this->name != "Assignment" || this->name == "Block"){
             this->kill_parent(idx);
             return this;
         }else{
@@ -105,7 +106,7 @@ void node::expression_policy(){
     if(this->exp_applicable){            
         if((this->children).size() == 2) {
             node* child = (this->children)[0];
-            if(this->name == "Expression" || this->name == "Assignment" || this->name == "Block"){
+            if(this->name == "Expression" || this->name == "Assignment"){
                 child->add_child((this->children)[1]);
                 this->children.clear();
                 this->add_child(child);
@@ -179,9 +180,11 @@ void node::make_dot(string filename /*= "tree.gv"*/){
     this->add_edges(dot_code);
     dot_code += "}";
 
-    ofstream out(filename);
-    out<<dot_code;
-    out.close();
+    {
+        ofstream out(filename);
+        out<<dot_code;
+        out.close();
+    }
 }
 
 void node::add_nodes(unsigned long long (&node_num), string (&dot_code)){
@@ -189,7 +192,7 @@ void node::add_nodes(unsigned long long (&node_num), string (&dot_code)){
     this->node_number = node_num;
     
     if(this->terminal){
-        dot_code += "node" + to_string(this->node_number) + "[label = \"" + this->type + '\n' + this->name + "\", shape = rectangle, color = ";
+        dot_code += "node" + to_string(this->node_number) + "[label = \"" + this->type + '\n' + this->name + " (L" + to_string(this->line_no) +  ")\", shape = rectangle, color = ";
         if(this->type == "ID"){
             dot_code += "purple";
         }else if(this->type == "OPERATOR" || this->type == "OP_ASSIGNMENT"){
@@ -203,7 +206,7 @@ void node::add_nodes(unsigned long long (&node_num), string (&dot_code)){
         }
         dot_code += "];\n";
     }else{
-        dot_code += "node" + to_string(this->node_number) + "[label = \"" + this->name + "\"];\n";
+        dot_code += "node" + to_string(this->node_number) + "[label = \"" + this->name + " (L" + to_string(this->line_no) + ")\"];\n";
     }
 
     for(auto child : (this->children)){
@@ -284,7 +287,9 @@ symbol_table* node::get_symbol_table() {
     }
     if(this -> name == "MethodDeclaration") {
         if(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name) {
-            cout << "ERROR: Constructor cannot have a return type at line number: " << this -> sym_tab_entry -> line_no << endl;
+            // cout << "ERROR: Constructor cannot have a return type at line number: " << this -> sym_tab_entry -> line_no << endl;
+            // EXPERIMENTAL
+            cout << "ERROR: Constructor cannot have a return type. Found a return type at line number: " << this -> line_no << endl;
             exit(1);
         }
         
@@ -292,7 +297,9 @@ symbol_table* node::get_symbol_table() {
     }
     else if(this -> name == "ConstructorDeclaration") {
         if(!(this -> sym_tab_entry -> name == temp_node -> sym_tab -> name)) {
-            cout << "ERROR: Constructor name does not match simple class name at line number: " << this -> sym_tab_entry -> line_no << endl;
+            // cout << "ERROR: Constructor name does not match simple class name at line number: " << this -> sym_tab_entry -> line_no << endl;
+            // EXPERIMENTAL
+            cout << "ERROR: Constructor name does not match simple class name at line number: " << this -> line_no << endl;
             exit(1);
         }
         (((symbol_table_func*) this -> sym_tab)-> return_type) = temp_node -> sym_tab -> name;  // setting the return type of the constructor as the class name  
@@ -330,7 +337,7 @@ st_entry* node::get_and_look_up() {
 
     if(!cnt_table) {
         cout << this -> name << endl;
-        cout << "Unknown error, symbol table not found f! Aborting..." << endl;
+        cout << "Unknown error, symbol table not found! Aborting..." << endl;
         exit(1);
     }
 
@@ -339,6 +346,7 @@ st_entry* node::get_and_look_up() {
 }
 
 // WALK 1
+
 void node::create_scope_hierarchy() {
     if(this -> sym_tab) {
         symbol_table* temp_st = this -> get_symbol_table();
@@ -383,7 +391,8 @@ void node::validate_expression() {
             }
 
             if(!flag) {
-                cout << "ERROR: Unknown method identifier " << this -> name << " at line number " << endl;
+                // EXPERIMENTAL
+                cout << "ERROR: Unknown method identifier " << this -> name << " at line number " << this -> line_no << endl;
                 exit(1);
             }
         }
@@ -421,7 +430,8 @@ void node::validate_expression() {
                         if(this -> name == tmp -> type){
                             tmp -> initialized = true;
                         }else{
-                            cout << "Error: Conflicting types for the object \"" << tmp -> name << "\": " << tmp -> type << " (Line No. " << tmp -> line_no << ") & " << this -> name << endl;
+                            // EXPERIMENTAL
+                            cout << "Error: Conflicting types for the object \"" << tmp -> name << "\": " << tmp -> type << " (Line No. " << tmp -> line_no << ") & " << this -> name << "(Line No. " << this -> line_no << ")" << endl;
                             exit(1);
                         }  
                     }
@@ -436,7 +446,7 @@ void node::validate_expression() {
             }
             else {
                 if(!(tmp -> initialized)) {
-                    cout << "ERROR: Variable " << tmp -> name << " has not been initialized at line number " << tmp -> line_no << endl;
+                    cout << "ERROR: Variable " << tmp -> name << " has not been initialized, but used at line number " << tmp -> line_no << endl;
                     exit(1);
                 }
             }
@@ -764,7 +774,9 @@ void node::set_datatype(node* child1, node* child2, string op){
 
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char" && dt1 != "String") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char" && dt2 != "String")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         if(dt1 == "String" || dt2 == "String"){ 
@@ -863,7 +875,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "-") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         bool flip = false;
@@ -944,7 +958,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "*") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         if(dt1 == "double" || dt2 == "double") { 
@@ -1018,7 +1034,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "/") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         if(dt1 == "double" || dt2 == "double") { 
@@ -1082,7 +1100,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "%") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         if(dt1 == "double" || dt2 == "double") { 
@@ -1144,12 +1164,16 @@ void node::set_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "++" || op == "--") {
-        
+        // EXPERIMENTAL
+        cout << "ERROR: Operator \'" << op << "\' cannot operate on Literal. Line No.: " << child1 -> line_no << endl;
+        exit(1);
     }
     else if(op == "~") {
         if(dt1 != "long" && dt1 != "int" && dt1 != "char") {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data type (" << dt1 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         this -> datatype = dt1;
@@ -1159,7 +1183,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "!") {
         if(dt1 != "boolean") {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data type (" << dt1 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
         this -> datatype = "boolean";
         this -> exp_bool_val = (child1 -> exp_bool_val == true);
@@ -1168,7 +1194,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "<<") {
         if((dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         this -> datatype = dt1; // type is same as the left hand operand
@@ -1186,7 +1214,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == ">>") {
         if((dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         this -> datatype = dt1; // type is same as the left hand operand
@@ -1204,6 +1234,8 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == ">>>") {
         if((dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             return;
         }
 
@@ -1222,8 +1254,11 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == ">") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
+
         this -> datatype = "boolean";
         bool result;
         if(dt1 == "double" || dt1 == "float"){
@@ -1245,7 +1280,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "<") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         this -> datatype = "boolean";
@@ -1269,7 +1306,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == ">=") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         this -> datatype = "boolean";
@@ -1292,7 +1331,9 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "<=") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
 
         this -> datatype = "boolean";
@@ -1344,7 +1385,9 @@ void node::set_datatype(node* child1, node* child2, string op){
         }   
         else {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "==") {
@@ -1378,41 +1421,9 @@ void node::set_datatype(node* child1, node* child2, string op){
         }   
         else {
             this -> datatype = "ERROR";
-            return;
-        }
-    }
-    else if(op == "!=") {
-        if((C1 == 'B' && C2 == 'B') || ((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) || (C1 == 'N' && C2 == 'N')) {
-            this -> datatype = "boolean";
-            bool result;
-            if(C1 == 'N'){
-                result = false;
-            }
-            else if(C1 == 'B'){
-                result = ((child1 -> exp_bool_val) != (child2 -> exp_bool_val));
-            }
-            else if(C1 == 'D'){
-                if(C2 == 'D'){
-                    result = ((child1 -> exp_dob_val) != (child2 -> exp_dob_val));
-                }
-                else if(C2 == 'I'){
-                    result = ((child1 -> exp_dob_val) != (child2 -> exp_int_val));
-                }
-            }
-            else if(C1 == 'I'){
-                if(C2 == 'D'){
-                    result = ((child1 -> exp_int_val) != (child2 -> exp_dob_val));
-                }
-                else if(C2 == 'I'){
-                    result = ((child1 -> exp_int_val) != (child2 -> exp_int_val));
-                }
-            }
-            this -> exp_bool_val = result;
-            return;
-        }   
-        else {
-            this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "&") {
@@ -1428,7 +1439,9 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "|") {
@@ -1444,7 +1457,9 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "^") {
@@ -1460,7 +1475,9 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "&&") {
@@ -1471,7 +1488,9 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "||") {
@@ -1482,7 +1501,9 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            // EXPERIMENTAL
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
 }
@@ -1509,7 +1530,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
             this -> datatype = "ERROR";
             // REPORT ERROR HERE ONLY
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '+' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '+' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1519,7 +1540,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "-") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '-' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '-' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
         
@@ -1529,7 +1550,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "*") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '*' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '*' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1539,7 +1560,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "/") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '/' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '/' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1549,7 +1570,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "%") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '%' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '%' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1559,7 +1580,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "++" || op == "--") {
         if(!(C1 == 'I' || C1 == 'D')) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '"<< op <<"' operator with operands " << dt1 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '"<< op <<"' operator with operands " << dt1 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1569,7 +1590,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "~") {
         if(!(C1 == 'I')) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '~' operator with operands " << dt1 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '~' operator with operands " << dt1 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1579,7 +1600,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "!") {
         if(dt1 != "boolean") {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '!' operator with operands " << dt1 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '!' operator with operands " << dt1 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
         this -> datatype = "boolean";
@@ -1588,7 +1609,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "<<") {
         if(!(C1 == 'I') || !(C2 == 'I')) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '<<' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '<<' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
         this -> datatype = dt1; // type is same as the left hand operand
@@ -1597,7 +1618,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == ">>") {
         if(!(C1 == 'I') || !(C2 == 'I')) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '>>' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '>>' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1607,7 +1628,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == ">>>") {
         if(!(C1 == 'I') || !(C2 == 'I')) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '>>>' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '>>>' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1617,7 +1638,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == ">") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '>' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '>' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
         this -> datatype = "boolean";
@@ -1626,7 +1647,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "<") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '<' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '<' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1636,7 +1657,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == ">=") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '>=' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '>=' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1646,7 +1667,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "<=") {
         if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '<=' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '<=' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1660,7 +1681,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }   
         else {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '==' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '==' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
     }
@@ -1671,7 +1692,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }   
         else {
             this -> datatype = "ERROR";
-            cout << "ERROR: Illegal use of '%' operator with operands " << dt1 << " and " << dt2 << " at line number: " << endl;
+            cout << "ERROR: Illegal use of '%' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
         }
     }
@@ -1686,7 +1707,8 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            cout << "ERROR: Illegal use of '&' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "|") {
@@ -1700,7 +1722,8 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            cout << "ERROR: Illegal use of '|' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "^") {
@@ -1714,7 +1737,8 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            cout << "ERROR: Illegal use of '^' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "&&") {
@@ -1724,7 +1748,8 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            cout << "ERROR: Illegal use of '&&' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
     else if(op == "||") {
@@ -1734,7 +1759,8 @@ void node::calc_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            return;
+            cout << "ERROR: Illegal use of '||' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
+            exit(1);
         }
     }
 }
@@ -1793,7 +1819,7 @@ void node::type_check() {
         for(auto &child : this -> children) {
             if(child -> name == "Expression") {
                 if(child -> get_datatype_category() != 'I') {
-                    cout << "ERROR: Expected integer type in array access, received " << child -> datatype << " instead." << endl;
+                    cout << "ERROR: Expected integer type in array access, received " << child -> datatype << " instead at line number: " << child -> line_no << endl;
                     exit(1);                    
                 }
             }
@@ -1801,7 +1827,8 @@ void node::type_check() {
 
         string tmp = this -> children[0] -> datatype;
         if(tmp[(int)(tmp.size()) - 1] != ']') {
-            cout << "ERROR: Array required but " << tmp << " found. Possibly accessing more dimensions than permissible." << endl;
+            // EXPERIMENTAL
+            cout << "ERROR: Array required but " << tmp << " found. Possibly accessing more dimensions than permissible at line number: " << this -> children[0] -> line_no << endl;
             exit(1);
         }
         else {
@@ -1822,11 +1849,12 @@ void node::type_check() {
         
         if(this -> children.size() == 1){
             if(return_type != "void") {
-                cout << "ERROR: Non-void function " << return_type ;
+                cout << "ERROR: Non-void function has return type (" << return_type << ") at line number: " << this -> children[0] -> line_no << endl;
+                exit(1);
             }
         }else if(this -> children.size() == 2){
             if(return_type != this -> children[1] -> datatype){
-                cout << "ERROR: Function (" << tmp->name << ") returns (" << return_type << ") type, but expected (" << this -> children[1] -> datatype << ")." << endl;
+                cout << "ERROR: Function (" << tmp->name << ") returns (" << return_type << ") type at line number (" << this -> children[1] -> line_no << "), but expected (" << this -> children[1] -> datatype << ")" << endl;
                 exit(1);
             }
         }
@@ -1844,7 +1872,7 @@ void node::type_check() {
     }
     else if(this -> name == "PreIncrementExpression" || this -> name == "PreDecrementExpression") {
         if(!(this -> children[1] -> type == "ID" || this -> children[1] -> name == "Name")) {
-            cout << "ERROR: '"<< this -> children[0] -> name <<"' can only operate on variables at line number: " << endl;
+            cout << "ERROR: '"<< this -> children[0] -> name <<"' can only operate on variables at line number: " << this -> children[0] -> line_no << endl;
             exit(1);
         }
 
@@ -1853,7 +1881,7 @@ void node::type_check() {
     }
     else if(this -> name == "PostIncrementExpression" || this -> name == "PostDecrementExpression") {
         if(!(this -> children[0] -> type == "ID" || this -> children[0] -> name == "Name")) {
-            cout << "ERROR: '"<< this -> children[1] -> name <<"' can only operate on variables at line number: " << endl;
+            cout << "ERROR: '"<< this -> children[1] -> name <<"' can only operate on variables at line number: " << this -> children[0] -> line_no << endl;
             exit(1);
         }
         
@@ -1863,7 +1891,7 @@ void node::type_check() {
     else if(this -> name == "CastExpression"){
         string dt1 = this -> children[1] -> name, dt2 = this -> children[3] -> datatype;
         if(!(this -> find_cast(dt1, dt2))){
-            cout << "ERROR: Cannot cast " << dt2 << " into " << dt1 << "." << endl;
+            cout << "ERROR: Cannot cast " << dt2 << " into " << dt1 << ". Line number: " << this -> children[1] -> line_no << endl;
             exit(1);
         }
 
@@ -1874,16 +1902,16 @@ void node::type_check() {
         // only tackling Identifier BracketArgumentList for now
 
         string func_name = this -> children[0] -> name;
-        vector<string> params = this -> children[1] -> get_function_parameters();
+        vector<string> func_params = this -> children[1] -> get_function_parameters();
 
         symbol_table_class* class_table = this -> get_symbol_table_class();
         bool match_found = false;
         for(auto &func : class_table -> member_funcs) {
             bool flag = true;
-            if(func -> name == func_name && params.size() == func -> params.size()) {
+            if(func -> name == func_name && func_params.size() == func -> params.size()) {
                 flag = false;
-                for(int idx = 0; idx < params.size(); idx++) {
-                    if(params[idx] != func -> params[idx] -> type) {
+                for(int idx = 0; idx < func_params.size(); idx++) {
+                    if(func_params[idx] != func -> params[idx] -> type) {
                         flag = true;
                         break;
                     }
@@ -1897,7 +1925,20 @@ void node::type_check() {
         }
 
         if(!match_found) {
-            cout << "ERROR: Unknown method invocation " << endl; // ! Tanwar print parameters
+            cout << "ERROR: Unknown method invocation of (" << func_name << ") with arg-types (";
+            {
+                bool first = true;
+                for(const auto (&param) : func_params){
+                    if(first){
+                        cout << param;
+                        first = false;
+                    }
+                    else{
+                        cout << ", " << param;
+                    }
+                }
+            }
+            cout <<") at line number: " << this->line_no << endl; // ! Tanwar print parameters
             exit(1);
         }
     }

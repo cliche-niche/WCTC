@@ -14,6 +14,7 @@ struct node{
     node* parent = NULL;
     string datatype = "UNDEFINED";      // Used for typechecking
     string typecast_to = "UNNEEDED";    // If the node needs to be type-casted,
+    int line_no = 0;                    // Stores where the node body **ENDS**, i.e., where the production rule is completed
 
     long long int exp_int_val = 0;
     double exp_dob_val = 0.0;

@@ -6,6 +6,7 @@
 #include "node.hpp"
 
 extern unsigned long long int num_scopes;
+extern "C" int yylineno;
 
 extern symbol_table_global *main_table;
 
