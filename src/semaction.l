@@ -261,9 +261,15 @@ void write_tree_code() {
             output << "\t\t\t";
             output << "string s($1);\n";
             write_func(false, "s", true, token_to_type[rhs_terms[0]]);
+            if(token_to_type[rhs_terms[0]] == "ID") {     // used to get line numbers of unknown dentifiers
+                output << "\t\t\t$$ -> sym_tab_entry = new st_entry(\"\", yylineno, count_semicolon);\n";
+            }
         }
         else if(token_to_name.find(rhs_terms[0]) != token_to_name.end()) {
             write_func(false, '\"' + token_to_name[rhs_terms[0]] + '\"', true, token_to_type[rhs_terms[0]]);
+            if(token_to_type[rhs_terms[0]] == "ID") {     // used to get line numbers of unknown dentifiers
+                output << "\t\t\t$$ -> sym_tab_entry = new st_entry(\"\", yylineno, count_semicolon);\n";
+            }
         }
         else {
             write_func(false, '\"' + lhs + '\"', false, "");
@@ -278,9 +284,15 @@ void write_tree_code() {
                 output << "\t\t\t";
                 output << "string s($" << (i+1) << ");\n";
                 write_func(true, "s", true, token_to_type[rhs_terms[i]]);
+                if(token_to_type[rhs_terms[i]] == "ID") {     // used to get line numbers of unknown identifiers
+                    output << "\t\t\ttemp_node -> sym_tab_entry = new st_entry(\"\", yylineno, count_semicolon);\n";
+                }
             }
             else if(token_to_name.find(rhs_terms[i]) != token_to_name.end()) {
                 write_func(true, '\"' + token_to_name[rhs_terms[i]] + '\"', true, token_to_type[rhs_terms[i]]);
+                if(token_to_type[rhs_terms[i]] == "ID") {     // used to get line numbers of unknown identifiers
+                    output << "\t\t\ttemp_node -> sym_tab_entry = new st_entry(\"\", yylineno, count_semicolon);\n";
+                }
             }
             else {
                 output << "\t\t\t";
@@ -308,6 +320,7 @@ void write_func(bool l, string name, bool isT, string token) {
         output << "\t\t\t";
         output << "$$->add_child(temp_node);\n";
     }
+
 }
 
 int main() {

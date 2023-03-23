@@ -56,9 +56,10 @@ struct symbol_table_func : public symbol_table {
     // Additionally stores the types of parameters expected in the function
     // Along with other entries in a typical symbol table
     vector<st_entry* > params;
+    string return_type;
     bool modifier_bv[10] = {0};
     
-    symbol_table_func(string func_name, vector<st_entry* > (&params));
+    symbol_table_func(string func_name, vector<st_entry* > (&params), string return_type);
 
     void add_entry(st_entry* new_entry);
 

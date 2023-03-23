@@ -232,20 +232,54 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 "!" { return (OPERATOR_not); }
 {ASSIGNMENTOPERATOR} { yylval.strval = strdup(yytext); return (OPERATOR_assignment); }
 
-{DEC}                   { int x = stol(yytext); yylval.strval = strdup(yytext); return (LITERAL_integer); }
-{HEX}                   { int x = stol(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 16); yylval.strval = strdup(yytext); return (LITERAL_integer); }
-{OCT}                   { int x = stol(yytext, 0, 8); yylval.strval = strdup(yytext); return (LITERAL_integer); }
-{BIN}                   { int x = stol(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 2) ; yylval.strval = strdup(yytext); return (LITERAL_integer); }
-{DECFLOAT}|{HEXFLOAT}   { long double x = stold(yytext); return (LITERAL_floatingpoint); }
-{BOOL}                  { return (LITERAL_boolean); }
+{DEC}                   { 
+                            long long int x = stoll(yytext); 
+                            string s = to_string(x); 
+                            yylval.strval  = strdup(s.c_str()); 
+                            return (LITERAL_integer); 
+                        }
+{HEX}                   { 
+                            long long int x = stoll(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 16); 
+                            string s = to_string(x); 
+                            yylval.strval = strdup(s.c_str()); 
+                            return (LITERAL_integer); 
+                        }
+{OCT}                   { 
+                            long long int x = stoll(yytext, 0, 8); 
+                            string s = to_string(x); 
+                            yylval.strval  = strdup(s.c_str()); 
+                            return (LITERAL_integer); 
+                        }
+{BIN}                   { 
+                            long long int x = stoll(((string) yytext).substr(2, ((string) yytext).length()-2), 0, 2); 
+                            string s = to_string(x); 
+                            yylval.strval  = strdup(s.c_str()); 
+                            return (LITERAL_integer); 
+                        }
+{DECFLOAT}|{HEXFLOAT}   { 
+                            long double x = stold(yytext); 
+                            string s = to_string(x); 
+                            yylval.strval  = strdup(s.c_str()); 
+                            return (LITERAL_floatingpoint); 
+                        }
+{BOOL}                  { 
+                            yylval.strval = strdup(yytext); 
+                            return (LITERAL_boolean); 
+                        }
 {STRING}                {
                             string tmp(yytext);
                             string tmp2 = tmp.substr(1, yyleng - 2);
                             yylval.strval = strdup(tmp2.c_str());
                             return (LITERAL_string); 
                         }
-{NULL}                  { return (LITERAL_null); }
-{ID}                    { yylval.strval = strdup(yytext); return (Identifier); }
+{NULL}                  { 
+                            yylval.strval = strdup(yytext); 
+                            return (LITERAL_null); 
+                        }
+{ID}                    { 
+                            yylval.strval = strdup(yytext); 
+                            return (Identifier); 
+                        }
 
 . {
     cerr << "Unknown character " << yytext << " found at line: " << yylineno << "\n";

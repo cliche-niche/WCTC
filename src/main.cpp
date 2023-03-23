@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
 
     root->create_scope_hierarchy();
     root->populate_and_check();
+    root->chill_traversal();
     
     fclose(program);
 }

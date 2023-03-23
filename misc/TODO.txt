@@ -11,3 +11,13 @@ Field/MethodDeclaration ka OOPS ka kachra bacha hua hai, regarding sub/superclas
 Add Modifiers to Sym_table - sub/super class rules
 
 Line numbers for all identifiers
+
+expression in if should be boolean
+expression in while, do-while, for (update) should be boolean
+qualified_name -> type?
+expression -> accurate, casting/no info loss
+function - parameter match, get return type
+
+Add line number to nodes?
+update cast_to member in node for usage in 3AC (later phases)
+method invocations check for name, super, name.super

@@ -18,9 +18,6 @@
 %define parse.error verbose
 
 %union{
-    long numval;
-    long double realval;
-    int boolval;
     char* strval;
     struct node* treenode;
 }
@@ -32,7 +29,7 @@
 %token<strval> LITERAL_string
 %token<strval> LITERAL_textblock
 %token<strval> OPERATOR_assignment
-%token LITERAL_null 
+%token<strval> LITERAL_null 
 
 %token KEYWORD_class KEYWORD_extends KEYWORD_super KEYWORD_package KEYWORD_public KEYWORD_private KEYWORD_abstract KEYWORD_static KEYWORD_final KEYWORD_sealed KEYWORD_nonsealed KEYWORD_strictfp KEYWORD_implements KEYWORD_import KEYWORD_permits KEYWORD_transient KEYWORD_volatile KEYWORD_synchronized KEYWORD_native KEYWORD_void KEYWORD_this KEYWORD_enum KEYWORD_if KEYWORD_else KEYWORD_assert KEYWORD_while KEYWORD_for KEYWORD_break KEYWORD_yield KEYWORD_continue KEYWORD_return KEYWORD_throw KEYWORD_try KEYWORD_catch KEYWORD_finally KEYWORD_boolean KEYWORD_new KEYWORD_var KEYWORD_byte KEYWORD_short KEYWORD_int KEYWORD_long KEYWORD_char KEYWORD_float KEYWORD_double KEYWORD_protected KEYWORD_throws KEYWORD_do
 %token<strval> Identifier
@@ -72,7 +69,7 @@
 %right UNARY_minus UNARY_plus OPERATOR_not OPERATOR_bitwisecomp
 %nonassoc OPERATOR_increment OPERATOR_decrement
 
-%type<treenode> DoStatement IntegralType FloatingPointType PrimitiveType NumericType ArrayType Dims qDims Name Modifiers CompilationUnit OrdinaryCompilationUnit Modifier sCommaName NameList AdditionalBound pAdditionalBound ArrayInitializer qComma sCommaVariableInitializer VariableInitializerList qVariableInitializerList sImportDeclaration ImportDeclaration importName  PackageDeclaration sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration ClassExtends qClassExtends ClassImplements qClassImplements Block qBlockStatements BlockStatements BlockStatement LocalClassOrInterfaceDeclaration LocalVariableDeclarationStatement LocalVariableDeclaration LocalVariableType Statement StatementNoShortIf StatementWithoutTrailingSubstatement EmptyStatement LabeledStatement LabeledStatementNoShortIf ExpressionStatement StatementExpression IfThenStatement IfThenElseStatement IfThenElseStatementNoShortIf AssertStatement WhileStatement WhileStatementNoShortIf ForStatement ForStatementNoShortIf BasicForStatement BasicForStatementNoShortIf qForInit qForUpdate ForInit ForUpdate StatementExpressionList sCommaStatementExpression EnhancedForStatement EnhancedForStatementNoShortIf BreakStatement qIdentifier YieldStatement ContinueStatement ReturnStatement qExpression ThrowStatement SynchronizedStatement TryStatement qCatches pCatches Catches CatchClause CatchFormalParameter CatchType sOrName Finally TryWithResourcesStatement qFinally ResourceSpecification qSemicolon ResourceList ssemicolonResource Resource VariableAccess Pattern TypePattern NormalClassDeclaration ClassPermits qClassPermits ClassBody qClassBody ClassBodyDeclaration sClassBodyDeclaration ClassMemberDeclaration FieldDeclaration VariableDeclaratorList sCommaVariableDeclarator VariableDeclarator VariableDeclaratorId qEqualVariableInitializer VariableInitializer UnannType MethodDeclaration MethodHeader MethodDeclarator ReceiverParameterComma ReceiverParameter IdentifierDot qIdentifierDot FormalParameterList qFormalParameterList FormalParameter sCommaFormalParameter VariableArityParameter Throws qThrows MethodBody InstanceInitializer StaticInitializer ConstructorDeclaration ConstructorDeclarator ConstructorBody ExplicitConstructorInvocation BracketArgumentList UnaryExpression PreIncrementExpression UnaryExpressionNotPlusMinus PostfixExpression Primary PrimaryNoNewArray Literal ClassLiteral ClassInstanceCreationExpression UnqualifiedClassInstanceCreationExpression qArgumentList ArgumentList sCommaExpression FieldAccess ArrayAccess MethodInvocation MethodReference ArrayCreationExpression DimExprs DimExpr PostIncrementExpression PostDecrementExpression CastExpression InstanceofExpression Assignment LeftHandSide Expression AssignmentExpression ConditionalExpression ConditionalOrExpression ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression PreDecrementExpression BooleanDims NumericTypeDims 
+%type<treenode> DoStatement IntegralType FloatingPointType PrimitiveType NumericType ArrayType Dims qDims Name Modifiers CompilationUnit OrdinaryCompilationUnit Modifier sCommaName NameList ArrayInitializer qComma sCommaVariableInitializer VariableInitializerList qVariableInitializerList sImportDeclaration ImportDeclaration importName  PackageDeclaration sTopLevelClassOrInterfaceDeclaration TopLevelClassOrInterfaceDeclaration ClassExtends qClassExtends ClassImplements qClassImplements Block qBlockStatements BlockStatements BlockStatement LocalClassOrInterfaceDeclaration LocalVariableDeclarationStatement LocalVariableDeclaration LocalVariableType Statement StatementNoShortIf StatementWithoutTrailingSubstatement EmptyStatement LabeledStatement LabeledStatementNoShortIf ExpressionStatement StatementExpression IfThenStatement IfThenElseStatement IfThenElseStatementNoShortIf AssertStatement WhileStatement WhileStatementNoShortIf ForStatement ForStatementNoShortIf BasicForStatement BasicForStatementNoShortIf qForInit qForUpdate ForInit ForUpdate StatementExpressionList sCommaStatementExpression EnhancedForStatement EnhancedForStatementNoShortIf BreakStatement qIdentifier YieldStatement ContinueStatement ReturnStatement qExpression ThrowStatement SynchronizedStatement TryStatement qCatches pCatches Catches CatchClause CatchFormalParameter CatchType sOrName Finally TryWithResourcesStatement qFinally ResourceSpecification qSemicolon ResourceList ssemicolonResource Resource VariableAccess Pattern TypePattern NormalClassDeclaration ClassPermits qClassPermits ClassBody qClassBody ClassBodyDeclaration sClassBodyDeclaration ClassMemberDeclaration FieldDeclaration VariableDeclaratorList sCommaVariableDeclarator VariableDeclarator VariableDeclaratorId qEqualVariableInitializer VariableInitializer UnannType MethodDeclaration MethodHeader MethodDeclarator ReceiverParameterComma ReceiverParameter IdentifierDot qIdentifierDot FormalParameterList qFormalParameterList FormalParameter sCommaFormalParameter VariableArityParameter Throws qThrows MethodBody InstanceInitializer StaticInitializer ConstructorDeclaration ConstructorDeclarator ConstructorBody ExplicitConstructorInvocation BracketArgumentList UnaryExpression PreIncrementExpression UnaryExpressionNotPlusMinus PostfixExpression Primary PrimaryNoNewArray Literal ClassLiteral ClassInstanceCreationExpression UnqualifiedClassInstanceCreationExpression qArgumentList ArgumentList sCommaExpression FieldAccess ArrayAccess MethodInvocation MethodReference ArrayCreationExpression DimExprs DimExpr PostIncrementExpression PostDecrementExpression CastExpression InstanceofExpression Assignment LeftHandSide Expression AssignmentExpression ConditionalExpression ConditionalOrExpression ConditionalAndExpression InclusiveOrExpression ExclusiveOrExpression AndExpression EqualityExpression RelationalExpression ShiftExpression AdditiveExpression MultiplicativeExpression PreDecrementExpression BooleanDims NumericTypeDims 
 
 %start CompilationUnit
 
@@ -133,19 +130,22 @@
             delete ($1 -> sym_tab_entry);
         }
         ;
-        
-    AdditionalBound:
-        OPERATOR_bitwiseand Name { }                                      
-        ;
-    
-    pAdditionalBound:
-        AdditionalBound { }
-        | pAdditionalBound AdditionalBound { }
-        ;
 
     /****************** NAMES  ******************/
     Name:
-        Name DELIM_period Identifier { }
+        Name DELIM_period Identifier { 
+            
+            {
+                if($1 -> children.size()){
+                    vector<node* > temp = $1 -> children;
+                    $1 -> children.clear();
+                    temp.push_back($$ -> children [$$ -> children.size() - 2]);
+                    temp.push_back($$ -> children [$$ -> children.size() - 1]);
+                    $$ -> children.clear();
+                    $$ -> children = temp;
+                }
+            }
+        }
         | Identifier { }
         ;
     sCommaName: { }
@@ -555,8 +555,7 @@
             ($$ -> sym_tab_entry) -> update_modifiers($1 -> entry_list);
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
-
-            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> type);
             $$ -> sym_tab -> scope_start_line_no = yylineno;
             ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
 
@@ -573,7 +572,7 @@
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
             $$ -> entry_list = $1 -> entry_list;
             $1 -> entry_list . clear();
-            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> type);
             $$ -> sym_tab -> scope_start_line_no = yylineno;
 
             // cout << "Method identifier: " << $$ -> sym_tab_entry -> name << endl;
@@ -621,7 +620,7 @@
         UnannType qIdentifierDot KEYWORD_this { }
         ;
     
-    IdentifierDot: 
+    IdentifierDot:
         Identifier DELIM_period { }
         ;
     
@@ -723,7 +722,7 @@
             $$ -> sym_tab_entry -> update_modifiers($1 -> entry_list);
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
-            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, "");   // no return type of constructors
             $$ -> sym_tab -> scope_start_line_no = yylineno;
 
             ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
@@ -732,7 +731,7 @@
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
             $$ -> entry_list = $1 -> entry_list;
             $1 -> entry_list . clear();
-            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list);
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, "");   // no return type of constructors 
             $$ -> sym_tab -> scope_start_line_no = yylineno;
         }
         ;
@@ -1170,170 +1169,485 @@
 
     Expression:
         AssignmentExpression { 
-            $$ -> sym_tab_entry = new st_entry("Expression", yylineno, count_semicolon);
-            $$ -> sym_tab_entry -> update_type("UNDEFINED");
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
         }
         ;
 
     AssignmentExpression:
-        ConditionalExpression { }
-        |   Assignment { }
+        ConditionalExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        | Assignment { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         ;
     
     ConditionalExpression:
-        ConditionalOrExpression         %prec PREC_cond_to_condor { }
+        ConditionalOrExpression         %prec PREC_cond_to_condor { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   ConditionalOrExpression OPERATOR_ternaryquestion Expression OPERATOR_ternarycolon ConditionalExpression { 
             $$->exp_applicable = true;
+
+            
         }
         ;
 
     ConditionalOrExpression:
-        ConditionalAndExpression        %prec PREC_condor_to_condand { }
+        ConditionalAndExpression        %prec PREC_condor_to_condand { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   ConditionalOrExpression OPERATOR_logicalor ConditionalAndExpression { 
             $$->exp_applicable = true;
+            
+            $$ -> set_datatype($1, $3, "||");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '||' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     ConditionalAndExpression:
-        InclusiveOrExpression           %prec PREC_condand_to_incor { }
+        InclusiveOrExpression           %prec PREC_condand_to_incor { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   ConditionalAndExpression OPERATOR_logicaland InclusiveOrExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "&&");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '&&' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     InclusiveOrExpression:
-            ExclusiveOrExpression       %prec PREC_incor_to_excor { }
+        ExclusiveOrExpression       %prec PREC_incor_to_excor { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   InclusiveOrExpression OPERATOR_bitwiseor ExclusiveOrExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "|");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '|' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     ExclusiveOrExpression:
-        AndExpression               %prec PREC_excor_to_and { }
+        AndExpression               %prec PREC_excor_to_and { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   ExclusiveOrExpression OPERATOR_xor AndExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "^");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '^' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     AndExpression:
-        EqualityExpression          %prec PREC_and_to_equality { }
+        EqualityExpression          %prec PREC_and_to_equality { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   AndExpression OPERATOR_bitwiseand EqualityExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "&");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '&&' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     EqualityExpression: 
-        RelationalExpression    %prec PREC_equality_to_relational { }
+        RelationalExpression    %prec PREC_equality_to_relational { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   EqualityExpression OPERATOR_logicalequal RelationalExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "==");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '==' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }    
         |   EqualityExpression OPERATOR_neq RelationalExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "!=");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '!=' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     RelationalExpression:
-        ShiftExpression { }
+        ShiftExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        | InstanceofExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   RelationalExpression OPERATOR_lt ShiftExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "<");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '<' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }   
         |   RelationalExpression OPERATOR_gt ShiftExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, ">");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '>' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         |   RelationalExpression OPERATOR_leq ShiftExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "<=");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '<=' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         |   RelationalExpression OPERATOR_geq ShiftExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, ">=");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '>=' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
-        |   InstanceofExpression { }
         ;
 
     ShiftExpression:
-        AdditiveExpression { }
+        AdditiveExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   ShiftExpression OPERATOR_leftshift AdditiveExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "<<");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '<<' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         |   ShiftExpression OPERATOR_rightshift AdditiveExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, ">>");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '>>' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         |   ShiftExpression OPERATOR_unsignedrightshift AdditiveExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, ">>>");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '>>>' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     AdditiveExpression:
-        MultiplicativeExpression { }
-        |   AdditiveExpression OPERATOR_plus MultiplicativeExpression { 
+        MultiplicativeExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        |   AdditiveExpression OPERATOR_plus MultiplicativeExpression {
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "+");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '+' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         |   AdditiveExpression OPERATOR_minus MultiplicativeExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "-");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '-' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     MultiplicativeExpression:
-        UnaryExpression { }
-        |   MultiplicativeExpression OPERATOR_multiply UnaryExpression { 
+        UnaryExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        |   MultiplicativeExpression OPERATOR_multiply UnaryExpression {
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "*");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '*' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         |   MultiplicativeExpression OPERATOR_divide UnaryExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "/");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '/' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         |   MultiplicativeExpression OPERATOR_mod UnaryExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($1, $3, "%");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '%' operator with operands " << $1 -> datatype << " and " << $3 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         ;
 
     UnaryExpression:
-        PreIncrementExpression { }
-        |   PreDecrementExpression { }
+        PreIncrementExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        |   PreDecrementExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   OPERATOR_plus UnaryExpression       %prec UNARY_plus { 
             $$->exp_applicable = true;
+
+
         }
         |   OPERATOR_minus UnaryExpression      %prec UNARY_minus { 
             $$->exp_applicable = true;
+
+
         }
-        |   UnaryExpressionNotPlusMinus { }
+        |   UnaryExpressionNotPlusMinus { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         ;
 
     PreIncrementExpression:
-        OPERATOR_increment UnaryExpression { }
+        OPERATOR_increment UnaryExpression { 
+            if($2 -> datatype != "UNDEFINED") {
+                $$ -> datatype = "ERROR";
+                cout << "ERROR: '++' operator cannot be used with literal values at line number " << yylineno << endl;
+                exit(1); 
+            }
+        }
         ;
 
     PreDecrementExpression:
-        OPERATOR_decrement UnaryExpression { }
+        OPERATOR_decrement UnaryExpression { 
+            if($2 -> datatype != "UNDEFINED") {
+                $$ -> datatype = "ERROR";
+                cout << "ERROR: '--' operator cannot be used with literal values at line number " << yylineno << endl;
+                exit(1); 
+            }
+        }
         ;
     
     UnaryExpressionNotPlusMinus:
-        Name { }
-        |   PostfixExpression { }
+        Name { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        |   PostfixExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   OPERATOR_bitwisecomp UnaryExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($2, NULL, "~");
+            if($$ -> datatype == "ERROR") {
+            cout << "ERROR: Illegal use of '~' operator with operand " << $2 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
         |   OPERATOR_not UnaryExpression { 
             $$->exp_applicable = true;
+
+            $$ -> set_datatype($2, NULL, "!");
+            if($$ -> datatype == "ERROR") {
+                cout << "ERROR: Illegal use of '!' operator with operand " << $2 -> datatype << " at line number: " << yylineno << endl;
+                exit(1);
+            }
         }
-        |   CastExpression { }
+        |   CastExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         ;
     
     PostfixExpression:
-        Primary { }
-        |   PostIncrementExpression { }
-        |   PostDecrementExpression { }
+        Primary { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        |   PostIncrementExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        |   PostDecrementExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         ;
     
     Primary:
-        PrimaryNoNewArray { }
-        |   ArrayCreationExpression { }
+        PrimaryNoNewArray { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        |   ArrayCreationExpression { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         ;
     
     PrimaryNoNewArray:
-        Literal { }
-        |   ClassLiteral { }
+        Literal { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
+        |   ClassLiteral { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }
         |   KEYWORD_this { }
         |   Name DELIM_period KEYWORD_this { }
-        |   DELIM_lpar Expression DELIM_rpar { }
+        |   DELIM_lpar Expression DELIM_rpar { 
+            $$ -> datatype = $2 -> datatype;
+            $$ -> exp_dob_val = $2 -> exp_dob_val;
+            $$ -> exp_int_val = $2 -> exp_int_val;
+            $$ -> exp_str_val = $2 -> exp_str_val;
+            $$ -> exp_bool_val = $2 -> exp_bool_val;
+        }
         |   ClassInstanceCreationExpression { }
         |   FieldAccess { }
         |   ArrayAccess { }
@@ -1341,38 +1655,53 @@
         |   MethodReference { }
         ;
     
-    Literal : 
-        LITERAL_integer { 
-            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
-            // string s2($1);
-            // if(s2[(int)(s2.size()) - 1] == 'l' || s2[(int)(s2.size()) - 1] == 'L') $$ -> sym_tab_entry -> update_type("long");
-            // else $$ -> sym_tab_entry -> update_type("int");
+    Literal: 
+        LITERAL_integer {
+            {
+                string s($1);
+                if(s[(int)(s.size()) - 1] == 'l' || s[(int)(s.size()) - 1] == 'L') $$ -> datatype = "long";
+                else $$ -> datatype = "int";
+                $$ -> exp_int_val = stoll(s);
+            }
         }
         | LITERAL_floatingpoint { 
-            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
-            // string s2($1);
-            // if(s2[(int)(s2.size()) - 1] == 'f' || s2[(int)(s2.size()) - 1] == 'F') $$ -> sym_tab_entry -> update_type("float");
-            // else $$ -> sym_tab_entry -> update_type("double");
+            {
+                string s($1);
+                if(s[(int)(s.size()) - 1] == 'f' || s[(int)(s.size()) - 1] == 'F') $$ -> datatype = "float";
+                else $$ -> datatype = "double";
+                $$ -> exp_dob_val = stold(s);
+            }
         }
         | LITERAL_boolean { 
-            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
-            // $$ -> sym_tab_entry -> update_type("boolean");
+            $$ -> datatype = "boolean";
+            {
+                string s($1);
+                $$ -> exp_bool_val = (s == "true");
+            }
         }
         | LITERAL_char { 
-            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
-            // $$ -> sym_tab_entry -> update_type("char");
+            $$ -> datatype = "char";
+            {
+                string s($1);
+                $$ -> exp_int_val = s[0];
+            }
         } 
         | LITERAL_string { 
-            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
-            // $$ -> sym_tab_entry -> update_type("string");
+            $$ -> datatype = "String";
+            {
+                string s($1);
+                $$ -> exp_str_val = s;
+            }
         }
         | LITERAL_textblock { 
-            // $$ -> sym_tab_entry = new st_entry($1, yylineno, count_semicolon);
-            // $$ -> sym_tab_entry -> update_type("string");
+            $$ -> datatype = "textblock";
+            {
+                string s($1);
+                $$ -> exp_str_val = s;
+            }
         }
         | LITERAL_null { 
-            // $$ -> sym_tab_entry = new st_entry("null_literal", yylineno, count_semicolon);
-            // $$ -> sym_tab_entry -> update_type("null");
+            $$ -> datatype = "null";
         }
         ;
     
@@ -1422,8 +1751,8 @@
     MethodInvocation:
         Name BracketArgumentList { }
         |   Primary DELIM_period Identifier BracketArgumentList { }
-        |   KEYWORD_super DELIM_period  Identifier BracketArgumentList { }
-        |   Name DELIM_period KEYWORD_super DELIM_period Identifier BracketArgumentList { }
+        |   KEYWORD_super DELIM_period Identifier BracketArgumentList { }   // calls method of superclass
+        |   Name DELIM_period KEYWORD_super DELIM_period Identifier BracketArgumentList { } // 
         ; 
     
     MethodReference:
@@ -1484,20 +1813,43 @@
         ;
     
     PostIncrementExpression: 
-        Name OPERATOR_increment { } 
-        | PostfixExpression OPERATOR_increment { } 
+        Name OPERATOR_increment { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        } 
+        | PostfixExpression OPERATOR_increment { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        } 
         ;
     
     PostDecrementExpression: 
-        Name OPERATOR_decrement { }                          
-        | PostfixExpression OPERATOR_decrement { } 
+        Name OPERATOR_decrement { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        }                          
+        | PostfixExpression OPERATOR_decrement { 
+            $$ -> datatype = $1 -> datatype;
+            $$ -> exp_dob_val = $1 -> exp_dob_val;
+            $$ -> exp_int_val = $1 -> exp_int_val;
+            $$ -> exp_str_val = $1 -> exp_str_val;
+            $$ -> exp_bool_val = $1 -> exp_bool_val;
+        } 
         ; 
     
     // Partial implementation of casting. Cannot cast classes
     CastExpression:     
         DELIM_lpar PrimitiveType DELIM_rpar UnaryExpression { }
         |   DELIM_lpar ArrayType DELIM_rpar UnaryExpressionNotPlusMinus { }
-        |   DELIM_lpar ArrayType pAdditionalBound DELIM_rpar UnaryExpressionNotPlusMinus { }
         ;
     
     InstanceofExpression:
@@ -1509,13 +1861,13 @@
     Assignment:
         LeftHandSide OPERATOR_assignment Expression { 
             $$ -> exp_applicable = true;
-            $$ -> sym_tab_entry = new st_entry("Assignment", yylineno, count_semicolon);
-            $$ -> sym_tab_entry -> update_type("UNDEFINED");  
+            
+
         }
         | LeftHandSide OPERATOR_equal Expression { 
             $$ -> exp_applicable = true;
-            $$ -> sym_tab_entry = new st_entry("Assignment", yylineno, count_semicolon);  
-            $$ -> sym_tab_entry -> update_type("UNDEFINED");  
+            
+
         }
         ;
     
@@ -1528,6 +1880,6 @@
 
 void yyerror(const char *error)
 {
-    printf("ERROR:%s in line number: %d\n", error, yylineno);
+    printf("ERROR:%s at line number: %d\n", error, yylineno);
     exit(0);
 }

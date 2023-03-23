@@ -119,9 +119,10 @@ st_entry* symbol_table::look_up(string name){
     return NULL;
 }
 
-symbol_table_func::symbol_table_func(string func_name, vector<st_entry* > (&params)){
+symbol_table_func::symbol_table_func(string func_name, vector<st_entry* > (&params), string return_type){
     this->name = func_name;
     this->params = params;
+    this->return_type = return_type;
     this->symbol_table_category = 'M';  
 }
 
