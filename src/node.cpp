@@ -69,7 +69,7 @@ node* node::one_child_policy(int idx){
         exit(1);
     }
     if((this->children).size() == 1){
-        if(this->name != "Expression" && this->name != "VariableDeclarator" && this->name != "Assignment" && this->name != "Block" && this->name != "VariableDeclaratorId" && this->name != "ReturnStatement" && this->name != "ArrayCreationExpression"){
+        if(this->name != "Expression" && this->name != "VariableDeclarator" && this->name != "Assignment" && this->name != "Block" && this->name != "VariableDeclaratorId" && this->name != "ReturnStatement" && this->name != "ArrayCreationExpression" && this->name != "ForInit" && this->name != "ForUpdate"){
             this->kill_parent(idx);
             return this;
         }else{
@@ -2509,7 +2509,7 @@ void node::generate_tac(){
         string arg1 = this -> children[2] -> get_var_from_node();
         string arg2 = "J+" + to_string(this -> children[4] -> ta_codes.size() + 1);
         quad q("", arg1, op, arg2);
-        q.make_code_from_ifelse();
+        q.make_code_from_conditional();
 
         this -> ta_codes.push_back(q);      // add the jump statement
         this -> append_tac(this -> children[4]);
@@ -2521,7 +2521,7 @@ void node::generate_tac(){
         string arg1 = this -> children[2] -> get_var_from_node();
         string arg2 = "J+" + to_string(this -> children[4] -> ta_codes.size() + 2);
         quad q("", arg1, op, arg2);
-        q.make_code_from_ifelse();
+        q.make_code_from_conditional();
 
         this -> ta_codes.push_back(q);
         this -> append_tac(this -> children[4]);
@@ -2544,7 +2544,7 @@ void node::generate_tac(){
         string arg1 = this -> children[2] -> get_var_from_node();
         string arg2 = "J+" + to_string(stat_size + 2);
         quad q("", arg1, op, arg2);
-        q.make_code_from_ifelse();
+        q.make_code_from_conditional();
 
         this -> ta_codes.push_back(q);
         this -> append_tac(this -> children[4]);
@@ -2556,9 +2556,76 @@ void node::generate_tac(){
 
         this -> ta_codes.push_back(q2);
     }
-    else if(this -> name == "DoWhileStatement") {
+    else if(this -> name == "DoStatement") {
         int exp_size = this -> children[4] -> ta_codes.size();
         int stat_size = this -> children[1] -> ta_codes.size();
+
+        this -> append_tac(this -> children[1]);
+        this -> append_tac(this -> children[4]);
+        string op = "IFTRUE";
+        string arg1 = this -> children[4] -> get_var_from_node();
+        string arg2 = "J-" + to_string(stat_size + exp_size + 1);
+        quad q("", arg1, op, arg2);
+        q.make_code_from_conditional();
+
+        this -> ta_codes.push_back(q);
+    }
+    else if(this -> name == "BasicForStatement" || this -> name == "BasicForStatementNoShortIf"){
+        int init_size = 0;
+        int exp_size = 0;
+        int updt_size = 0;
+        
+        int last_child = (int)(this -> children.size()) - 1;
+        int stmt_size = this -> children[last_child] -> ta_codes . size();
+        
+        string op = "";
+        string arg1 = "", arg2 = "";
+
+        for(auto &(child) : this -> children){
+            if(child -> name == "ForInit"){
+                init_size = child -> ta_codes . size();
+                this -> append_tac(child -> ta_codes);
+            }
+            else if(child -> name == "Expression") {
+                exp_size = child -> ta_codes . size();
+            }
+            else if(child -> name == "ForUpdate") {
+                updt_size = child -> ta_codes . size();
+            }
+        }
+
+        for(auto &(child) : this -> children){
+            if(child -> name == "Expression"){
+                exp_size = child -> ta_codes . size();
+                this -> append_tac(child -> ta_codes);
+                op = "IFFALSE";
+                arg1 = child -> get_var_from_node();
+                arg2 = "J+" + to_string(updt_size + stmt_size + 2);
+                quad q("", arg1, op, arg2);
+                q.make_code_from_conditional();
+
+                this -> ta_codes . push_back(q);
+            }
+        }
+
+        this -> append_tac(this -> children[last_child] -> ta_codes);
+
+        for(auto &(child) : this -> children){
+            if(child -> name == "ForUpdate"){
+                updt_size = child -> ta_codes . size();
+                this -> append_tac(child -> ta_codes);
+                op = "GOTO";
+                arg1 = "J-" + to_string(updt_size + stmt_size + exp_size + 1);
+                quad q("", arg1, op, "");
+                q.make_code_from_goto();
+                
+                this -> ta_codes.push_back(q);
+            }
+        }
+        return;
+    }
+    else if(this -> name == "EnhancedForStatement") {
+
     }
     // @TODO Handle post fix pre fix inc/dec
     else if(this -> type == "OPERATOR") {
@@ -2633,7 +2700,8 @@ void node::print_tac(){
     int ins_count = 1;
     for(auto q : this -> ta_codes) {
         if(q.code != "") {
-            cout << ins_count << " " << q.code;
+            q.check_jump(ins_count);
+            cout << ins_count << ": " << q.code;
             ins_count++;
         }
     }

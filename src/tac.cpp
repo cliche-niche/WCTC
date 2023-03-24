@@ -17,10 +17,22 @@ void quad::make_code_from_assignment(){
     code += "\t\t" + result + " = " + arg1 + ";\n";
 }
 
-void quad::make_code_from_ifelse(){
-    code += "\t\t" + op + " " + arg1 + " GOTO " + arg2 + ";\n";
+void quad::make_code_from_conditional(){
+    jump = stoi(arg2.substr(1, arg2.size()-1));
+    code += "\t\t" + op + " " + arg1 + " GOTO ";
 }
 
 void quad::make_code_from_goto(){
-    code += "\t\t" + op + " " + arg1 + ";\n";
+    jump = stoi(arg1.substr(1, arg1.size()-1));
+    code += "\t\t" + op + " ";
+}
+
+void quad::check_jump(const int ins_line){
+    if(jump){
+        code += to_string(ins_line + jump) + ";\n"; 
+    }
+}
+
+void quad::make_code_beginfunc() {
+    
 }
