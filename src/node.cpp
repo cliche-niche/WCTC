@@ -2467,39 +2467,14 @@ string node::get_var_from_node(){
     return "__t" + to_string(this -> node_number);
 }
 
-string node::get_label_from_node(){
-    for(auto (&q) : this -> ta_codes){
-        if(q.label != ""){
-            return q.label;
-        }
-    }
-    return "__L" + to_string(this -> node_number);
-}
-
-string node::get_next_label(){
-    node* v = this;
-    while(v == v -> parent -> children[v -> parent -> children.size() - 1]){
-        v = v -> parent;
-    }
-    int idx = 0;
-    for(idx = 0; idx < v -> parent -> children.size(); idx++){
-        if(v -> parent -> children[idx] == v){
-            idx++;
-            return v -> parent -> children[idx] -> get_label_from_node();
-        }
-    }
-
-    return "__L";
-}
-
-void node::copy_tac(vector<quad> (&tacs)){
+void node::append_tac(vector<quad> (&tacs)){
     for(auto (&tac) : tacs){
         this -> ta_codes.push_back(tac);
     }
     tacs.clear();
 }
 
-void node::copy_tac(node* v){
+void node::append_tac(node* v){
     for(auto (&tac) : v -> ta_codes){
         this -> ta_codes.push_back(tac);
     }
@@ -2515,73 +2490,75 @@ void node::generate_tac(){
         // Do not need to handle these
         return;
     }
+
     else if(this -> name == "Expression") {
         string op = "=";
         string result = this -> get_var_from_node();
         string arg1 = this -> children[0] -> get_var_from_node();
-        string label = this -> get_label_from_node();
-        quad q(result, arg1, op, "", label);
+        quad q(result, arg1, op, "");
         q.make_code_from_assignment();
 
-        this -> copy_tac(this -> children[0]);
+        this -> append_tac(this -> children[0]);
         this -> ta_codes.push_back(q);
         return;
     }
-    // @TODO Handle IfThenStatement
     else if(this -> name == "IfThenStatement"){
-        string op = "IFTRUE";
+        this -> append_tac(this -> children[2]);
+
+        string op = "IFFALSE";
         string arg1 = this -> children[2] -> get_var_from_node();
-        string arg2 = this -> children[3] -> get_var_from_node();
-        string label = this -> get_label_from_node();
-
-        this -> copy_tac(this -> children[2]);
-        
-        quad q("", arg1, op, arg2, label);
+        string arg2 = "J+" + to_string(this -> children[4] -> ta_codes.size() + 1);
+        quad q("", arg1, op, arg2);
         q.make_code_from_ifelse();
-        this -> ta_codes.push_back(q);
-        
-        op = "IFFALSE";
-        arg2 = this -> parent -> get_next_label();
-        q = quad("", arg1, op, arg2, "");
-        q.make_code_from_ifelse();
-        this -> ta_codes.push_back(q);
-        
-        this -> copy_tac(this -> children[4]);
 
-        op = "GOTO";
-        arg1 = this -> parent -> get_next_label();
-        q = quad("", arg1, "GOTO", "", "");
-        q.make_code_from_goto();
-        this -> ta_codes.push_back(q);
+        this -> ta_codes.push_back(q);      // add the jump statement
+        this -> append_tac(this -> children[4]);
     }
     else if(this -> name == "IfThenElseStatement" || this -> name == "IfThenElseStatementNoShortIf") {
-        string op = "IFTRUE";
+        this -> append_tac(this -> children[2]);
+
+        string op = "IFFALSE";
         string arg1 = this -> children[2] -> get_var_from_node();
-        string arg2 = this -> children[4] -> get_label_from_node();
-        string label = this -> get_label_from_node();
-        
-        this -> copy_tac(this -> children[2]);
-
-        quad q("", arg1, op, arg2, label);
+        string arg2 = "J+" + to_string(this -> children[4] -> ta_codes.size() + 2);
+        quad q("", arg1, op, arg2);
         q.make_code_from_ifelse();
-        this -> ta_codes.push_back(q);
 
-        op = "IFFALSE";
-        arg2 = this -> children[6] -> get_label_from_node();
-        q = quad("", arg1, op, arg2, "");
-        q.make_code_from_ifelse();
         this -> ta_codes.push_back(q);
-
-        this -> copy_tac(this -> children[4]);
+        this -> append_tac(this -> children[4]);
 
         op = "GOTO";
-        arg1 = this -> parent -> get_next_label();
-        q = quad("", arg1, "GOTO", "", "");
-        q.make_code_from_goto();
-        this -> ta_codes.push_back(q);
+        arg1 = "J+" + to_string(this -> children[6] -> ta_codes.size() + 1);
+        quad q2("", arg1, op, "");
+        q2.make_code_from_goto();
 
-        this -> copy_tac(this -> children[6]);
-        return; 
+        this -> ta_codes.push_back(q2);
+        this -> append_tac(this -> children[6]); 
+    }
+    else if(this -> name == "WhileStatement" || this -> name == "WhileStatementNoShortIf") {
+        int exp_size = this -> children[2] -> ta_codes.size();
+        int stat_size = this -> children[4] -> ta_codes.size();
+
+        this -> append_tac(this -> children[2]);
+
+        string op = "IFFALSE";
+        string arg1 = this -> children[2] -> get_var_from_node();
+        string arg2 = "J+" + to_string(stat_size + 2);
+        quad q("", arg1, op, arg2);
+        q.make_code_from_ifelse();
+
+        this -> ta_codes.push_back(q);
+        this -> append_tac(this -> children[4]);
+
+        op = "GOTO";
+        arg1 = "J-" + to_string(stat_size + exp_size + 1);
+        quad q2("", arg1, op, "");
+        q2.make_code_from_goto();
+
+        this -> ta_codes.push_back(q2);
+    }
+    else if(this -> name == "DoWhileStatement") {
+        int exp_size = this -> children[4] -> ta_codes.size();
+        int stat_size = this -> children[1] -> ta_codes.size();
     }
     // @TODO Handle post fix pre fix inc/dec
     else if(this -> type == "OPERATOR") {
@@ -2590,12 +2567,11 @@ void node::generate_tac(){
             string result = this -> get_var_from_node();
             string arg1 = this -> children[0] -> get_var_from_node();
             string arg2 = this -> children[1] -> get_var_from_node();
-            string label = this -> get_label_from_node();
-            quad q(result, arg1, op, arg2, label);
+            quad q(result, arg1, op, arg2);
             q.make_code_from_binary();
     
-            this -> copy_tac(this -> children[0]);
-            this -> copy_tac(this -> children[1]);
+            this -> append_tac(this -> children[0]);
+            this -> append_tac(this -> children[1]);
             this -> ta_codes.push_back(q);
             return;
         }
@@ -2605,11 +2581,10 @@ void node::generate_tac(){
         else if(op == "~" || op == "!") {
             string result = this -> get_var_from_node();
             string arg1 = this -> children[0] -> get_var_from_node();
-            string label = this -> get_label_from_node();
-            quad q(result, arg1, op, "", label);
+            quad q(result, arg1, op, "");
             q.make_code_from_unary();
     
-            this -> copy_tac(this -> children[0]);
+            this -> append_tac(this -> children[0]);
             this -> ta_codes.push_back(q);
             return;
         }
@@ -2617,12 +2592,11 @@ void node::generate_tac(){
             // @TODO HANDLE MORE STRICTLY
             string arg1 = this -> children[0] -> get_var_from_node();
             string arg2 = this -> children[1] -> get_var_from_node();
-            string label = this -> get_label_from_node();
-            quad q(arg1, arg2, "", "", label);
+            quad q(arg1, arg2, "", "");
             q.make_code_from_assignment();
     
-            this -> copy_tac(this -> children[0]);
-            this -> copy_tac(this -> children[1]);
+            this -> append_tac(this -> children[0]);
+            this -> append_tac(this -> children[1]);
             this -> ta_codes.push_back(q);
             return;
         }
@@ -2630,18 +2604,17 @@ void node::generate_tac(){
             string result = this -> get_var_from_node();
             string arg1 = this -> children[0] -> get_var_from_node();
             string arg2 = this -> children[1] -> get_var_from_node();
-            string label = this -> get_label_from_node();
             op = op.substr(0, op.size() - 1);
     
-            this -> copy_tac(this -> children[0]);
-            this -> copy_tac(this -> children[1]);
+            this -> append_tac(this -> children[0]);
+            this -> append_tac(this -> children[1]);
             {
-                quad q(arg1, arg1, op, arg2, "");
+                quad q(arg1, arg1, op, arg2);
                 q.make_code_from_binary();
                 this -> ta_codes.push_back(q);
             }
             {
-                quad q(result, arg1, "", "", label);
+                quad q(result, arg1, "", "");
                 q.make_code_from_assignment();
                 this -> ta_codes.push_back(q);
             }
@@ -2649,29 +2622,19 @@ void node::generate_tac(){
         }
     }else{
         for(auto &(child) : this -> children){
-            this -> copy_tac(child);
+            this -> append_tac(child);
         }
     }
 }
 
 void node::print_tac(){
     // @TODO Need to determine order of printing for each node
-    
-    bool label = false;
-    for(auto q : this -> ta_codes){
-        label |= (q.label != "");
-    }
-    if(!label){
-        cout << this -> get_label_from_node() << ":\n";
-    }
-    for(auto q : this -> ta_codes){
-        if(q.code != ""){
-            cout << q.code;
+
+    int ins_count = 1;
+    for(auto q : this -> ta_codes) {
+        if(q.code != "") {
+            cout << ins_count << " " << q.code;
+            ins_count++;
         }
-    }
-
-
-    for(auto (&child) : this -> children){
-        child -> print_tac();
     }
 }

@@ -77,10 +77,9 @@ struct node{
     void obtain_function_parameters(vector<string> &params);        // helper function
 
     string get_var_from_node();
-    string get_label_from_node();
     string get_next_label();                                          // Useful for IfThenStatement, WhileStatement, ForStatement, etc.
-    void copy_tac(vector<quad> (&tacs));
-    void copy_tac(node* v);
+    void append_tac(vector<quad> (&tacs));
+    void append_tac(node* v);
     void generate_tac();
     void print_tac();
 };
