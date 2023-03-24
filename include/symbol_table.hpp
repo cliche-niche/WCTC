@@ -17,7 +17,7 @@ struct st_entry{
     ull line_no;
     ull stmt_no;
     ull size;
-    ull offset = 0; // what is this
+    ull offset = 0; // offset for field declarations 
     ull dimensions = 0;
     bool modifier_bv[10] = {0}; 
     bool initialized = false;   // FIELD DECLARATIONS are initialized with default values
@@ -77,6 +77,7 @@ struct symbol_table_func : public symbol_table {
 struct symbol_table_class : public symbol_table {
     // Stores member variables and a list of Function-Symbol tables for member functions 
     vector<symbol_table_func* > member_funcs;
+    int object_size = 0;
     bool modifier_bv[10] = {0};
     
     symbol_table_class(string class_name);

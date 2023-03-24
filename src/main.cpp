@@ -65,11 +65,15 @@ int main(int argc, char* argv[]) {
     root->create_scope_hierarchy();             // walk 1
 
     root->populate_default_constructors();      // walk 2
+    root->populate_class_sizes();
     root->populate_and_check();
 
     root->chill_traversal();                    // walk 3
 
-    main_table->make_csv_wrapper(st_file);    
+    // main_table->make_csv_wrapper(st_file);    
+
+    root->generate_tac();
+    root->print_tac();
     
     fclose(program);
 }

@@ -1,19 +1,41 @@
 #include <bits/stdc++.h>
 #include "../include/global_vars.hpp" // Includes node.hpp
+#include "../include/tac.hpp"
 using namespace std;
 
-int n_terms;
+quad::quad(string r, string a1, string o, string a2, string l) : result(r), arg1(a1), op(o), arg2(a2), label(l) {}
 
-void quad::build_tac(node* v){
-    if(v -> sym_tab_entry -> name == "Expression" && v -> children[0] -> type == "OPERATOR"){
-        node* tmp = v -> children[0];
-        string arg1 = tmp -> children[0] -> name, arg2 = tmp -> children[1] -> name;
-        string op = tmp -> name, res = "t" + n_terms;
-        n_terms++;
-        tacodes.push_back(quad(tmp->line_no, arg1, arg2, op, res));
+void quad::make_code_from_binary(){
+    if(label != ""){
+        code += label + ":\n";
     }
+    code += "\t\t" + result + " = " + arg1 + " " + op + " " + arg2 + ";\n";
+}
 
-    for(auto &child : v -> children) {
-        build_tac(child);
+void quad::make_code_from_unary(){
+    if(label != ""){
+        code += label + ":\n";
     }
+    code += "\t\t" + result + " = " + op + "(" + arg1 + ");\n";
+}
+
+void quad::make_code_from_assignment(){
+    if(label != ""){
+        code += label + ":\n";
+    }
+    code += "\t\t" + result + " = " + arg1 + ";\n";
+}
+
+void quad::make_code_from_ifelse(){
+    if(label != ""){
+        code += label + ":\n";
+    }
+    code += "\t\t" + op + " " + arg1 + " GOTO " + arg2 + ";\n";
+}
+
+void quad::make_code_from_goto(){
+    if(label != ""){
+        code += label + ":\n";
+    }
+    code += "\t\t" + op + " " + arg1 + ";\n";
 }

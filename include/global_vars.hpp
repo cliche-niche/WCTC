@@ -14,8 +14,6 @@ extern symbol_table_global *main_table;
 extern map<string, int> type_to_size;
 extern set<string> primitive_types;
 
-extern vector<quad> tacodes;
-
 enum MODIFIER {
     M_PUBLIC,
     M_PRIVATE,

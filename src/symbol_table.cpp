@@ -58,6 +58,9 @@ st_entry::st_entry(string name, st_entry (&other)){
 void st_entry::update_type(string type){
     this->type = type;
     this->size = type_to_size[type];
+    if(this -> size == 0) {
+        this -> size = 4;       // otherwise it's a reference and hence 4 bytes
+    }
 }
 
 void st_entry::update_modifiers(vector<st_entry*> modifiers){
@@ -355,15 +358,16 @@ void symbol_table_class::make_csv(string filename) {
 void symbol_table_global::make_csv(string filename) {
     ofstream out(filename, ios::app);
 
-    out << "Scope, Class Name, Type, Line Number\n";
+    out << "Scope, Class Name, Size, Line Number\n";
     for(auto &cls : this -> classes) {
-        out << "Global, " << cls -> name << ", type, " << this -> scope_start_line_no << "\n";  
+        out << "Global, " << cls -> name << ", " << cls -> object_size << ", " << this -> scope_start_line_no << "\n";  
     }
 
     out.close();
 }
 
 void symbol_table::make_csv_wrapper(string filename) {
+    string child_file;
     switch(this -> symbol_table_category) {
         case 'G': ((symbol_table_global *) this) -> make_csv(filename);
         break;
@@ -377,6 +381,12 @@ void symbol_table::make_csv_wrapper(string filename) {
     }
 
     for(auto &child : children_st) {
-        child -> make_csv_wrapper(filename);
+        child_file = filename.substr(0, filename.size()-4) + "_" + child -> name + ".csv";
+        if(child -> symbol_table_category == 'G' || child -> symbol_table_category == 'C' || child -> symbol_table_category == 'M'){
+            child -> make_csv_wrapper(child_file);
+        }
+        else{
+            child -> make_csv_wrapper(filename);
+        }
     }
 }

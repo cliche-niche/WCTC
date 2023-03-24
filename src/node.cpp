@@ -330,6 +330,19 @@ st_entry* node::get_and_look_up(string id) {
     return tmp;
 }
 
+string node::get_type_without_array(string type) {
+    string type_without_array = "";
+
+    for(int i = 0; i < type.size(); i++) {
+        if(type[i] == '[') {
+            break;
+        }
+        type_without_array += type[i];
+    }
+
+    return type_without_array;
+}
+
 // WALK 1
 
 void node::create_scope_hierarchy() {
@@ -372,7 +385,6 @@ void node::create_scope_hierarchy() {
                     cout << "ERROR: Constructor cannot have a return type. Found a return type at line number: " << this -> line_no << endl;
                     exit(1);
                 }
-
                 ((symbol_table_class*) temp_parent_st) -> add_func((symbol_table_func*) this -> sym_tab);
             }
             else if(this -> name == "ConstructorDeclaration") {
@@ -412,6 +424,7 @@ void node::create_scope_hierarchy() {
 }
 
 // BEFORE WALK 2 ADD DEFAULT CONSTRUCTORS TO ALL CLASSES AS NECESSARY
+// BEFORE WALK 2 CALCULATE ALL THE CLASS SIZES FROM FIELD MEMBERS
 void node::populate_default_constructors() {
     for(auto &cls : main_table -> classes) {
         bool flag = false;
@@ -428,6 +441,18 @@ void node::populate_default_constructors() {
         if(!(cls -> look_up_function(cls->name, empty_params))) {
             cls -> add_func(new symbol_table_func(cls->name, empty_formal_params, cls->name));
         }
+    }
+}
+
+void node::populate_class_sizes() {
+    for(auto &cls : main_table -> classes) {
+        int offset = 0;
+        for(auto &entry : cls -> entries) {
+            entry -> offset = offset;
+            offset += entry -> size;
+        }
+
+        cls -> object_size = offset;
     }
 }
 
@@ -506,7 +531,7 @@ void node::validate_expression() {
         else {    // Identifier is a variable
             st_entry* tmp = cnt_table -> look_up(this -> name); // look up the identifier in the symbol table
             if(!tmp) {
-                cout << "ERROR: hmmm Unknown identifier " << this -> name << " at line number " << this -> sym_tab_entry -> line_no << endl;
+                cout << "ERROR: Unknown identifier " << this -> name << " at line number " << this -> sym_tab_entry -> line_no << endl;
                 exit(1);
             }
             else {
@@ -634,15 +659,16 @@ void node::populate_and_check() {
         isField = (this -> parent) && (this -> parent -> name == "FieldDeclaration");   // check if the current variable is a field declaration
 
         bool flag = false;
-        if(primitive_types.find(this -> sym_tab_entry -> type) == primitive_types.end()) {
+        string type_without_array = get_type_without_array(this -> sym_tab_entry -> type);
+        if(primitive_types.find(type_without_array) == primitive_types.end()) {
             for(auto &cls : main_table -> classes) {
-                if(cls -> name == this -> sym_tab_entry -> type) {
+                if(cls -> name == type_without_array) {
                     flag = true;
                     break;
                 }
             }
             if(!flag) {
-                cout << "ERROR: Unknown object type " << this -> sym_tab_entry -> type << " at line number: " << this -> line_no << endl;
+                cout << "ERROR: Unknown object type " << type_without_array << " at line number: " << this -> line_no << endl;
                 exit(1);
             }
         }
@@ -1252,14 +1278,12 @@ void node::set_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "++" || op == "--") {
-        // EXPERIMENTAL
         cout << "ERROR: Operator \'" << op << "\' cannot operate on Literal. Line No.: " << child1 -> line_no << endl;
         exit(1);
     }
     else if(op == "~") {
         if(dt1 != "long" && dt1 != "int" && dt1 != "char") {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data type (" << dt1 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -2068,7 +2092,9 @@ void node::type_check() {
             cout << "ERROR: (" << this -> children[idx] <<") was not declared in this scope." << endl;
             exit(1); 
         }
-        cls = main_table -> look_up_class(entry -> type);
+        string type_without_array = get_type_without_array(entry -> type);
+        
+        cls = main_table -> look_up_class(type_without_array);
         
         for(idx = 0; idx + 3 <= this -> children.size(); idx += 2){
             if(idx + 3 < this -> children.size()){
@@ -2077,7 +2103,7 @@ void node::type_check() {
                     cout << "ERROR: (" << this -> children[idx] -> name << ") does not have (" << this -> children[idx + 2] -> name << ") as a member. Line number: " << this -> children[idx] -> line_no << endl;
                     exit(1);
                 }
-                cls = main_table -> look_up_class(entry -> type);
+                cls = main_table -> look_up_class(type_without_array);
                 if(!cls){
                     cout << "Unknown type error occurred due to ";
                     for(int i = 0; i <= idx + 2; i++){
@@ -2208,34 +2234,6 @@ void node::type_check() {
             }
             else if(child -> name == "Name") {
                 // Assuming that it is valid, just need to get the function's return type
-                // symbol_table_class* cls = NULL;
-                // st_entry* entry = NULL;
-                
-                // // Checking for membership of variables
-                // cls = main_table -> look_up_class(this -> children[0] -> datatype);
-
-                // if(cls == NULL){
-                //     cout << "ERROR: Unknown type error occurred due to (" << this -> children[0] -> name << ") at line number: " << this -> children[0] -> line_no << endl;
-                //     exit(0);
-                // }
-
-                // int idx = 0;
-                // for(idx = 0; idx + 3 < this -> children.size(); idx += 2){
-                //     entry = cls -> look_up(this -> children[idx + 2] -> name);
-
-                //     if(entry == NULL){
-                //         cout<<"ERROR: (" << this -> children[idx] -> name << ") has no member named (" << this -> children[idx + 2] -> name << ") at line number: " << this ->children[idx] -> line_no << endl;
-                //         exit(1);
-                //     }else{
-                //         cnt_class = main_table -> look_up_class(this -> children[idx + 2] -> datatype);
-
-                //         if(cnt_class == NULL){
-                //             cout << "ERROR: Unknown type error occurred due to (" << this -> children[0] -> name << ") at line number: " << this -> children[0] -> line_no << endl;
-                //             exit(0);
-                //         }
-                //     }
-                // }
-                // return;
 
                 class_table = main_table -> look_up_class(child -> children[0] -> datatype);
 
@@ -2252,7 +2250,8 @@ void node::type_check() {
                         cout << "ERROR: Could not find (" << child -> children[idx + 2] -> name << ") in (" << child -> children[idx] -> name << ")'s members. Line number: " << child -> children[idx] -> line_no << endl;
                         exit(1);
                     }else{
-                        class_table = main_table -> look_up_class(found_entry -> type);
+                        string type_without_array = get_type_without_array(found_entry -> type);
+                        class_table = main_table -> look_up_class(type_without_array);
                         if(class_table == NULL){
                             cout << "ERROR: Unknown Error occurred at line number: " << child -> children[idx] -> line_no << endl;
                             exit(1);
@@ -2443,7 +2442,6 @@ void node::type_check() {
         }
     }
     else {
-        // Handle default nodes @TODO Come up with a strategy to decide on the datatype of current node based on datatypes of children 
         for(auto (&child) : this -> children){
             if(child -> datatype != "UNDEFINED"){
                 this -> datatype = child -> datatype;
@@ -2458,10 +2456,222 @@ void node::copy(const node other){
     this -> terminal = other.terminal;
     this -> exp_applicable = other.exp_applicable;
     this -> type = other.type;
-    
-    // this -> sym_tab = other -> sym_tab;
-    // this -> sym_tab_entry = other -> sym_tab_entry;
-    // this -> entry_list = other -> entry_list;
+}
 
-    // parent and children set manually
+// WALK 4 : GENERATE 3AC
+
+string node::get_var_from_node(){
+    if(this -> type == "ID" || this -> type == "LITERAL"){
+        return this -> name;
+    }
+    return "__t" + to_string(this -> node_number);
+}
+
+string node::get_label_from_node(){
+    for(auto (&q) : this -> ta_codes){
+        if(q.label != ""){
+            return q.label;
+        }
+    }
+    return "__L" + to_string(this -> node_number);
+}
+
+string node::get_next_label(){
+    node* v = this;
+    while(v == v -> parent -> children[v -> parent -> children.size() - 1]){
+        v = v -> parent;
+    }
+    int idx = 0;
+    for(idx = 0; idx < v -> parent -> children.size(); idx++){
+        if(v -> parent -> children[idx] == v){
+            idx++;
+            return v -> parent -> children[idx] -> get_label_from_node();
+        }
+    }
+
+    return "__L";
+}
+
+void node::copy_tac(vector<quad> (&tacs)){
+    for(auto (&tac) : tacs){
+        this -> ta_codes.push_back(tac);
+    }
+    tacs.clear();
+}
+
+void node::copy_tac(node* v){
+    for(auto (&tac) : v -> ta_codes){
+        this -> ta_codes.push_back(tac);
+    }
+    v -> ta_codes.clear();
+}
+
+void node::generate_tac(){
+    for(auto (&child) : this -> children){
+        child -> generate_tac();
+    }
+
+    if(this -> type == "ID" || this -> type == "LITERAL") {
+        // Do not need to handle these
+        return;
+    }
+    else if(this -> name == "Expression") {
+        string op = "=";
+        string result = this -> get_var_from_node();
+        string arg1 = this -> children[0] -> get_var_from_node();
+        string label = this -> get_label_from_node();
+        quad q(result, arg1, op, "", label);
+        q.make_code_from_assignment();
+
+        this -> copy_tac(this -> children[0]);
+        this -> ta_codes.push_back(q);
+        return;
+    }
+    // @TODO Handle IfThenStatement
+    else if(this -> name == "IfThenStatement"){
+        string op = "IFTRUE";
+        string arg1 = this -> children[2] -> get_var_from_node();
+        string arg2 = this -> children[3] -> get_var_from_node();
+        string label = this -> get_label_from_node();
+
+        this -> copy_tac(this -> children[2]);
+        
+        quad q("", arg1, op, arg2, label);
+        q.make_code_from_ifelse();
+        this -> ta_codes.push_back(q);
+        
+        op = "IFFALSE";
+        arg2 = this -> parent -> get_next_label();
+        q = quad("", arg1, op, arg2, "");
+        q.make_code_from_ifelse();
+        this -> ta_codes.push_back(q);
+        
+        this -> copy_tac(this -> children[4]);
+
+        op = "GOTO";
+        arg1 = this -> parent -> get_next_label();
+        q = quad("", arg1, "GOTO", "", "");
+        q.make_code_from_goto();
+        this -> ta_codes.push_back(q);
+    }
+    else if(this -> name == "IfThenElseStatement" || this -> name == "IfThenElseStatementNoShortIf") {
+        string op = "IFTRUE";
+        string arg1 = this -> children[2] -> get_var_from_node();
+        string arg2 = this -> children[4] -> get_label_from_node();
+        string label = this -> get_label_from_node();
+        
+        this -> copy_tac(this -> children[2]);
+
+        quad q("", arg1, op, arg2, label);
+        q.make_code_from_ifelse();
+        this -> ta_codes.push_back(q);
+
+        op = "IFFALSE";
+        arg2 = this -> children[6] -> get_label_from_node();
+        q = quad("", arg1, op, arg2, "");
+        q.make_code_from_ifelse();
+        this -> ta_codes.push_back(q);
+
+        this -> copy_tac(this -> children[4]);
+
+        op = "GOTO";
+        arg1 = this -> parent -> get_next_label();
+        q = quad("", arg1, "GOTO", "", "");
+        q.make_code_from_goto();
+        this -> ta_codes.push_back(q);
+
+        this -> copy_tac(this -> children[6]);
+        return; 
+    }
+    // @TODO Handle post fix pre fix inc/dec
+    else if(this -> type == "OPERATOR") {
+        string op = this -> name;
+        if(op == "+" || op == "-" || op == "*" || op == "/" || op == "%" || op == "<<" || op == ">>" || op == ">>>" || op == ">" || op == "<" || op == ">=" || op == "<=" || op == "==" || op == "!=" || op == "&" || op == "|" || op == "^" || op == "&&" || op == "||") {
+            string result = this -> get_var_from_node();
+            string arg1 = this -> children[0] -> get_var_from_node();
+            string arg2 = this -> children[1] -> get_var_from_node();
+            string label = this -> get_label_from_node();
+            quad q(result, arg1, op, arg2, label);
+            q.make_code_from_binary();
+    
+            this -> copy_tac(this -> children[0]);
+            this -> copy_tac(this -> children[1]);
+            this -> ta_codes.push_back(q);
+            return;
+        }
+        else if(op == "++" || op == "--") {     // Don't need to handle these
+            return;
+        }
+        else if(op == "~" || op == "!") {
+            string result = this -> get_var_from_node();
+            string arg1 = this -> children[0] -> get_var_from_node();
+            string label = this -> get_label_from_node();
+            quad q(result, arg1, op, "", label);
+            q.make_code_from_unary();
+    
+            this -> copy_tac(this -> children[0]);
+            this -> ta_codes.push_back(q);
+            return;
+        }
+        else if(op == "=") {
+            // @TODO HANDLE MORE STRICTLY
+            string arg1 = this -> children[0] -> get_var_from_node();
+            string arg2 = this -> children[1] -> get_var_from_node();
+            string label = this -> get_label_from_node();
+            quad q(arg1, arg2, "", "", label);
+            q.make_code_from_assignment();
+    
+            this -> copy_tac(this -> children[0]);
+            this -> copy_tac(this -> children[1]);
+            this -> ta_codes.push_back(q);
+            return;
+        }
+        else if(op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "%=" || op == "<<=" || op == ">>=" || op == ">>>=" || op == "&=" || op == "^=" || op == "|=") {
+            string result = this -> get_var_from_node();
+            string arg1 = this -> children[0] -> get_var_from_node();
+            string arg2 = this -> children[1] -> get_var_from_node();
+            string label = this -> get_label_from_node();
+            op = op.substr(0, op.size() - 1);
+    
+            this -> copy_tac(this -> children[0]);
+            this -> copy_tac(this -> children[1]);
+            {
+                quad q(arg1, arg1, op, arg2, "");
+                q.make_code_from_binary();
+                this -> ta_codes.push_back(q);
+            }
+            {
+                quad q(result, arg1, "", "", label);
+                q.make_code_from_assignment();
+                this -> ta_codes.push_back(q);
+            }
+            return;
+        }
+    }else{
+        for(auto &(child) : this -> children){
+            this -> copy_tac(child);
+        }
+    }
+}
+
+void node::print_tac(){
+    // @TODO Need to determine order of printing for each node
+    
+    bool label = false;
+    for(auto q : this -> ta_codes){
+        label |= (q.label != "");
+    }
+    if(!label){
+        cout << this -> get_label_from_node() << ":\n";
+    }
+    for(auto q : this -> ta_codes){
+        if(q.code != ""){
+            cout << q.code;
+        }
+    }
+
+
+    for(auto (&child) : this -> children){
+        child -> print_tac();
+    }
 }

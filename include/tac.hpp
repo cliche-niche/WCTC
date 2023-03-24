@@ -2,25 +2,24 @@
 #define TAC_HPP
 
 #include <bits/stdc++.h>
-#include "symbol_table.hpp"
-#include "node.hpp"
 
 using namespace std;
 
-extern symbol_table_global *main_table;
-
 struct quad{
-    int line_no;
     string op;
     string arg1;
     string arg2;
     string result;
-    string stmt = to_string(line_no);
+    string label = "";
+    string code = "";        // Construct from each node
 
     quad();
-    quad(int line_no, string op, string arg1, string arg2, string result);  // res = arg1 op arg2
-
-    void build_tac(node *v);
+    quad(string r, string a1, string o, string a2, string l="");  // res = arg1 op arg2
+    void make_code_from_binary();           // r = a1 op a2;
+    void make_code_from_unary();            // r = op a1;
+    void make_code_from_assignment();       // r = a1;
+    void make_code_from_ifelse();           // IFFALSE a1 GOTO a2
+    void make_code_from_goto();             // GOTO a1
 };
 
 

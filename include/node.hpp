@@ -1,8 +1,9 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
-#include "symbol_table.hpp"
 #include <bits/stdc++.h>
+#include "symbol_table.hpp"
+#include "tac.hpp"
 using namespace std;
 
 struct node{
@@ -15,6 +16,7 @@ struct node{
     string datatype = "UNDEFINED";      // Used for typechecking
     string typecast_to = "UNNEEDED";    // If the node needs to be type-casted,
     int line_no = 0;                    // Stores where the node body **ENDS**, i.e., where the production rule is completed
+    vector<quad> ta_codes;
 
     long long int exp_int_val = 0;
     double exp_dob_val = 0.0;
@@ -63,13 +65,24 @@ struct node{
     void create_scope_hierarchy();
 
     void populate_default_constructors();
+    void populate_class_sizes();
+
+    string get_type_without_array(string type);
 
     void validate_expression();
     void populate_and_check();
     void type_check();
-    void chill_traversal(); // just a temporary function for type checking
-    vector<string> get_function_parameters();   // returns function parameters and should only be called from BracketArgumentList node 
-    void obtain_function_parameters(vector<string> &params);      // helper function
+    void chill_traversal();                                         // just a temporary function for type checking
+    vector<string> get_function_parameters();                       // returns function parameters and should only be called from BracketArgumentList node 
+    void obtain_function_parameters(vector<string> &params);        // helper function
+
+    string get_var_from_node();
+    string get_label_from_node();
+    string get_next_label();                                          // Useful for IfThenStatement, WhileStatement, ForStatement, etc.
+    void copy_tac(vector<quad> (&tacs));
+    void copy_tac(node* v);
+    void generate_tac();
+    void print_tac();
 };
 
 #endif
