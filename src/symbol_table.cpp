@@ -94,6 +94,11 @@ void symbol_table::add_scope(symbol_table* st){
 }
 
 void symbol_table::add_entry(st_entry* new_entry){
+    for(int i = 0; i < new_entry -> dimensions; i++) {
+        new_entry -> type += "[]";
+    }
+    new_entry -> update_type(new_entry -> type);
+
     for(auto (&entry) : entries){
         if(new_entry->name == entry->name){
             cout << "ERROR: Variable " << new_entry->name << " is already declared at line number " << entry->line_no << " in the same scope.\n";
@@ -117,6 +122,8 @@ void symbol_table::delete_entry(string name){
 }
 
 st_entry* symbol_table::look_up(string name){
+    //! populate the global symbol table entry list with class names so that lookup here is possible !//
+
     for(ull idx = 0; idx < entries.size(); idx++){
         if(entries[idx]->name == name){
             return entries[idx];
@@ -132,12 +139,26 @@ st_entry* symbol_table::look_up(string name){
 
 symbol_table_func::symbol_table_func(string func_name, vector<st_entry* > (&params), string return_type){
     this->name = func_name;
+
+    for(auto &param : params) {
+        for(int i = 0; i < param -> dimensions; i++) {
+            param -> type += "[]";
+        }
+
+        param -> update_type(param -> type); 
+    }
+
     this->params = params;
     this->return_type = return_type;
     this->symbol_table_category = 'M';  
 }
 
 void symbol_table_func::add_entry(st_entry* new_entry) {
+    for(int i = 0; i < new_entry -> dimensions; i++) {
+        new_entry -> type += "[]";
+    }
+    new_entry -> update_type(new_entry -> type);
+
     for(const auto (&param) : params) {
         if(new_entry->name == param->name) {
             cout << "ERROR: Variable " << new_entry -> name << " is already declared at line number " << param->line_no << " as a formal parameter.\n";
@@ -175,8 +196,7 @@ bool symbol_table_func::operator == (const symbol_table_func& other){
     if(this->name == other.name){
         if((this->params).size() == other.params.size()){
             for(int idx = 0; idx < other.params.size(); idx++){
-                // cout << this -> name << " " << other.name << endl;
-                if((this->params)[idx]->type != other.params[idx]->type || (this->params)[idx]->dimensions != other.params[idx]->dimensions){
+                if((this->params)[idx]->type != other.params[idx]->type){
                     return false;
                 }
             }
@@ -261,6 +281,9 @@ void symbol_table_global::add_entry(symbol_table_class* new_cls) {
         }
     }
 
+    st_entry *tmp = new st_entry(new_cls -> name, new_cls -> scope_start_line_no, 0, new_cls -> name);
+    tmp -> initialized = true;
+    this -> entries . push_back(tmp);  // populate here as well for other lookups
     this -> classes . push_back(new_cls);
 }
 

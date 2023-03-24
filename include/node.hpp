@@ -59,6 +59,7 @@ struct node{
     symbol_table* get_symbol_table();
     symbol_table_class* get_symbol_table_class();
     st_entry* get_and_look_up();
+    st_entry* get_and_look_up(string id);
     void create_scope_hierarchy();
 
     void populate_default_constructors();

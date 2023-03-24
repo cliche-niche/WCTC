@@ -316,6 +316,20 @@ st_entry* node::get_and_look_up() {
     return tmp;
 }
 
+st_entry* node::get_and_look_up(string id) {
+    // Get symbol table entry corresponding to an ID
+    symbol_table* cnt_table = this -> get_symbol_table();
+
+    if(!cnt_table) {
+        cout << id << endl;
+        cout << "Unknown error, symbol table not found! Aborting..." << endl;
+        exit(1);
+    }
+
+    st_entry* tmp = cnt_table -> look_up(id);
+    return tmp;
+}
+
 // WALK 1
 
 void node::create_scope_hierarchy() {
@@ -492,7 +506,7 @@ void node::validate_expression() {
         else {    // Identifier is a variable
             st_entry* tmp = cnt_table -> look_up(this -> name); // look up the identifier in the symbol table
             if(!tmp) {
-                cout << "ERROR: hmm Unknown identifier " << this -> name << " at line number " << this -> sym_tab_entry -> line_no << endl;
+                cout << "ERROR: hmmm Unknown identifier " << this -> name << " at line number " << this -> sym_tab_entry -> line_no << endl;
                 exit(1);
             }
             else {
@@ -2040,9 +2054,6 @@ void node::type_check() {
 
         if(tmp) {
             this -> datatype = tmp -> type;
-            for(int i = 0; i < tmp -> dimensions; i++) {
-                this -> datatype += "[]";
-            }
         }
     }
     else if(this -> name == "Name") {
@@ -2118,6 +2129,19 @@ void node::type_check() {
         }
         else {
             this -> datatype = tmp.substr(0, tmp.size() - 2);
+        }
+    }
+    else if(this -> name == "ArrayCreationExpression") {
+        if(this -> children[1]) {
+            this -> datatype = this -> children[1] -> name;
+        }
+        else {
+            cout << "Unknown error, ArrayCreationExpression child not found!" << endl;
+            exit(1);
+        }
+
+        for(int i = 0; i < this -> sym_tab_entry -> dimensions; i++) {
+            this -> datatype += "[]";
         }
     }
     else if(this -> name == "ReturnStatement") {   // keyword_return

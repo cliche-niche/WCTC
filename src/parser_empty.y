@@ -555,7 +555,13 @@
             ($$ -> sym_tab_entry) -> update_modifiers($1 -> entry_list);
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
-            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> type);
+
+            string augmentedReturnType = $$ -> sym_tab_entry -> type;
+            for(int i = 0; i < $$ -> sym_tab_entry -> dimensions; i++) {
+                augmentedReturnType += "[]";
+            }
+
+            $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, augmentedReturnType);
             $$ -> sym_tab -> scope_start_line_no = $2 -> line_no;
             ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
 
@@ -572,6 +578,12 @@
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
             $$ -> entry_list = $1 -> entry_list;
             $1 -> entry_list . clear();
+
+            string augmentedReturnType = $$ -> sym_tab_entry -> type;
+            for(int i = 0; i < $$ -> sym_tab_entry -> dimensions; i++) {
+                augmentedReturnType += "[]";
+            }
+
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> type);
             $$ -> sym_tab -> scope_start_line_no = $1 -> line_no;
 
