@@ -561,6 +561,9 @@
                 augmentedReturnType += "[]";
             }
 
+            for(auto &entry : $$ -> entry_list) {
+                entry -> initialized = true;
+            }
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, augmentedReturnType);
             $$ -> sym_tab -> scope_start_line_no = $2 -> line_no;
             ((symbol_table_func*) $$ -> sym_tab) -> update_modifiers($1 -> entry_list);
@@ -584,6 +587,9 @@
                 augmentedReturnType += "[]";
             }
 
+            for(auto &entry : $$ -> entry_list) {
+                entry -> initialized = true;
+            }
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> type);
             $$ -> sym_tab -> scope_start_line_no = $1 -> line_no;
 
@@ -734,6 +740,9 @@
             $$ -> sym_tab_entry -> update_modifiers($1 -> entry_list);
             $$ -> entry_list = $2 -> entry_list;
             $2 -> entry_list . clear();
+            for(auto &entry : $$ -> entry_list) {
+                entry -> initialized = true;
+            }
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> name);   // return type of constructors is the class object
             $$ -> sym_tab -> scope_start_line_no = $2 -> line_no;
 
@@ -743,6 +752,9 @@
             $$ -> sym_tab_entry = $1 -> sym_tab_entry;
             $$ -> entry_list = $1 -> entry_list;
             $1 -> entry_list . clear();
+            for(auto &entry : $$ -> entry_list) {
+                entry -> initialized = true;
+            }
             $$ -> sym_tab = new symbol_table_func($$ -> sym_tab_entry -> name, $$ -> entry_list, $$ -> sym_tab_entry -> name);   // return type of constructors is the class object
             $$ -> sym_tab -> scope_start_line_no = $1 -> line_no;
         }
@@ -1857,7 +1869,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
-        }                          
+        }
         | PostfixExpression OPERATOR_decrement { 
             $$ -> datatype = $1 -> datatype;
             $$ -> exp_dob_val = $1 -> exp_dob_val;

@@ -1,22 +1,11 @@
-class ohbhai {
-    A a;
-    void f(){
-        // int a = 0;
+class test_10 {
+    int A[] = new int[10];
 
-        // do {
-        //     a += 10;
-        //     a = 19;
-        // } while (a < 20);
-
+    void func() {
         int x = 0;
-        for(x = 10; x < 20; x ++){
-            x = 53;
+        for(int i = 0; i < 10; i++) {
+            x += A[i];
         }
-
-        x = 25 + a.y;
+        // System.out.println(x);
     }
-}
-
-class A{
-    int y;
 }

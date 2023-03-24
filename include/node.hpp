@@ -17,6 +17,7 @@ struct node{
     string typecast_to = "UNNEEDED";    // If the node needs to be type-casted,
     int line_no = 0;                    // Stores where the node body **ENDS**, i.e., where the production rule is completed
     vector<quad> ta_codes;
+    bool type_checked = false;          // Tracks if type_checked is called or not
 
     long long int exp_int_val = 0;
     double exp_dob_val = 0.0;
@@ -80,8 +81,10 @@ struct node{
     string get_next_label();                                          // Useful for IfThenStatement, WhileStatement, ForStatement, etc.
     void append_tac(vector<quad> (&tacs));
     void append_tac(node* v);
+    vector<string> get_func_args_tac();
     void generate_tac();
-    void print_tac();
+
+    void print_tac(string filename);
 };
 
 #endif

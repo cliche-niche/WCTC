@@ -18,10 +18,15 @@ struct quad{
     void make_code_from_binary();                       // r = a1 op a2;
     void make_code_from_unary();                        // r = op a1;
     void make_code_from_assignment();                   // r = a1;
-    void make_code_from_conditional();                  // IFTRUE/FALSE a1 GOTO a2
-    void make_code_from_goto();                         // GOTO a1
-    void make_code_beginfunc();                         // BEGINFUNC x
-    void make_code_endfunc();                           // ENDFUNC
+    void make_code_from_conditional();                  // IFTRUE/FALSE a1 GOTO a2;
+    void make_code_from_cast();                         // r = (a2) a1;
+    void make_code_from_deref();                        // r = *(a1);
+    void make_code_from_func_call();                    // push/popparam a1;
+    void make_code_from_goto();                         // GOTO a1;
+    void make_code_from_param();                        // push/popparam a1;
+    void make_code_begin_func();                        // begin_func x;
+    void make_code_end_func();                          // end_func;
+    void make_code_from_return();                       // return a1;
     void check_jump(const int);
 };
 

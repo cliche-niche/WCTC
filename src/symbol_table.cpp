@@ -16,11 +16,12 @@ map<string, int> type_to_size = {
         {"float", 4},
         {"double", 8},
         {"boolean", 1},
-        {"char", 2}
+        {"char", 2},
+        {"String", 4}
 };
 
 set<string> primitive_types = {
-    "byte", "short", "int", "long", "float", "double", "boolean", "char", "null"
+    "byte", "short", "int", "long", "float", "double", "boolean", "char", "String", "null"
 };
 
 // enum MODIFIER {
@@ -126,7 +127,15 @@ void symbol_table::delete_entry(string name){
 
 st_entry* symbol_table::look_up(string name){
     //! populate the global symbol table entry list with class names so that lookup here is possible !//
-
+    
+    if(this -> symbol_table_category == 'M') {
+        symbol_table_func* tmp = (symbol_table_func *) this;
+        for(ull idx = 0; idx < tmp -> params.size(); idx++) {
+            if(tmp -> params[idx]-> name == name) {
+                return tmp -> params[idx];
+            }
+        } 
+    }
     for(ull idx = 0; idx < entries.size(); idx++){
         if(entries[idx]->name == name){
             return entries[idx];
@@ -389,4 +398,49 @@ void symbol_table::make_csv_wrapper(string filename) {
             child -> make_csv_wrapper(filename);
         }
     }
+}
+
+void symbol_table_global::add_SysOutPln(){
+    // MAKE PrintStream CLASS
+    symbol_table_class *prnt;
+    symbol_table_func *pln;
+    prnt = new symbol_table_class("PrintStream");
+
+    vector<st_entry *> empty_params;
+    vector<st_entry *> only_string;
+    only_string.push_back(new st_entry("message", -1, -1, "String"));
+  
+    pln = new symbol_table_func("println", empty_params, "void");
+    prnt->add_func(pln);
+
+    pln = new symbol_table_func("println", only_string, "void");
+    prnt->add_func(pln);
+        
+    pln = new symbol_table_func("print", empty_params, "void");
+    prnt->add_func(pln);
+
+    pln = new symbol_table_func("print", only_string, "void");
+    prnt->add_func(pln);
+
+    // END PrintStream class
+    
+    // MAKE System class
+    symbol_table_class *syst;
+    st_entry *out;
+    syst = new symbol_table_class("System");
+    out = new st_entry("out", -1, -1, "PrintStream");
+    syst -> entries.push_back(out);
+    // END System class
+
+    // ADD Dummy to simulate System
+    symbol_table_class *sup;
+    st_entry* dum;
+    sup = new symbol_table_class("__SUPER__SYSTEM__");
+    dum = new st_entry("System", -1, -1, "System");
+    sup -> entries.push_back(dum);
+
+    // ADD to Global Table
+    main_table -> add_entry(syst);
+    main_table -> add_entry(prnt);
+    main_table -> add_entry(sup);
 }

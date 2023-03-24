@@ -99,6 +99,7 @@ struct symbol_table_global : public symbol_table {
     symbol_table_class* look_up_class(string &cls_name);
 
     void make_csv(string filename);
+    void add_SysOutPln();
 };
 
 #endif 
