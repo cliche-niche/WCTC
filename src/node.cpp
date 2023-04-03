@@ -287,6 +287,35 @@ symbol_table* node::get_symbol_table() {
     return temp_node -> sym_tab;
 }
 
+symbol_table* node::get_scope() {
+    node* tmp = this;
+    while(tmp && !tmp -> sym_tab) {
+        tmp = tmp -> parent;
+    }
+
+    if(!tmp) {
+        return NULL;
+    }
+    else {
+        return tmp -> sym_tab;
+    }
+}
+
+bool node::check_static() {
+    symbol_table* scope = this -> get_scope();
+    while(scope && scope -> parent_st && scope -> symbol_table_category != 'M') {
+        scope = scope -> parent_st;
+    }
+    if(scope == main_table) {       // if we go to the global table, exit
+        return false;
+    }
+    if(scope){
+        return ((symbol_table_func*) scope)->modifier_bv[M_STATIC];
+    }
+
+    return false;
+}
+
 symbol_table_class* node::get_symbol_table_class() {
     symbol_table* cnt = this -> get_symbol_table();
 
@@ -655,19 +684,15 @@ void node::populate_and_check() {
             cout << "Unknown error, symbol table not found! Aborting..." << endl;
             exit(1);
         }
-        
+
         isField = (this -> get_symbol_table() -> symbol_table_category == 'C');
 
         bool flag = false;
         string type_without_array = get_type_without_array(this -> sym_tab_entry -> type);
         if(primitive_types.find(type_without_array) == primitive_types.end()) {
-            for(auto &cls : main_table -> classes) {
-                if(cls -> name == type_without_array) {
-                    flag = true;
-                    break;
-                }
-            }
-            if(!flag) {
+            symbol_table_class* tmp_class = main_table -> look_up_class(type_without_array);    // try to find object type
+            
+            if(!tmp_class) {
                 cout << "ERROR: Unknown object type " << type_without_array << " at line number: " << this -> line_no << endl;
                 exit(1);
             }
@@ -708,6 +733,42 @@ void node::populate_and_check() {
 
     for(auto &child : this -> children) {
         child -> populate_and_check();
+    }
+}
+
+// WALK 2.5 - Modifier Checking
+
+void node::modifier_check() {
+    if(this -> name == "Name") {
+        // @TODO
+    }
+
+    else if(this -> type == "ID") {     // reference field variable from a static function
+        st_entry* tmp = this -> get_and_look_up(this -> name);
+
+        if(tmp && tmp -> table -> symbol_table_category == 'C' && !(tmp -> modifier_bv[M_STATIC]) && this -> check_static()) {
+            cout << "ERROR: Cannot reference field variable (" << this -> name << ") from static function. Line number " << this -> line_no << endl;  
+            exit(1);
+        }
+    }
+
+    else if(this -> name == "MethodInvocation") {
+        vector<string> params = this -> children[(int)(this -> children.size()) - 1] -> get_function_parameters();
+        symbol_table_class* cnt_class = this -> get_symbol_table_class();
+        if(!cnt_class){
+            cout << "Unknown error, symbol table not found! Aborting..." << endl;
+            exit(1);
+        }
+        symbol_table_func* cnt_func = cnt_class -> look_up_function(this -> children[0] -> name, params);
+
+        if(cnt_func && !(cnt_func -> modifier_bv[M_STATIC]) && this -> check_static()) {
+            cout << "ERROR: Cannot reference non-static function (" << this -> children[0] -> name << ") from static function. Line number: " << this -> line_no << endl;  
+            exit(1);
+        }
+    }
+
+    for(auto &child : this -> children) {
+        child -> modifier_check();
     }
 }
 
@@ -1978,7 +2039,9 @@ void node::calc_datatype(node* child1, node* child2, string op){
                 cout << "ERROR: Lossy conversion from (" << dt2 << ") to (" << dt1 << ") at line number: " << this -> line_no << endl;
                 exit(1); 
             }
-            child2 -> typecast_to = child1 -> datatype;
+            if(child1 -> datatype != child2 -> datatype) {
+                child2 -> typecast_to = child1 -> datatype;
+            }
         }
         else {
             if(dt1 != dt2) {
@@ -1989,47 +2052,69 @@ void node::calc_datatype(node* child1, node* child2, string op){
     }
     else if(op == "+=") {
         this -> calc_datatype(child1, child2, "+");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == "-=") {
         this -> calc_datatype(child1, child2, "-");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == "*=") {
         this -> calc_datatype(child1, child2, "*");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == "/=") {
         this -> calc_datatype(child1, child2, "/");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == "%=") {
         this -> calc_datatype(child1, child2, "%");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == "<<=") {
         this -> calc_datatype(child1, child2, "<<");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == ">>=") {
         this -> calc_datatype(child1, child2, ">>");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == ">>>=") {
         this -> calc_datatype(child1, child2, ">>>");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }   
     else if(op == "&=") {
         this -> calc_datatype(child1, child2, "&");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == "^=") {
         this -> calc_datatype(child1, child2, "^");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
     else if(op == "|=") {
         this -> calc_datatype(child1, child2, "|");
-        child2 -> typecast_to = child1 -> datatype;
+        if(child1 -> datatype != child2 -> datatype) {
+            child2 -> typecast_to = child1 -> datatype;
+        }
     }
 }
 
@@ -2144,6 +2229,31 @@ void node::type_check() {
         this -> datatype = this -> children[idx + 2] -> datatype;
         return;
     }
+    // else if(this -> name == "FieldAccess") {        // invocations of the form this.var
+    //     for(auto &child : this -> children) {
+    //         if(child -> type == "ID") {              // get the field name
+    //             st_entry* cnt_entry = this -> get_and_look_up(child -> name);
+    //             symbol_table* cnt_table = cnt_entry -> table;
+
+    //             while(cnt_table && cnt_table -> symbol_table_category != 'C') {
+    //                 cnt_table = cnt_table -> parent_st;
+    //             }
+    //             if(!cnt_table) {
+    //                 cout << "Unknown Error! FieldAccess not inside a class";
+    //                 exit(1);
+    //             } 
+
+    //             symbol_table_class* cnt_class = (symbol_table_class*) cnt_table;
+    //             bool flag = false;
+    //             for(auto &entry : cnt_class -> entries) {
+    //                 if(entry -> name == child -> name) {
+    //                     flag = true;
+    //                     // cnt_entry -> 
+    //                 }
+    //             }
+    //         } 
+    //     }
+    // }
     else if(this -> name == "ArrayAccess") {        // checking array accesses
         for(auto &child : this -> children) {
             if(child -> name == "Expression") {
@@ -2211,12 +2321,12 @@ void node::type_check() {
         
         if(this -> children.size() == 1){
             if(return_type != "void") {
-                cout << "ERROR: Non-void function has return type (" << return_type << ") at line number: " << this -> children[0] -> line_no << endl;
+                cout << "ERROR: Non-void function returns nothing at line number: " << this -> children[0] -> line_no << endl;
                 exit(1);
             }
         }else if(this -> children.size() == 2){
             if(return_type != this -> children[1] -> datatype){
-                cout << "ERROR: Function (" << tmp->name << ") returns (" << return_type << ") type at line number (" << this -> children[1] -> line_no << "), but expected (" << this -> children[1] -> datatype << ")" << endl;
+                cout << "ERROR: Function (" << tmp->name << ") returns (" << this -> children[1] -> datatype << ") type at line number (" << this -> children[1] -> line_no << "), but expected (" << return_type << ")" << endl;
                 exit(1);
             }
         }
@@ -2520,7 +2630,7 @@ string node::get_var_from_node(){
         return this -> name;
     }
     
-    return "__t" + to_string(this -> node_number);
+    return "##t" + to_string(this -> node_number);
 }
 
 void node::append_tac(vector<quad> (&tacs)){
@@ -2588,6 +2698,26 @@ void node::generate_tac(){
             this -> ta_codes.push_back(q);
         }
         return;
+    }
+    else if(this -> name == "PrimaryNoNewArray") {
+        if(this -> children.size() == 1 && this -> children[0] -> type == "LITERAL"){
+            string op = "=";
+            string result = this -> get_var_from_node();
+            string arg1 = this -> children[0] -> get_var_from_node();
+            quad q(result, arg1, op, "");
+            q.make_code_from_assignment();
+            this -> ta_codes.push_back(q);
+        }
+        else if(this -> children.size() == 3 && this -> children[1] -> name == "Expression"){
+            this -> append_tac(this -> children[1]);
+
+            string op = "=";
+            string result = this -> get_var_from_node();
+            string arg1 = this -> children[1] -> get_var_from_node();
+            quad q(result, arg1, op, "");
+            q.make_code_from_assignment();
+            this -> ta_codes.push_back(q);
+        }
     }
     else if(this -> name == "IfThenStatement"){
         this -> append_tac(this -> children[2]);
@@ -2755,14 +2885,28 @@ void node::generate_tac(){
             this -> ta_codes.push_back(q);
         }
     }
-    else if(this -> name == "ArrayAccess"){        
+    else if(this -> name == "ArrayAccess"){
+        for(auto (&child) : this -> children){
+            this -> append_tac(child);
+        }
+        
         string res = this -> get_var_from_node();
         string arg1 = this -> children[2] -> get_var_from_node();
         string op = "*";
         string arg2;
         
         quad q("", "", "", "");
-        q = quad(res, arg1, op, "4");
+
+        //get the array access datatype
+        int datatype_size = 0;
+        if(primitive_types.find(this -> datatype) != primitive_types.end()) {
+            datatype_size = type_to_size[this -> datatype];
+        }
+        else {
+            datatype_size = address_size;
+        }
+        
+        q = quad(res, arg1, op, to_string(datatype_size));
         q.make_code_from_binary();
         this -> ta_codes.push_back(q);
         
@@ -2773,18 +2917,20 @@ void node::generate_tac(){
         q.make_code_from_binary();
         this -> ta_codes.push_back(q);
 
-        arg1 = res;
-        op = "*()";
-        q = quad(res, arg1, op, "");
-        q.make_code_from_deref();
-        this -> ta_codes.push_back(q);
+        if(this -> parent -> name != "="){
+            arg1 = res;
+            op = "*()";
+            q = quad(res, arg1, op, "");
+            q.make_code_from_deref();
+            this -> ta_codes.push_back(q);
+        }
 
         this -> append_tac(this -> children[0] -> ta_codes);
         return;
     }
     else if(this -> name == "MethodInvocation") {
-        vector<string> args = this -> children[1] -> get_func_args_tac();
-        this -> append_tac(this -> children[1]);
+        vector<string> args = this -> children[this -> children.size() - 1] -> get_func_args_tac();
+        this -> append_tac(this -> children[this -> children.size() - 1]);
         quad q("", "", "", "");
         
         for(auto arg : args){
@@ -2792,6 +2938,15 @@ void node::generate_tac(){
             q.make_code_from_param();
             this -> ta_codes.push_back(q);
         }
+        
+        /*
+        int old_pointer_space = address_size;
+        int return_type_space = address_size + this -> sym_tab_entry -> size;
+        int total_frame_space = old_pointer_space + return_type_space + ((symbol_table_func*)(this -> sym_tab) -> get_localspace_size());
+        
+        q = quad("", "-" + to_string(total_frame_space), "", "");
+        q.make_code_shift_pointer();
+        this -> ta_codes.push_back(q);
         
         string arg = this -> children[0] -> get_var_from_node();
         q = quad("", arg, "call_func", "");
@@ -2804,21 +2959,28 @@ void node::generate_tac(){
             q.make_code_from_param();
             this -> ta_codes.push_back(q);
         }
+
+        q = quad("", "+" + to_string(total_frame_space), "", "");
+        q.make_code_shift_pointer();
+        this -> ta_codes.push_back(q);
+        */
+
     }    
-    else if(this -> name == "MethodDeclaration" || this -> name == "ConstructorDeclaration") {
-        quad q("", "xxx", "", "");
+    else if(this -> name == "MethodDeclaration" || this -> name == "ConstructorDeclaration") {   
+
+        quad q("", "", "", "");
         q.make_code_begin_func();
         this -> ta_codes.push_back(q);
         
         this -> append_tac(this -> children[(int)this -> children.size() - 1]);
-
+        
         q.make_code_end_func();
         this -> ta_codes.push_back(q);
     }
     else if(this -> name == "VariableDeclarator") {
         if(this -> children.size() == 2) {
             this -> append_tac(this -> children[1]);
-            quad q(this -> sym_tab_entry -> name, this -> children[1] -> get_var_from_node(), "", "");
+            quad q(this -> sym_tab_entry -> name, this -> children[1] -> get_var_from_node(), "=", "");
             q.make_code_from_assignment();
             this -> ta_codes.push_back(q);
         }
@@ -2838,7 +3000,8 @@ void node::generate_tac(){
         return; 
     }
     else if(this -> name == "ReturnStatement") {
-        string arg1 = "";
+        string arg1 = "", op = "return";
+
         for(auto &child : this -> children) {
             if(child -> name == "Expression") {
                 arg1 = child -> get_var_from_node();
@@ -2846,9 +3009,17 @@ void node::generate_tac(){
             }
         }
 
-        quad q("", arg1, "", "");
-        q.make_code_from_return();
-        this -> ta_codes.push_back(q);
+        if(this -> children .size() == 1){
+            quad q("", "", op, "");
+            q.make_code_from_return();
+            this -> ta_codes.push_back(q);
+        }
+        else{
+            arg1 = this -> children[1] -> get_var_from_node();
+            quad q("", arg1, op, "");
+            q.make_code_from_return();
+            this -> ta_codes.push_back(q);
+        }
     }
     else if(this -> name == "PreIncrementExpression" || this -> name == "PreDecrementExpression" || this -> name == "PostIncrementExpression" || this -> name == "PostDecrementExpression") {
         string result = this -> get_var_from_node();
@@ -2868,7 +3039,7 @@ void node::generate_tac(){
             q.make_code_from_binary();
             this -> ta_codes.push_back(q);
 
-            q = quad(result, arg1, "", "");
+            q = quad(result, arg1, "=", "");
             q.make_code_from_assignment();
             this -> ta_codes.push_back(q);
         }
@@ -2881,7 +3052,7 @@ void node::generate_tac(){
                 op = "-";
             }
 
-            q = quad(result, arg1, "", "");
+            q = quad(result, arg1, "=", "");
             q.make_code_from_assignment();
             this -> ta_codes.push_back(q);
             
@@ -2930,7 +3101,10 @@ void node::generate_tac(){
                 string arg1 = this -> children[0] -> get_var_from_node();
                 string arg2 = this -> children[1] -> get_var_from_node();
 
-                quad q(arg1, arg2, "", "");
+                quad q(arg1, arg2, "=", "");
+                if(this -> children[0] -> name == "ArrayAccess"){
+                    q.result = "*(" + q.result + ")";
+                }
                 q.make_code_from_assignment();
         
                 this -> append_tac(this -> children[0]);
@@ -2939,7 +3113,7 @@ void node::generate_tac(){
             }
             else if(this -> children.size() == 1) {
                 this -> append_tac(this -> children[0]);
-                quad q(this->get_var_from_node(), this ->children[0]->get_var_from_node(), "", "");
+                quad q(this->get_var_from_node(), this ->children[0]->get_var_from_node(), "=", "");
                 q.make_code_from_assignment();
                 this -> ta_codes.push_back(q);
             }
@@ -2958,7 +3132,7 @@ void node::generate_tac(){
                 this -> ta_codes.push_back(q);
             }
             {
-                quad q(result, arg1, "", "");
+                quad q(result, arg1, "=", "");
                 q.make_code_from_assignment();
                 this -> ta_codes.push_back(q);
             }
@@ -2979,19 +3153,196 @@ void node::generate_tac(){
     }
 }
 
+void node::optimize_tac(){
+    map<string, set<int> > lhs_apps, rhs_apps;
+    set<int> jumped_to;
+
+    int ins_count = 1;
+    for(auto (&q) : this -> ta_codes){
+        if(q.code != ""){
+            q.check_jump(ins_count);        // Sets ins_line and abs_jump of q
+
+            lhs_apps[q.result].insert(ins_count);
+            rhs_apps[q.arg1].insert(ins_count);
+            rhs_apps[q.arg2].insert(ins_count);
+            jumped_to.insert(q.abs_jump);
+
+            ins_count++;
+        }
+    }
+
+    // Remove redundant temporaries
+    {
+        bool optimizing = true;
+        while(optimizing){
+            optimizing = false;
+            for(int i = 0; i < (this -> ta_codes).size(); i++){
+                quad (&q) = this -> ta_codes[i];
+                if(q.code != ""){
+                    if(jumped_to.find(q.ins_line) == jumped_to.end() && lhs_apps[q.result].size() == 1 && q.result.size() > 2 && q.result[0] == '#' && q.result[1] == '#'){
+
+                        if(q.made_from == quad::ASSIGNMENT){    
+                            /*
+                                Looking for cases like
+                                    t1 = a1;
+                                    t2 = t1 + t3;
+                                    ...
+                            */ 
+
+                            bool green_light = false;
+                            set<int> tmp = rhs_apps[q.result];
+                            for(int j = i + 1; j < (this -> ta_codes).size(); j++){
+                                quad (&p) = this -> ta_codes[j];
+                                if(tmp.find(p.ins_line) == tmp.end() && jumped_to.find(p.ins_line) == jumped_to.end()){
+                                    green_light = (tmp.size() == 0);
+                                    break;
+                                }
+                                if(p.arg1 == q.result || p.arg2 == q.result){
+                                    tmp.erase(p.ins_line);
+                                }
+                            }
+                            
+                            if(green_light){
+                                optimizing = true;
+                                q.code = "";
+                                for(int j = i + 1; j < (this -> ta_codes).size(); j++){
+                                    if(rhs_apps[q.result].size() == 0){
+                                        break;
+                                    }
+                                    quad (&p) = this -> ta_codes[j];
+                                    if(p.arg1 == q.result || p.arg2 == q.result){
+                                        q.code = "";    
+                                        if(p.arg1 == q.result){
+                                            p.arg1 = q.arg1;
+                                        }
+                                        if(p.arg2 == q.result){
+                                            p.arg2 = q.arg1;
+                                        }
+                                        rhs_apps[q.arg1].insert(p.ins_line);
+                                        rhs_apps[q.result].erase(p.ins_line);
+                                        p.make_code();
+                                    }
+                                }       
+                            }
+                        }
+                        else if(q.made_from == quad::BINARY || q.made_from == quad::UNARY || q.made_from == quad::DEREF || q.made_from == quad::CAST){
+                            /*
+                                Looking for cases like
+                                    t1 = a1 + a2;
+                                    t2 = t1;
+                                    ...
+                            */
+
+                            bool green_light = false;
+                            set<int> tmp = rhs_apps[q.result];
+                            for(int j = i + 1; j < (this -> ta_codes).size(); j++){
+                                quad (&p) = this -> ta_codes[j];
+                                if(tmp.find(p.ins_line) == tmp.end() || jumped_to.find(p.ins_line) != jumped_to.end()){
+                                    green_light = (tmp.size() == 0);
+                                    break;
+                                }
+                                if(p.made_from == quad::ASSIGNMENT && (p.arg1 == q.result || p.arg2 == q.result)){
+                                    tmp.erase(p.ins_line);
+                                }
+                            }
+
+                            if(green_light){
+                                optimizing = true;
+                                q.code = "";
+                                for(int j = i + 1; j < (this -> ta_codes).size(); j++){
+                                    quad (&p) = this -> ta_codes[j];
+                                    if(rhs_apps[q.result].size() == 0){
+                                        break;
+                                    }
+                                    if(p.made_from == quad::ASSIGNMENT && (p.arg1 == q.result || p.arg2 == q.result)){
+                                        p.op = q.op;
+                                        p.arg1 = q.arg1;
+                                        p.arg2 = q.arg2;
+                                        p.made_from = q.made_from;
+                                        rhs_apps[q.arg1].insert(p.ins_line);
+                                        rhs_apps[q.arg2].insert(p.ins_line);
+                                        rhs_apps[q.result].erase(p.ins_line);
+                                        p.make_code();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Rename temporaries
+    {
+        map<string, int> order_of_appearance;
+        int temporaries_seen = 0;
+        for(auto (&q) : this -> ta_codes){
+            if(q.code != ""){
+                if(q.result.size() > 2 && q.result[0] == '#' && q.result[1] == '#'){
+                    if(order_of_appearance[q.result] == 0){
+                        temporaries_seen++;
+                        order_of_appearance[q.result] = temporaries_seen;
+                    }
+                    q.result = "##t" + to_string(order_of_appearance[q.result]);
+                }
+                if(q.arg1.size() > 2 && q.arg1[0] == '#' && q.arg1[1] == '#'){
+                    if(order_of_appearance[q.arg1] == 0){
+                        temporaries_seen++;
+                        order_of_appearance[q.arg1] = temporaries_seen;
+                    }
+                    q.arg1 = "##t" + to_string(order_of_appearance[q.arg1]);
+                }
+                if(q.arg2.size() > 2 && q.arg2[0] == '#' && q.arg2[1] == '#'){
+                    if(order_of_appearance[q.arg2] == 0){
+                        temporaries_seen++;
+                        order_of_appearance[q.arg2] = temporaries_seen;
+                    }
+                    q.arg2 = "##t" + to_string(order_of_appearance[q.arg2]);
+                }
+                q.make_code();   
+            }
+        }
+    }
+
+    {
+        ins_count = 1;
+        map<int, int> new_ins_count;
+        for(auto (&q) : this -> ta_codes){      // Update q's ins_line
+            if(q.code != ""){
+                new_ins_count[q.ins_line] = ins_count;
+                q.ins_line = new_ins_count[q.ins_line];
+                ins_count++;
+            }
+        }
+
+        ins_count = 1;
+        for(auto (&q) : this -> ta_codes){      // Update q's abs_jump
+            if(q.code != ""){
+                if(q.rel_jump){
+                    q.abs_jump = new_ins_count[q.abs_jump];
+                    q.make_code();
+                    q.rel_jump = q.abs_jump - q.ins_line;
+                }
+                ins_count++;
+            }
+        }
+    }
+}
+
 void node::print_tac(string filename){
     ofstream out(filename);
 
     int ins_count = 1;
-    for(auto q : this -> ta_codes) {
+    for(auto (&q) : this -> ta_codes) {
         if(q.code != "") {
-            q.check_jump(ins_count);
+            q.check_jump(ins_count);    // Also sets q's ins_line
 
             if(filename == "") {
-                cout << ins_count << ": " << q.code;
+                cout << ins_count << (ins_count >= 100 ? ":" : ":\t") << q.code;
             }
             else {
-                out << ins_count << ": " << q.code;
+                out << ins_count << (ins_count >= 100 ? ":" : ":\t") << q.code;
             }
             ins_count++;
         }

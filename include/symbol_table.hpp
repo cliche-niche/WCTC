@@ -54,6 +54,7 @@ struct symbol_table {
 
     void make_csv(string filename = "symbol_table.csv");
     void make_csv_wrapper(string filename);
+    int get_localspace_size();
 };
 
 struct symbol_table_func : public symbol_table {
@@ -68,6 +69,8 @@ struct symbol_table_func : public symbol_table {
     void add_entry(st_entry* new_entry);
 
     void update_modifiers(vector<st_entry*> modifiers);
+
+    int get_localspace_size();
 
     bool operator == (const symbol_table_func& other);
 
@@ -96,7 +99,7 @@ struct symbol_table_global : public symbol_table {
 
     symbol_table_global();
     void add_entry(symbol_table_class* new_cls);
-    symbol_table_class* look_up_class(string &cls_name);
+    symbol_table_class* look_up_class(string cls_name);
 
     void make_csv(string filename);
     void add_SysOutPln();

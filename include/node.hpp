@@ -59,6 +59,8 @@ struct node{
     int get_dims(node* v);      // semantic actions
     
 
+    symbol_table* get_scope();
+    bool check_static();        // Checks if function is static or not
     symbol_table* get_symbol_table();
     symbol_table_class* get_symbol_table_class();
     st_entry* get_and_look_up();
@@ -72,6 +74,9 @@ struct node{
 
     void validate_expression();
     void populate_and_check();
+
+    void modifier_check();
+
     void type_check();
     void chill_traversal();                                         // just a temporary function for type checking
     vector<string> get_function_parameters();                       // returns function parameters and should only be called from BracketArgumentList node 
@@ -84,6 +89,7 @@ struct node{
     vector<string> get_func_args_tac();
     void generate_tac();
 
+    void optimize_tac();
     void print_tac(string filename);
 };
 

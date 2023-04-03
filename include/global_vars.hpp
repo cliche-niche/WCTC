@@ -13,6 +13,7 @@ extern symbol_table_global *main_table;
 
 extern map<string, int> type_to_size;
 extern set<string> primitive_types;
+extern const int address_size;
 
 enum MODIFIER {
     M_PUBLIC,

@@ -68,13 +68,17 @@ int main(int argc, char* argv[]) {
     root->populate_class_sizes();
     root->populate_and_check();
 
+    root->modifier_check();
+
     root->chill_traversal();                    // walk 3
 
     main_table->add_SysOutPln();
     // for(auto cls : main_table)
-    main_table->make_csv_wrapper(st_file);    
+    // main_table->make_csv_wrapper(st_file);    
 
     root->generate_tac();
+    root->print_tac("tac_original.txt");
+    root->optimize_tac();
     root->print_tac("tac.txt");
     
     fclose(program);

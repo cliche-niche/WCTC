@@ -24,6 +24,8 @@ set<string> primitive_types = {
     "byte", "short", "int", "long", "float", "double", "boolean", "char", "String", "null"
 };
 
+const int address_size = 4;
+
 // enum MODIFIER {
 //     M_PUBLIC,
 //     M_PRIVATE,
@@ -60,7 +62,7 @@ void st_entry::update_type(string type){
     this->type = type;
     this->size = type_to_size[type];
     if(this -> size == 0) {
-        this -> size = 4;       // otherwise it's a reference and hence 4 bytes
+        this -> size = address_size;       // otherwise it's a reference and hence address_size bytes
     }
 }
 
@@ -125,9 +127,22 @@ void symbol_table::delete_entry(string name){
     cout<<"Returning without deleting...\n";
 }
 
+int symbol_table::get_localspace_size() {
+    int space = 0;
+
+    for(auto &entry : this -> entries) {
+        space += entry -> size;
+    }
+
+    return space;
+}
+
 st_entry* symbol_table::look_up(string name){
     //! populate the global symbol table entry list with class names so that lookup here is possible !//
-    
+    if(this -> symbol_table_category == 'G') {
+        return NULL;  // use main_table -> look_up_class() for these   
+    }
+
     if(this -> symbol_table_category == 'M') {
         symbol_table_func* tmp = (symbol_table_func *) this;
         for(ull idx = 0; idx < tmp -> params.size(); idx++) {
@@ -158,6 +173,7 @@ symbol_table_func::symbol_table_func(string func_name, vector<st_entry* > (&para
         }
 
         param -> update_type(param -> type); 
+        param -> table = this;
     }
 
     this->params = params;
@@ -263,6 +279,19 @@ symbol_table_func* symbol_table_class::look_up_function(string &name, vector<str
     return NULL;
 }
 
+int symbol_table_func::get_localspace_size() {
+    int space = 0;
+    for(auto &entry : this -> entries) {
+        space += entry -> size;
+    }
+
+    for(auto &subscopes : this -> children_st) {
+        space += subscopes -> get_localspace_size();
+    }
+
+    return space;
+}
+
 void symbol_table_class::update_modifiers(vector<st_entry*> modifiers){
     for(auto entry : modifiers){
         if(entry -> name == "public")       this -> modifier_bv [M_PUBLIC]          = true;
@@ -293,13 +322,10 @@ void symbol_table_global::add_entry(symbol_table_class* new_cls) {
         }
     }
 
-    st_entry *tmp = new st_entry(new_cls -> name, new_cls -> scope_start_line_no, 0, new_cls -> name);
-    tmp -> initialized = true;
-    this -> entries . push_back(tmp);  // populate here as well for other lookups
     this -> classes . push_back(new_cls);
 }
 
-symbol_table_class* symbol_table_global::look_up_class(string &cls_name) {
+symbol_table_class* symbol_table_global::look_up_class(string cls_name) {
     for(auto &cls : this -> classes) {
         if(cls -> name == cls_name) {
             return cls;
