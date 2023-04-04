@@ -87,6 +87,7 @@ struct node{
     void append_tac(vector<quad> (&tacs));
     void append_tac(node* v);
     vector<string> get_func_args_tac();
+    string get_mangled_name();
     void generate_tac();
 
     void optimize_tac();

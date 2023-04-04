@@ -26,8 +26,13 @@ void quad::make_code_from_cast(){
     code = "\t\t" + result + " = (" + op + ") " + arg1 + ";\n";
 }
 
-void quad::make_code_from_deref(){
-    made_from = DEREF;
+void quad::make_code_from_store(){
+    made_from = STORE;
+    code = "\t\t*(" + result + ") = " + arg1 + ";\n";
+}
+
+void quad::make_code_from_load(){
+    made_from = LOAD;
     code = "\t\t" + result + " = *(" + arg1 + ");\n";
 }
 
@@ -63,7 +68,7 @@ void quad::check_jump(const int ins_line){
     
 void quad::make_code_begin_func() {
     made_from = BEGIN_FUNC;
-    code = "\t\tbegin_func\n";
+    code = "\t\tbegin_func " + arg1 + "\n";
 }
 
 void quad::make_code_end_func() {
@@ -80,45 +85,55 @@ void quad::make_code_shift_pointer() {
     made_from = SHIFT_POINTER;
     code = "\t\tshift_pointer" + arg1 + "\n";
 }
+void quad::make_code_pop_param() {
+    made_from = POP_PARAM;
+    code = "\t\t" + arg1 + " = pop_param;\n";
+}
 
 void quad::make_code(){
     if(this -> made_from == BINARY){
         this -> make_code_from_binary();
     }
-    if(this -> made_from == UNARY){
+    else if(this -> made_from == UNARY){
         this -> make_code_from_unary();
     }
-    if(this -> made_from == ASSIGNMENT){
+    else if(this -> made_from == ASSIGNMENT){
         this -> make_code_from_assignment();
     }
-    if(this -> made_from == CONDITIONAL){
+    else if(this -> made_from == CONDITIONAL){
         this -> make_code_from_conditional();
     }
-    if(this -> made_from == CAST){
+    else if(this -> made_from == CAST){
         this -> make_code_from_cast();
     }
-    if(this -> made_from == DEREF){
-        this -> make_code_from_deref();
+    else if(this -> made_from == STORE){
+        this -> make_code_from_store();
     }
-    if(this -> made_from == FUNC_CALL){
+    else if(this -> made_from == LOAD){
+        this -> make_code_from_load();
+    }
+    else if(this -> made_from == FUNC_CALL){
         this -> make_code_from_func_call();
     }
-    if(this -> made_from == GOTO){
+    else if(this -> made_from == GOTO){
         this -> make_code_from_goto();
     }
-    if(this -> made_from == PARAM){
+    else if(this -> made_from == PARAM){
         this -> make_code_from_param();
     }
-    if(this -> made_from == BEGIN_FUNC){
+    else if(this -> made_from == BEGIN_FUNC){
         this -> make_code_begin_func();
     }
-    if(this -> made_from == END_FUNC){
+    else if(this -> made_from == END_FUNC){
         this -> make_code_end_func();
     }
-    if(this -> made_from == RETURN){
+    else if(this -> made_from == RETURN){
         this -> make_code_from_return();
     }
-    if(this -> made_from == SHIFT_POINTER){
+    else if(this -> made_from == SHIFT_POINTER){
         this -> make_code_shift_pointer();
+    }
+    else if(this -> made_from == POP_PARAM) {
+        this -> make_code_pop_param();
     }
 }

@@ -2247,6 +2247,7 @@ void node::type_check() {
                 for(auto &entry : cnt_table -> entries) {
                     if(entry -> name == child -> name) {
                         flag = true;
+                        this -> datatype = entry -> type; 
                         break;
                     }
                 } 
@@ -2255,6 +2256,7 @@ void node::type_check() {
                     cout << "ERROR: Unknown field access (" + child -> name + ") at line number " << child -> line_no << endl;
                     exit(1);
                 }
+
             } 
         }
     }
@@ -2630,7 +2632,7 @@ string node::get_var_from_node(){
         }
         return s;
     }
-    if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)){
+    else if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)){
         return this -> name;
     }
     
@@ -2666,6 +2668,41 @@ vector<string> node::get_func_args_tac(){
     return args;
 }
 
+string node::get_mangled_name() {
+    if(this -> name != "UnqualifiedClassInstanceCreationExpression" && this -> name != "MethodInvocation" && this -> name != "MethodDeclaration" && this -> name != "ConstructorDeclaration") {
+        cout << "Unknown error! Mangled name called from unknown name. Aborting...";
+        exit(1);
+    }
+
+    string mangled_name = "";
+    if(this -> name == "UnqualifiedClassInstanceCreationExpression" || this -> name == "MethodInvocation") {
+        vector<string> func_params;
+        string func_name;
+
+        for(auto &child : this -> children) {
+            if(child -> name == "BracketArgumentList") {
+                func_params = child -> get_function_parameters();
+            }
+            else if(child -> type == "ID") {
+                func_name = child -> name;
+            }
+        }
+
+        for(int i = func_params.size() - 1; i >= 0; i--) {
+            mangled_name = "@" + func_params[i] + mangled_name; 
+        }
+        mangled_name = func_name + mangled_name;
+    }
+    else {
+        for(int i = this -> entry_list.size() - 1; i >= 0; i--) {
+            mangled_name = "@" + this -> entry_list[i] -> type + mangled_name;
+        }
+        mangled_name = this -> sym_tab_entry -> name + mangled_name;
+    }
+
+    return mangled_name;
+}
+
 void node::generate_tac(){
     for(auto (&child) : this -> children){
         child -> generate_tac();
@@ -2682,6 +2719,9 @@ void node::generate_tac(){
             this -> ta_codes.push_back(q);
         }
         return;
+    }
+    else if(this -> name == "Name"){
+        
     }
     else if(this -> name == "continue" && this -> type == "KEYWORD") {
         string op = "goto";
@@ -2908,7 +2948,34 @@ void node::generate_tac(){
         }
         return;
     }
-    
+    else if(this -> name == "FieldAccess") {        // this.var type expressions
+        quad q("", "", "", "");
+        q.result = this -> get_var_from_node();
+        q.arg1 = "this";
+        q.op = "=";
+        q.make_code_from_assignment();
+        this -> ta_codes.push_back(q);
+
+        string id;
+        for(auto &child : this -> children) {
+            if(child -> type == "ID") {
+                id = child -> name;
+            }
+        }
+        symbol_table_class* cnt_class = this -> get_symbol_table_class();
+        st_entry* cnt_entry = cnt_class -> look_up(id);
+        
+        q.arg1 = q.result;
+        q.arg2 = to_string(cnt_entry -> offset);
+        q.op = "+";
+        q.make_code_from_binary();
+        this -> ta_codes.push_back(q);
+
+        q.arg2 = "";
+        q.op = "*()";
+        q.make_code_from_load();
+        this -> ta_codes.push_back(q);
+    }
     else if(this -> name == "ArrayCreationExpression") {
         quad q("", "", "", "");
 
@@ -2916,42 +2983,53 @@ void node::generate_tac(){
         q.make_code_from_func_call();
         this -> ta_codes.push_back(q);
 
-        q = quad(this -> get_var_from_node(), "pop_param *", "", "");
-        q.make_code_from_assignment();
+        q = quad("", this -> get_var_from_node(), "", "");
+        q.make_code_pop_param();
         this -> ta_codes.push_back(q);
     }
     else if(this -> name == "UnqualifiedClassInstanceCreationExpression") {
         quad q("", "", "", "");
 
+        string cls_name = "";
+        for(auto &child : this -> children) {
+            if(child -> type == "ID") {
+                cls_name = child -> name;
+                break;
+            }
+        }
+
+        symbol_table_class* cnt_class = main_table -> look_up_class(cls_name);
+        
+        q = quad("", to_string(cnt_class -> object_size), "push_param", "");
+        q.make_code_from_param();
+        this -> ta_codes.push_back(q);
+
         q = quad("", "allocmem", "callfunc", "");
         q.make_code_from_func_call();
         this -> ta_codes.push_back(q);
 
-        q = quad(this -> get_var_from_node(), "pop_param *", "", "");
-        q.make_code_from_assignment();
+        q = quad("", this -> get_var_from_node(), "", "");
+        q.make_code_pop_param();
         this -> ta_codes.push_back(q);
 
-        // 
         vector<string> args = this -> children[2] -> get_func_args_tac();
         this -> append_tac(this -> children[2]);
         
-        for(auto arg : args){
+        for(auto arg : args){                                           // pushing the other parameters
             q = quad("", arg, "push_param", "");
             q.make_code_from_param();
             this -> ta_codes.push_back(q);
         }
-        
-        string arg = this -> children[1] -> get_var_from_node();
-        q = quad("", arg, "call_func", "");
-        q.make_code_from_func_call();
+
+        q = quad("", this -> get_var_from_node(), "push_param", "");    // pushing the this pointer into the constructor
+        q.make_code_from_param();
         this -> ta_codes.push_back(q);
 
-        for(int idx = args.size() - 1; idx >= 0; idx--){
-            arg = args[idx];
-            q = quad("", arg, "pop_param", "");
-            q.make_code_from_param();
-            this -> ta_codes.push_back(q);
-        }
+        string mangled_name = this -> get_mangled_name();
+
+        q = quad("", mangled_name, "call_func", "");
+        q.make_code_from_func_call();
+        this -> ta_codes.push_back(q);
     }
     else if(this -> name == "ArrayAccess"){
         for(auto (&child) : this -> children){
@@ -2989,7 +3067,7 @@ void node::generate_tac(){
             arg1 = res;
             op = "*()";
             q = quad(res, arg1, op, "");
-            q.make_code_from_deref();
+            q.make_code_from_load();
             this -> ta_codes.push_back(q);
         }
 
@@ -3006,7 +3084,32 @@ void node::generate_tac(){
             q.make_code_from_param();
             this -> ta_codes.push_back(q);
         }
+
+        vector<string> func_params;
+        string func_name;
+        symbol_table_class* class_table = this -> get_symbol_table_class();
         
+        for(auto &child : this -> children) {
+            if(child -> name == "BracketArgumentList") {
+                func_params = child -> get_function_parameters();
+            }
+            if(child -> type == "ID") {
+                func_name = child -> name;
+            }
+        }
+
+        symbol_table_func* func_table = class_table -> look_up_function(func_name, func_params);
+        if(!func_table -> modifier_bv[M_STATIC]) {
+            q = quad("", "this", "push_param", "");
+            q.make_code_from_param();
+            this -> ta_codes.push_back(q);
+        }
+
+        string arg = this -> get_mangled_name();
+        q = quad("", arg, "call_func", "");
+        q.make_code_from_func_call();
+        this -> ta_codes.push_back(q);
+
         /*
         int old_pointer_space = address_size;
         int return_type_space = address_size + this -> sym_tab_entry -> size;
@@ -3014,11 +3117,6 @@ void node::generate_tac(){
         
         q = quad("", "-" + to_string(total_frame_space), "", "");
         q.make_code_shift_pointer();
-        this -> ta_codes.push_back(q);
-        
-        string arg = this -> children[0] -> get_var_from_node();
-        q = quad("", arg, "call_func", "");
-        q.make_code_from_func_call();
         this -> ta_codes.push_back(q);
 
         for(int idx = args.size() - 1; idx >= 0; idx--){
@@ -3032,14 +3130,30 @@ void node::generate_tac(){
         q.make_code_shift_pointer();
         this -> ta_codes.push_back(q);
         */
-
     }    
     else if(this -> name == "MethodDeclaration" || this -> name == "ConstructorDeclaration") {   
 
-        quad q("", "", "", "");
+        string mangled_name = this -> get_mangled_name();
+        quad q("", mangled_name, "", "");
         q.make_code_begin_func();
         this -> ta_codes.push_back(q);
         
+        // popping the this keyword if the function is non static
+        if(!this -> sym_tab_entry -> modifier_bv[M_STATIC]) {
+            q = quad("", "this", "", "");
+            q.make_code_pop_param();
+            this -> ta_codes.push_back(q);
+        }
+
+        // get the formal parameters
+        symbol_table_func* func = (symbol_table_func*) this -> sym_tab;                                           
+        
+        for(int idx = func -> params . size() - 1; idx >= 0; idx--){
+            q = quad("", func -> params[idx] -> name, "", "");
+            q.make_code_pop_param();
+            this -> ta_codes.push_back(q);
+        }
+
         this -> append_tac(this -> children[(int)this -> children.size() - 1]);
         
         q.make_code_end_func();
@@ -3166,15 +3280,23 @@ void node::generate_tac(){
         }
         else if(op == "=") {
             if(this -> children.size() == 2) {
-                string arg1 = this -> children[0] -> get_var_from_node();
-                string arg2 = this -> children[1] -> get_var_from_node();
+                quad q("", "", "", "");
 
-                quad q(arg1, arg2, "=", "");
-                if(this -> children[0] -> name == "ArrayAccess"){
-                    q.result = "*(" + q.result + ")";
-                }
-                q.make_code_from_assignment();
+                string result = this -> children[0] -> get_var_from_node();
+                string arg1 = this -> children[1] -> get_var_from_node();
         
+                q = quad(result, arg1, "=", "");
+                if(this -> children[0] -> name == "ArrayAccess"){
+                    q.make_code_from_store();
+                }
+                else if(this -> children[0] -> name == "FieldAccess"){
+                    q.make_code_from_store();
+                    this -> children[0] -> ta_codes.pop_back();
+                }
+                else{
+                    q.make_code_from_assignment();
+                }
+                
                 this -> append_tac(this -> children[0]);
                 this -> append_tac(this -> children[1]);
                 this -> ta_codes.push_back(q);
@@ -3293,7 +3415,7 @@ void node::optimize_tac(){
                                 }       
                             }
                         }
-                        else if(q.made_from == quad::BINARY || q.made_from == quad::UNARY || q.made_from == quad::DEREF || q.made_from == quad::CAST){
+                        else if(q.made_from == quad::BINARY || q.made_from == quad::UNARY || q.made_from == quad::LOAD || q.made_from == quad::CAST){
                             /*
                                 Looking for cases like
                                     t1 = a1 + a2;

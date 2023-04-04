@@ -19,7 +19,8 @@ struct quad{
         ASSIGNMENT,
         CONDITIONAL,
         CAST,
-        DEREF,
+        STORE,
+        LOAD,
         FUNC_CALL,
         GOTO,
         PARAM,
@@ -27,6 +28,7 @@ struct quad{
         END_FUNC,
         RETURN,
         SHIFT_POINTER,
+        POP_PARAM
     };
 
     quad();
@@ -37,7 +39,8 @@ struct quad{
     void make_code_from_assignment();                   // r = a1;
     void make_code_from_conditional();                  // IFTRUE/FALSE a1 GOTO [filled later using check_jump()];
     void make_code_from_cast();                         // r = (a2) a1;
-    void make_code_from_deref();                        // r = *(a1);
+    void make_code_from_store();                        // *(r) = a1;
+    void make_code_from_load();                         // r = *(a1);
     void make_code_from_func_call();                    // push/popparam a1;
     void make_code_from_goto();                         // GOTO a1;
     void make_code_from_param();                        // push/popparam a1;
@@ -45,8 +48,8 @@ struct quad{
     void make_code_end_func();                          // end_func;
     void make_code_from_return();                       // return a1;
     void make_code_shift_pointer();                      // shift stack pointer
+    void make_code_pop_param();
     void check_jump(const int);
 };
-
 
 #endif
