@@ -1782,7 +1782,17 @@
         ;
     
     MethodInvocation:
-        Name BracketArgumentList { }
+        Name BracketArgumentList { 
+            if($1 && $1 -> children.size() == 5) {
+                bool b1 = $1 -> children[0] -> name == "System";
+                bool b2 = $1 -> children[2] -> name == "out";
+                bool b3 = ($1 -> children[4] -> name == "println") || ($1 -> children[4] -> name == "print");
+
+                if(b1 && b2 && b3) {
+                    $1 -> name = "#Print#";
+                }
+            }
+        }
         |   Primary DELIM_period Identifier BracketArgumentList { }
         |   KEYWORD_super DELIM_period Identifier BracketArgumentList { }   // calls method of superclass
         |   Name DELIM_period KEYWORD_super DELIM_period Identifier BracketArgumentList { } // 
@@ -1808,7 +1818,7 @@
             } 
             delete ($3 -> sym_tab_entry);
         }
-        |   KEYWORD_new Name DimExprs qDims { 
+        |   KEYWORD_new Name DimExprs qDims {
             $$ -> sym_tab_entry = new st_entry();
             $$ -> sym_tab_entry -> dimensions = $3 -> sym_tab_entry -> dimensions;
             if ($4 && $4 -> sym_tab_entry){

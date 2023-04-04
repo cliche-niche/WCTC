@@ -9,7 +9,7 @@ extern FILE *yyin;
 extern FILE *yyout;
 
 FILE *program;  // the input to the compiler
-string input_file = "test.java";
+string input_file = "../tests/test.java";
 string output_file = "tree.gv"; 
 string st_file = "symbol_table.csv";
 string tac_file = "tac.txt";
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 
     root->chill_traversal();                    // walk 3
 
-    main_table->add_SysOutPln();
+    // main_table->add_SysOutPln();
     // for(auto cls : main_table)
     // main_table->make_csv_wrapper(st_file);    
 

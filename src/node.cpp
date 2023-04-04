@@ -246,6 +246,24 @@ string node::get_name(node* v){
     return "ERROR.\n";
 }
 
+// int node::calc_dims(node* v){
+//     // to calculate memory needed for an array
+//     if(v && v->name == "DimExprs"){
+//         if(v->children.size()==1){
+
+//         }
+//     }
+//     if(v){
+//         if(v->name == "DimExpr"){
+//             node* curr = v->children[1];
+//             while(curr->children.size()){
+//                 curr = curr->children[0];
+//             }
+//             return atoi(curr->name);
+//         }
+//     }
+// }
+
 int node::get_dims(node* v){
     // Only for qDims-like nodes
     if(v){
@@ -739,14 +757,15 @@ void node::populate_and_check() {
 // WALK 2.5 - Modifier Checking
 
 void node::modifier_check() {
-    if(this -> name == "#Name#") {
-        // @TODO
-    }
+    // if(this -> name == "#Name#") {
+    //     // @TODO
+    //     return;    
+    // }
 
-    else if(this -> type == "ID") {     // reference field variable from a static function
+    if(this -> type == "ID") {     // reference using this.x from a static function
         st_entry* tmp = this -> get_and_look_up(this -> name);
 
-        if(tmp && tmp -> table -> symbol_table_category == 'C' && !(tmp -> modifier_bv[M_STATIC]) && this -> check_static()) {
+        if(tmp && tmp -> table -> symbol_table_category == 'C' && !(tmp -> modifier_bv[M_STATIC]) && this -> check_static() && !(this -> parent && this -> parent -> name == "#Name#")) {
             cout << "ERROR: Cannot reference field variable (" << this -> name << ") from static function. Line number " << this -> line_no << endl;  
             exit(1);
         }
@@ -2169,6 +2188,10 @@ void node::type_check() {
             this -> datatype = tmp -> type;
         }
     }
+    else if(this -> name == "#Print#"){
+        this -> datatype = "void";
+        return;
+    }
     else if(this -> name == "#Name#") {
         symbol_table_class* cls = NULL;
         st_entry* entry = NULL;
@@ -3044,8 +3067,69 @@ void node::generate_tac(){
         q.make_code_from_load();
         this -> ta_codes.push_back(q);
     }
-    else if(this -> name == "ArrayCreationExpression") {
+    else if(this -> name == "DimExpr") {
         quad q("", "", "", "");
+
+        q.result = this -> get_var_from_node();
+        q.arg1 = this->children[1]->get_var_from_node();
+        q.op = "=";
+        q.make_code_from_assignment();
+
+        this -> append_tac(this -> children[1]);
+        this -> ta_codes.push_back(q);
+
+    }
+    else if(this -> name == "DimExprs"){
+        if(this -> children.size() == 1){
+            quad q("", "", "", "");
+
+            q.result = this -> get_var_from_node();
+            q.arg1 = this->children[0]->get_var_from_node();
+            q.op = "=";
+            q.make_code_from_assignment();
+
+            this -> append_tac(this -> children[0]);
+            this -> ta_codes.push_back(q);
+        }
+        else if(this -> children.size() == 2){
+            quad q("", "", "", "");
+
+            q.result = this -> get_var_from_node();
+            q.arg1 = this->children[0]->get_var_from_node();
+            q.arg2 = this->children[1]->get_var_from_node();
+            q.op = "*";
+            q.make_code_from_binary();
+
+            this -> append_tac(this -> children[0]);
+            this -> append_tac(this -> children[1]);
+            this -> ta_codes.push_back(q);            
+        }
+    }
+    else if(this -> name == "ArrayCreationExpression") {
+        if(this -> children.size() == 4) {
+            cout << "Error: Cannot allocate memory. Specify all dimensions, without array initializers please. To be supported later." << endl;
+            exit(1);
+        }
+
+        quad q("", "", "", "");
+
+        this -> append_tac(this -> children[this -> children.size() - 1]);      // Code of DimExprs
+
+        int datatype_size = 0;
+        if(primitive_types.find(this -> children[1] -> name) != primitive_types.end()) {
+            datatype_size = type_to_size[this -> children[1] -> name];
+        }
+        else {
+            datatype_size = address_size;
+        }
+
+        q = quad(this -> get_var_from_node(), this -> children[this -> children.size() - 1] -> get_var_from_node(), "*", to_string(datatype_size));        // size of array
+        q.make_code_from_binary();
+        this -> ta_codes.push_back(q);
+        
+        q = quad("", this -> get_var_from_node(), "push_param", "");        // size of array
+        q.make_code_from_param();
+        this -> ta_codes.push_back(q);
 
         q = quad("", "allocmem", "callfunc", "");
         q.make_code_from_func_call();
@@ -3187,12 +3271,6 @@ void node::generate_tac(){
             this -> ta_codes.push_back(q);
         }
 
-        string arg = this -> get_mangled_name();
-        q = quad("", arg, "call_func", "");
-        q.make_code_from_func_call();
-        this -> ta_codes.push_back(q);
-
-        /*
         int old_pointer_space = address_size;
         int return_type_space = address_size + this -> sym_tab_entry -> size;
         int total_frame_space = old_pointer_space + return_type_space + ((symbol_table_func*)(this -> sym_tab) -> get_localspace_size());
@@ -3201,17 +3279,14 @@ void node::generate_tac(){
         q.make_code_shift_pointer();
         this -> ta_codes.push_back(q);
 
-        for(int idx = args.size() - 1; idx >= 0; idx--){
-            arg = args[idx];
-            q = quad("", arg, "pop_param", "");
-            q.make_code_from_param();
-            this -> ta_codes.push_back(q);
-        }
+        string arg = this -> get_mangled_name();
+        q = quad("", arg, "call_func", "");
+        q.make_code_from_func_call();
+        this -> ta_codes.push_back(q);
 
         q = quad("", "+" + to_string(total_frame_space), "", "");
         q.make_code_shift_pointer();
         this -> ta_codes.push_back(q);
-        */
     }    
     else if(this -> name == "MethodDeclaration" || this -> name == "ConstructorDeclaration") {   
 

@@ -1,33 +1,33 @@
-class test_10 {
-    // int A[] = new int[10];
-    ab x;
-    cd l;
-    int f;
-    int j;
+public class Example1 {
+		int x;
+        double y;
 
-    int func() {
-        int i, j;
-        f = 10;
+        Example1(int x, double y) {
+            this.x = x;
+            this.y = y;
+        }
 
-        func();
-
-        l.d.c = 5;
-        return 0;
-    }
-
-    public static void main(String[] args) {
-        test_10 obj1 = new test_10();
-        test_10 obj2 = new test_10();
-
-        obj1.func();
-    }
+        public static void main(String[] args /*so that we can compile with javac*/) {
+            Example1 a = new Example1(2,3.14);
+            System.out.println(a.x);
+            System.out.println(a.y);
+        }
 }
 
-class ab{
-    int y;
-    int c;
-}
+// class ab{
+//     int y;
+//     int c;
+// }
 
-class cd{
-    ab d;
-}
+// class cd{
+//     ab d;
+//     int y;
+// }
+
+// class ace{
+//     // cd lmao;
+
+//     public void func() {
+//         // cd a[][][] = new cd[2][4][3];
+//     }
+// }

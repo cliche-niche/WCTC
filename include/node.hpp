@@ -57,7 +57,6 @@ struct node{
     
     string get_name(node* v);   // used for
     int get_dims(node* v);      // semantic actions
-    
 
     symbol_table* get_scope();
     bool check_static();        // Checks if function is static or not
