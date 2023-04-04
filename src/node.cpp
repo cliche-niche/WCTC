@@ -2229,31 +2229,35 @@ void node::type_check() {
         this -> datatype = this -> children[idx + 2] -> datatype;
         return;
     }
-    // else if(this -> name == "FieldAccess") {        // invocations of the form this.var
-    //     for(auto &child : this -> children) {
-    //         if(child -> type == "ID") {              // get the field name
-    //             st_entry* cnt_entry = this -> get_and_look_up(child -> name);
-    //             symbol_table* cnt_table = cnt_entry -> table;
+    else if(this -> name == "FieldAccess") {        // invocations of the form this.var
+        for(auto &child : this -> children) {
+            if(child -> type == "ID") {              // get the field name
+                symbol_table* cnt_table = this -> get_symbol_table();
+                if(!cnt_table) {
+                    cout << "Unknown Error! Symbol table does not exist for field access node..." << endl;
+                    exit(1);
+                }
 
-    //             while(cnt_table && cnt_table -> symbol_table_category != 'C') {
-    //                 cnt_table = cnt_table -> parent_st;
-    //             }
-    //             if(!cnt_table) {
-    //                 cout << "Unknown Error! FieldAccess not inside a class";
-    //                 exit(1);
-    //             } 
+                while(cnt_table && cnt_table -> symbol_table_category != 'C') {
+                    cnt_table = cnt_table -> parent_st;
+                }
 
-    //             symbol_table_class* cnt_class = (symbol_table_class*) cnt_table;
-    //             bool flag = false;
-    //             for(auto &entry : cnt_class -> entries) {
-    //                 if(entry -> name == child -> name) {
-    //                     flag = true;
-    //                     // cnt_entry -> 
-    //                 }
-    //             }
-    //         } 
-    //     }
-    // }
+                cnt_table = (symbol_table_class *) cnt_table;
+                bool flag = false;
+                for(auto &entry : cnt_table -> entries) {
+                    if(entry -> name == child -> name) {
+                        flag = true;
+                        break;
+                    }
+                } 
+
+                if(!flag) {
+                    cout << "ERROR: Unknown field access (" + child -> name + ") at line number " << child -> line_no << endl;
+                    exit(1);
+                }
+            } 
+        }
+    }
     else if(this -> name == "ArrayAccess") {        // checking array accesses
         for(auto &child : this -> children) {
             if(child -> name == "Expression") {
@@ -2679,6 +2683,26 @@ void node::generate_tac(){
         }
         return;
     }
+    else if(this -> name == "continue" && this -> type == "KEYWORD") {
+        string op = "goto";
+        string arg1 = "CONTINUE";
+        quad q("", arg1, op, "");
+
+        q.code = "\t\tgoto CONTINUE;\n";
+        q.made_from = quad::GOTO;
+
+        this -> ta_codes.push_back(q);
+    }
+    else if(this -> name == "break" && this -> type == "KEYWORD") {
+        string op = "goto";
+        string arg1 = "BREAK";
+        quad q("", arg1, op, "");
+
+        q.code = "\t\tgoto BREAK;\n";
+        q.made_from = quad::GOTO;
+
+        this -> ta_codes.push_back(q);
+    }
     else if(this -> name == "Expression") {
         string op = "=";
         string result = this -> get_var_from_node();
@@ -2764,6 +2788,20 @@ void node::generate_tac(){
         q.make_code_from_conditional();
 
         this -> ta_codes.push_back(q);
+
+        for(int i = 0; i < this -> children[4] -> ta_codes.size(); i++){
+            auto (&tac) = this -> children[4] -> ta_codes[i];
+            if(tac.code == "\t\tgoto CONTINUE;\n"){
+                int rel_jump = (i + this -> ta_codes.size());
+                tac = quad("", "J-" + to_string(rel_jump), "goto", "");     // res, arg1, op, arg2
+                tac.make_code_from_goto();
+            }
+            else if(tac.code == "\t\tgoto BREAK;\n") {
+                int rel_jump = (this -> children[4] -> ta_codes.size() - i) + 1;
+                tac = quad("", "J+" + to_string(rel_jump), "goto", "");     // res, arg1, op, arg2
+                tac.make_code_from_goto();
+            }
+        }
         this -> append_tac(this -> children[4]);
 
         op = "goto";
@@ -2777,8 +2815,23 @@ void node::generate_tac(){
         int exp_size = this -> children[4] -> ta_codes.size();
         int stat_size = this -> children[1] -> ta_codes.size();
 
+        for(int i = 0; i < stat_size; i++){
+            auto (&tac) = this -> children[1] -> ta_codes[i];
+            if(tac.code == "\t\tgoto CONTINUE;\n"){
+                int rel_jump = (stat_size - i);
+                tac = quad("", "J+" + to_string(rel_jump), "goto", "");     // res, arg1, op, arg2
+                tac.make_code_from_goto();
+            }
+            else if(tac.code == "\t\tgoto BREAK;\n"){
+                int rel_jump = (stat_size - i) + (exp_size) + 2;
+                tac = quad("", "J+" + to_string(rel_jump), "goto", "");     // res, arg1, op, arg2
+                tac.make_code_from_goto();
+            }
+        }
         this -> append_tac(this -> children[1]);
+        
         this -> append_tac(this -> children[4]);
+
         string op = "if_true";
         string arg1 = this -> children[4] -> get_var_from_node();
         string arg2 = "J-" + to_string(stat_size + exp_size + 1);
@@ -2824,12 +2877,26 @@ void node::generate_tac(){
                 this -> ta_codes . push_back(q);
             }
         }
+        
+        for(int i = 0; i < this -> children[last_child] -> ta_codes.size(); i++){
+            auto (&tac) = this -> children[last_child] -> ta_codes[i];
+            if(tac.code == "\t\tgoto CONTINUE;\n"){
+                int rel_jump = (this -> children[last_child] -> ta_codes.size() - i);
+                tac = quad("", "J+" + to_string(rel_jump), "goto", "");     // res, arg1, op, arg2
+                tac.make_code_from_goto();
+            }
+            else if(tac.code == "\t\tgoto BREAK;\n") {
+                int rel_jump = (this -> children[last_child] -> ta_codes.size() - i) + (updt_size) + 1;
+                tac = quad("", "J+" + to_string(rel_jump), "goto", "");     // res, arg1, op, arg2
+                tac.make_code_from_goto();
+            }
+        }
 
         this -> append_tac(this -> children[last_child] -> ta_codes);
 
         for(auto &(child) : this -> children){
             if(child -> name == "ForUpdate"){
-                updt_size = child -> ta_codes . size();
+                // updt_size = child -> ta_codes . size();
                 this -> append_tac(child -> ta_codes);
                 op = "goto";
                 arg1 = "J-" + to_string(updt_size + stmt_size + exp_size + 1);
@@ -2841,6 +2908,7 @@ void node::generate_tac(){
         }
         return;
     }
+    
     else if(this -> name == "ArrayCreationExpression") {
         quad q("", "", "", "");
 
@@ -3305,13 +3373,14 @@ void node::optimize_tac(){
         }
     }
 
+    // Update ins_line and abs_jump
     {
         ins_count = 1;
         map<int, int> new_ins_count;
         for(auto (&q) : this -> ta_codes){      // Update q's ins_line
             if(q.code != ""){
                 new_ins_count[q.ins_line] = ins_count;
-                q.ins_line = new_ins_count[q.ins_line];
+                q.ins_line = new_ins_count[q.ins_line];     // q.ins_line = ins_count 
                 ins_count++;
             }
         }

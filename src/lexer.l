@@ -161,6 +161,7 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 "catch"  { return (KEYWORD_catch); }
 "char"  { return (KEYWORD_char); }
 "class" { return (KEYWORD_class); }
+"continue" { return (KEYWORD_continue); }
 "do"  { return (KEYWORD_do); }
 "double"  { return (KEYWORD_double); }
 "else"  { return (KEYWORD_else); }

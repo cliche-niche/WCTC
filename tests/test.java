@@ -4,6 +4,7 @@ class test_10 {
     int A[] = new int[10];
     int f;
     int r;
+    int x;
 
     int func(int a) {
         int y = 0;
@@ -30,9 +31,11 @@ class test_10 {
         else if(y > 23){
             c -= 20;
         }
-        else{
-            // "tmkc";
-        }
+        
+        test_10 obj = new test_10();
+
+        this.x = 10;
+
         return y;
     }
 }
