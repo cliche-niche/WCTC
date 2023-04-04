@@ -1,30 +1,33 @@
 class test_10 {
     // int A[] = new int[10];
+    ab x;
+    cd l;
     int f;
     int j;
 
-    int func(int a) {
+    int func() {
+        int i, j;
         f = 10;
-        int A[] = new int[10];
 
-        A[1] = 20;
-        A[2] = 30;
-        A[3] = A[5] + A[6];
+        func();
 
-
-        this.f = 10;        //*(this + 0) = 10;
-        // a = this.j + this.f;
-        func(this.j + this.f + A[3]);
-        /*
-            t1 = this;
-            t2 = t1 + 0;
-            *(t2) = 10
-         */
+        l.d.c = 5;
         return 0;
     }
 
     public static void main(String[] args) {
         test_10 obj1 = new test_10();
         test_10 obj2 = new test_10();
+
+        obj1.func();
     }
+}
+
+class ab{
+    int y;
+    int c;
+}
+
+class cd{
+    ab d;
 }

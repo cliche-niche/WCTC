@@ -229,7 +229,7 @@ void node::add_child(node* child) {
 
 string node::get_name(node* v){
     // Only for UnannType-like nodes
-    if(v->name == "Name" || (v->type == "ID" && v->terminal)){
+    if(v->name == "#Name#" || (v->type == "ID" && v->terminal)){
         // For Name-like nodes
         if(v->children.size() == 3){
             return get_name(v->children[0]) + "." + (v->children[2]->name);
@@ -571,7 +571,7 @@ void node::validate_expression() {
             }
         }
     }
-    else if(this -> name == "Name") {
+    else if(this -> name == "#Name#") {
         this -> children[0] -> validate_expression();
         return;
     }
@@ -739,7 +739,7 @@ void node::populate_and_check() {
 // WALK 2.5 - Modifier Checking
 
 void node::modifier_check() {
-    if(this -> name == "Name") {
+    if(this -> name == "#Name#") {
         // @TODO
     }
 
@@ -2169,7 +2169,7 @@ void node::type_check() {
             this -> datatype = tmp -> type;
         }
     }
-    else if(this -> name == "Name") {
+    else if(this -> name == "#Name#") {
         symbol_table_class* cls = NULL;
         st_entry* entry = NULL;
 
@@ -2192,6 +2192,7 @@ void node::type_check() {
                     cout << "ERROR: (" << this -> children[idx] -> name << ") does not have (" << this -> children[idx + 2] -> name << ") as a member. Line number: " << this -> children[idx] -> line_no << endl;
                     exit(1);
                 }
+                type_without_array = get_type_without_array(entry -> type);
                 cls = main_table -> look_up_class(type_without_array);
                 if(!cls){
                     cout << "Unknown type error occurred due to ";
@@ -2338,7 +2339,7 @@ void node::type_check() {
         }
     }
     else if(this -> name == "PreIncrementExpression" || this -> name == "PreDecrementExpression") {
-        if(!(this -> children[1] -> type == "ID" || this -> children[1] -> name == "Name")) {
+        if(!(this -> children[1] -> type == "ID" || this -> children[1] -> name == "#Name#")) {
             cout << "ERROR: '"<< this -> children[0] -> name <<"' can only operate on variables at line number: " << this -> children[0] -> line_no << endl;
             exit(1);
         }
@@ -2347,7 +2348,7 @@ void node::type_check() {
         this -> type = "LITERAL";
     }
     else if(this -> name == "PostIncrementExpression" || this -> name == "PostDecrementExpression") {
-        if(!(this -> children[0] -> type == "ID" || this -> children[0] -> name == "Name")) {
+        if(!(this -> children[0] -> type == "ID" || this -> children[0] -> name == "#Name#")) {
             cout << "ERROR: '"<< this -> children[1] -> name <<"' can only operate on variables at line number: " << this -> children[0] -> line_no << endl;
             exit(1);
         }
@@ -2375,7 +2376,7 @@ void node::type_check() {
             if(child -> name == "BracketArgumentList") {
                 func_params = child -> get_function_parameters();
             }
-            else if(child -> name == "Name") {
+            else if(child -> name == "#Name#") {
                 // Assuming that it is valid, just need to get the function's return type
 
                 class_table = main_table -> look_up_class(child -> children[0] -> datatype);
@@ -2484,7 +2485,7 @@ void node::type_check() {
             if(child -> name == "BracketArgumentList") {
                 constructor_params = child -> get_function_parameters();
             }
-            else if(child -> name == "Name") {
+            else if(child -> name == "#Name#") {
                 // @TODO Tanwar
             }
             else if(child -> type == "ID") {
@@ -2625,14 +2626,15 @@ void node::copy(const node other){
 // WALK 4 : GENERATE 3AC
 
 string node::get_var_from_node(){
-    if(this -> name == "Name"){
+    /*
+    if(this -> name == "#Name#"){
         string s = "";
         for(auto (&child) : this -> children){
             s += child -> name;
         }
         return s;
     }
-    else if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)){
+    else*/ if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)){
         return this -> name;
     }
     
@@ -2678,6 +2680,7 @@ string node::get_mangled_name() {
     if(this -> name == "UnqualifiedClassInstanceCreationExpression" || this -> name == "MethodInvocation") {
         vector<string> func_params;
         string func_name;
+        string class_name;
 
         for(auto &child : this -> children) {
             if(child -> name == "BracketArgumentList") {
@@ -2685,6 +2688,11 @@ string node::get_mangled_name() {
             }
             else if(child -> type == "ID") {
                 func_name = child -> name;
+                class_name = this -> get_symbol_table_class() -> name;
+            }
+            else if(child -> name == "#Name#") {
+                func_name = child -> children[child -> children.size() - 1] -> name;        // last child of name is the function name
+                class_name = child -> children[child -> children.size() - 3] -> datatype;
             }
         }
 
@@ -2692,13 +2700,17 @@ string node::get_mangled_name() {
             mangled_name = "@" + func_params[i] + mangled_name; 
         }
         mangled_name = func_name + mangled_name;
+        mangled_name = class_name + "." + mangled_name;
     }
     else {
         for(int i = this -> entry_list.size() - 1; i >= 0; i--) {
             mangled_name = "@" + this -> entry_list[i] -> type + mangled_name;
         }
         mangled_name = this -> sym_tab_entry -> name + mangled_name;
+
+        mangled_name = this -> sym_tab -> parent_st -> name + "." + mangled_name;
     }
+
 
     return mangled_name;
 }
@@ -2708,8 +2720,8 @@ void node::generate_tac(){
         child -> generate_tac();
     }
 
-    if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0) || this -> name == "Name") {
-        // Do not need to handle these unless they need to be cast
+    if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)) {        
+        // Add typecast if need be
         if(this -> typecast_to != "UNNEEDED" && this -> typecast_to != ""){
             string op = this -> typecast_to;
             string result = this -> get_var_from_node();
@@ -2720,8 +2732,64 @@ void node::generate_tac(){
         }
         return;
     }
-    else if(this -> name == "Name"){
+    else if(this -> name == "#Name#"){
+        quad q("", "", "", "");
+        int isMethodInvocation = 0;
+
+        // Check if this is a method invocation, if so, skip the last access
+        if(this -> parent -> name == "MethodInvocation") isMethodInvocation = 1;
+
+        // Assign address of first object
+        q.result = this -> get_var_from_node();
+        q.arg1 = this -> children[0] -> get_var_from_node();
+        q.op = "=";
+        q.make_code_from_assignment();
+        this -> ta_codes.push_back(q);
+
+        symbol_table_class* prev_class = NULL;
+        symbol_table_class* cnt_class = NULL;
         
+        for(int cur = 0; cur + 2 < this -> children.size() - isMethodInvocation; cur += 2){
+            int nxt = cur + 2;
+
+            st_entry* cur_obj;
+            if(!prev_class) {
+                cur_obj = this -> get_and_look_up(this -> children[cur] -> name);
+            }
+            else {
+                cur_obj = prev_class -> look_up(this -> children[cur] -> name);    
+            }
+            cnt_class = main_table -> look_up_class(cur_obj -> type);
+            st_entry *nxt_obj = cnt_class -> look_up(this -> children[nxt] -> name);
+
+            // Add offset of next object in current object
+            q.arg1 = q.result;
+            q.arg2 = to_string(nxt_obj -> offset);
+            q.op = "+";
+            q.make_code_from_binary();
+            this -> ta_codes.push_back(q);
+
+            // De-reference to get address of next object
+            q.arg2 = "";
+            q.op = "*()";
+            q.make_code_from_load();
+            this -> ta_codes.push_back(q);
+
+            prev_class = cnt_class;
+        }
+
+        // De-reference to obtain value of last object
+        q.make_code_from_load();
+        this -> ta_codes.push_back(q);
+        
+        if(this -> typecast_to != "UNNEEDED" && this -> typecast_to != ""){
+            string op = this -> typecast_to;
+            string result = this -> get_var_from_node();
+            string arg1 = this -> get_var_from_node();
+            quad q(result, arg1, op, "");
+            q.make_code_from_cast();
+            this -> ta_codes.push_back(q);
+        }
     }
     else if(this -> name == "continue" && this -> type == "KEYWORD") {
         string op = "goto";
@@ -3079,6 +3147,7 @@ void node::generate_tac(){
         this -> append_tac(this -> children[this -> children.size() - 1]);
         quad q("", "", "", "");
         
+
         for(auto arg : args){
             q = quad("", arg, "push_param", "");
             q.make_code_from_param();
@@ -3088,19 +3157,32 @@ void node::generate_tac(){
         vector<string> func_params;
         string func_name;
         symbol_table_class* class_table = this -> get_symbol_table_class();
+
+        bool qualified_function_call = false;
         
         for(auto &child : this -> children) {
             if(child -> name == "BracketArgumentList") {
                 func_params = child -> get_function_parameters();
             }
-            if(child -> type == "ID") {
+            else if(child -> type == "ID") {
                 func_name = child -> name;
+            }
+            else if(child -> name == "#Name#") {
+                func_name = child -> children[child -> children.size() - 1] -> name;        // last child of name is the function name
+                qualified_function_call = true;
             }
         }
 
         symbol_table_func* func_table = class_table -> look_up_function(func_name, func_params);
         if(!func_table -> modifier_bv[M_STATIC]) {
-            q = quad("", "this", "push_param", "");
+            if(!qualified_function_call) {
+                q = quad("", "this", "push_param", "");
+            }
+            else {
+                this -> append_tac(this -> children[0]);
+                this -> ta_codes.pop_back();
+                q  = quad("", this -> children[0] -> get_var_from_node(), "push_param", "");
+            }
             q.make_code_from_param();
             this -> ta_codes.push_back(q);
         }
@@ -3289,7 +3371,7 @@ void node::generate_tac(){
                 if(this -> children[0] -> name == "ArrayAccess"){
                     q.make_code_from_store();
                 }
-                else if(this -> children[0] -> name == "FieldAccess"){
+                else if(this -> children[0] -> name == "FieldAccess" || this -> children[0] -> name == "#Name#"){
                     q.make_code_from_store();
                     this -> children[0] -> ta_codes.pop_back();
                 }

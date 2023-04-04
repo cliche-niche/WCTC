@@ -134,7 +134,7 @@
     /****************** NAMES  ******************/
     Name:
         Name DELIM_period Identifier { 
-            
+            $$ -> name = "#Name#";      // prevent collision with identifiers and literals
             {
                 if($1 -> children.size()){
                     vector<node* > temp = $1 -> children;

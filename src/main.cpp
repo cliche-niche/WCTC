@@ -12,6 +12,7 @@ FILE *program;  // the input to the compiler
 string input_file = "test.java";
 string output_file = "tree.gv"; 
 string st_file = "symbol_table.csv";
+string tac_file = "tac.txt";
 
 void print_help_page();
 
@@ -31,6 +32,11 @@ int main(int argc, char* argv[]) {
         else if(std::string(argv[i]) == "--output" || std::string(argv[i]) == "-o") {
             if((i + 1) < argc) output_file = argv[i+1];
             else cout << "Error: No output filename given";
+            i++;
+        }
+        else if(std::string(argv[i]) == "--taco" || std::string(argv[i]) == "-t") {
+            if((i + 1) < argc) tac_file = argv[i+1];
+            else cout << "Error: No 3AC filename given";
             i++;
         }
         else if(std::string(argv[i]) == "--verbose" || std::string(argv[i]) == "-v") {
@@ -77,9 +83,8 @@ int main(int argc, char* argv[]) {
     // main_table->make_csv_wrapper(st_file);    
 
     root->generate_tac();
-    root->print_tac("tac_original.txt");
     root->optimize_tac();
-    root->print_tac("tac.txt");
+    root->print_tac(tac_file);
     
     fclose(program);
 }
@@ -89,6 +94,7 @@ void print_help_page() {
     cout << "Commands:\n-h, --help \t\t\t\t\t Show help page\n";
     cout << "-i, --input <input_file_name> \t\t\t Give input file\n";
     cout << "-o, --output <output_file_name>\t\t\t Redirect dot file to output file\n";
+    cout << "-t, --taco <tac_file_name>\t\t\t Redirect 3AC file to tac output file\n";
     cout << "-v, --verbose \t\t\t\t\t Outputs the entire derivation in command line\n";
     return;
 }
