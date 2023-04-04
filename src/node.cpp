@@ -2140,7 +2140,11 @@ void node::calc_datatype(node* child1, node* child2, string op){
 void node::obtain_function_parameters(vector<string> &params) {
     for(auto &child : this -> children) {
         if(this -> name == "Expression") {
-            params.push_back(this -> datatype);
+            if(this -> typecast_to != "UNNEEDED"){
+                params.push_back(this -> typecast_to);
+            }else{
+                params.push_back(this -> datatype);
+            }
             return;
         }
         else {
@@ -2188,10 +2192,6 @@ void node::type_check() {
             this -> datatype = tmp -> type;
         }
     }
-    else if(this -> name == "#Print#"){
-        this -> datatype = "void";
-        return;
-    }
     else if(this -> name == "#Name#") {
         symbol_table_class* cls = NULL;
         st_entry* entry = NULL;
@@ -2229,14 +2229,64 @@ void node::type_check() {
             }else{
                 if(this -> parent -> name == "MethodInvocation"){
                     this -> parent -> children[1] -> type_check();
-                    vector<string> params = this -> parent -> children[1] ->get_function_parameters();
+                    vector<string> func_params = this -> parent -> children[1] ->get_function_parameters();
+                    string func_name = this -> children[this -> children.size() - 1] -> name;
+                    symbol_table_func* sfunc = ((symbol_table_class* ) cls) -> look_up_function(this -> children[idx + 2] -> name, func_params);
                     
-                    symbol_table_func* func = ((symbol_table_class* ) cls) -> look_up_function(this -> children[idx + 2] -> name, params);
-                    if(!func){
+                    // first check for exact match, then castable matching
+                    bool match_found = false;
+                    for(auto &func : cls -> member_funcs) {
+                        bool flag = true;
+                        if(func -> name == func_name && func_params.size() == func -> params.size()) {
+                            flag = false;
+                            for(int idx = 0; idx < func_params.size(); idx++) {
+                                if(func_params[idx] != func -> params[idx] -> type) {
+                                    flag = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!flag) {
+                            match_found = true;
+                            sfunc = func;
+                            break;
+                        }
+                    }
+
+                    // now check for castable matching
+                    if(!match_found){
+                        for(auto &func : cls -> member_funcs) {
+                            bool flag = true;
+                            if(func -> name == func_name && func_params.size() == func -> params.size()) {
+                                flag = false;
+                                for(int idx = 0; idx < func_params.size(); idx++) {
+                                    if((this -> get_datatype_category(func_params[idx]) == 'I' || this -> get_datatype_category(func_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
+                                        if(this -> get_maxtype(func_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
+                                            flag = true;
+                                            break;
+                                        }
+                                    }
+                                    else {
+                                        if(func_params[idx] != func -> params[idx] -> type) {
+                                            flag = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if(!flag) {
+                                match_found = true;
+                                sfunc = func;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if(!sfunc){
                         cout << "ERROR: (" << this -> children[idx] -> name << ") does not have (" << this -> children[idx + 2] -> name << ") as a member. Line number: " << this -> children[idx] -> line_no << endl;
                         exit(1);
                     }
-                    this -> children[idx + 2] -> datatype = func -> return_type;
+                    this -> children[idx + 2] -> datatype = sfunc -> return_type;
                 }
                 else{
                     entry = cls -> look_up(this -> children[idx + 2] -> name);
@@ -3272,8 +3322,18 @@ void node::generate_tac(){
         }
 
         int old_pointer_space = address_size;
-        int return_type_space = address_size + this -> sym_tab_entry -> size;
-        int total_frame_space = old_pointer_space + return_type_space + ((symbol_table_func*)(this -> sym_tab) -> get_localspace_size());
+        string return_type = func_table -> return_type;
+        
+        int datatype_size = 0;
+        if(primitive_types.find(this -> children[1] -> name) != primitive_types.end()) {
+            datatype_size = type_to_size[this -> children[1] -> name];
+        }
+        else {
+            datatype_size = address_size;
+        }
+        
+        int return_type_space = address_size + datatype_size; 
+        int total_frame_space = old_pointer_space + return_type_space + (func_table -> get_localspace_size());
         
         q = quad("", "-" + to_string(total_frame_space), "", "");
         q.make_code_shift_pointer();

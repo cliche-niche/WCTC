@@ -83,7 +83,7 @@ void quad::make_code_from_return() {
 
 void quad::make_code_shift_pointer() {
     made_from = SHIFT_POINTER;
-    code = "\t\tshift_pointer" + arg1 + "\n";
+    code = "\t\tshift_pointer " + arg1 + "\n";
 }
 void quad::make_code_pop_param() {
     made_from = POP_PARAM;
