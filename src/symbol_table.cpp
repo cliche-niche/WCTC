@@ -259,24 +259,54 @@ void symbol_table_class::add_func(symbol_table_func* new_func){
 
 symbol_table_func* symbol_table_class::look_up_function(string &name, vector<string> &params) {
     bool flag = true;
-    for(ull idx = 0; idx < this -> member_funcs.size(); idx++) {
-        flag = true;
-        if(name == member_funcs[idx] -> name && params.size() == member_funcs[idx] -> params.size()) {
+    bool match_found = false;
+
+    // first check for exact argument types
+    for(auto &func : this -> member_funcs) {
+        bool flag = true;
+        if(func -> name == name && params.size() == func -> params.size()) {
             flag = false;
-            for(ull idx2 = 0; idx2 < params.size(); idx2++) {
-                if(params[idx2] != member_funcs[idx] -> params[idx2] -> type) {
+            for(int idx = 0; idx < params.size(); idx++) {
+                if(params[idx] != func -> params[idx] -> type) {
                     flag = true;
                     break;
                 }
             }
         }
-
         if(!flag) {
-            return member_funcs[idx];
+            match_found = true;
+            return func;
         }
     }
 
-    return NULL;
+    // now check for castable matching
+    match_found = false;
+    for(auto &func : this -> member_funcs) {
+        bool flag = true;
+        if(func -> name == name && params.size() == func -> params.size()) {
+            flag = false;
+            for(int idx = 0; idx < params.size(); idx++) {
+                if((root -> get_datatype_category(params[idx]) == 'I' || root -> get_datatype_category(params[idx]) == 'D') && (root -> get_datatype_category(func -> params[idx] -> type) == 'I' || root -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
+                    if(root -> get_maxtype(params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
+                        flag = true;
+                        break;
+                    }
+                }
+                else {
+                    if(params[idx] != func -> params[idx] -> type) {
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if(!flag) {
+            match_found = true;
+            return func;
+        }
+    }
+
+    return NULL;    // if no match
 }
 
 int symbol_table_func::get_localspace_size() {

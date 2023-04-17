@@ -14,3 +14,10 @@ int c = b = 5;
 
 
 Shift stack pointer for constructor
+
+TODO v3.0.0
+Complete convert_to_decimal for int+float+boolean
+Update optimize_tac_CONSTANT() to include constant folding for non-ints too
+Discuss BT in constant propagation due to pointers. 
+IMO, there shouldnt be any BT since no pointers in Java but lets see, maybe BT in global/static vars? Dunno
+Write a function for REMOVAL of basic DEAD_CODE, for cases like `a=b; c=d; a=e;` -> `c=d; a=e;`

@@ -89,8 +89,17 @@ struct node{
     string get_mangled_name();
     void generate_tac();
 
-    void optimize_tac();
-    void print_tac(string filename);
+
+    char calculate_type(string n);              // Tells if the string is an integer/float/boolean
+    string convert_to_decimal(string);          // Convert bin/hex/oct to Decimal
+    void convert_to_decimal();                  // Convert bin/hex/oct to Decimal in the whole 3AC
+    void remove_empty_tac();                    // Remove those Quads which have empty 3AC
+    void update_tac_jump_vals();                // Update ins_line's and abs_jump's
+    void rename_temporaries();                  // Rename temporaries starting from 1
+    void optimize_tac_RED_TEMPS();              // Remove redundant temporaries and rename them using Copy Propagation and its variant
+    void optimize_tac_CONST_and_STR_RED();      // Constant Folding and Constant Propagation, and 
+    void optimize_tac_COPY_PROP();              // Copy Propagation
+    void print_tac(string filename);            // Print 3AC into the file ``filename''
 };
 
 #endif

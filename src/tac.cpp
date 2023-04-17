@@ -38,7 +38,9 @@ void quad::make_code_from_load(){
 
 void quad::make_code_from_conditional(){
     made_from = CONDITIONAL;
-    rel_jump = stoi(arg2.substr(1, arg2.size()-1));
+    if(!rel_jump){
+        rel_jump = stoi(arg2.substr(1, arg2.size()-1));
+    }
     code = "\t\t" + op + " " + arg1 + " goto ";
 }
 
@@ -49,13 +51,10 @@ void quad::make_code_from_func_call(){
 
 void quad::make_code_from_goto(){
     made_from = GOTO;
-    rel_jump = stoi(arg1.substr(1, arg1.size()-1));
+    if(!rel_jump){
+        rel_jump = stoi(arg1.substr(1, arg1.size()-1));
+    }
     code = "\t\t" + op + " ";       // op is "GOTO"
-}
-
-void quad::make_code_from_param(){
-    made_from = PARAM;
-    code = "\t\t" + op + " " + arg1 + ";\n";
 }
 
 void quad::check_jump(const int ins_line){
@@ -78,16 +77,27 @@ void quad::make_code_end_func() {
 
 void quad::make_code_from_return() {
     made_from = RETURN;
-    code = "\t\t" + op + " " + arg1 + ";\n"; // op is "return"
+    if(arg1 != ""){
+        code = "\t\t" + op + " " + arg1 + ";\n";    // op is "return"
+    }
+    else{
+        code = "\t\t" + op + ";\n";                 // op is "return"
+    }
 }
 
 void quad::make_code_shift_pointer() {
     made_from = SHIFT_POINTER;
     code = "\t\tshift_pointer " + arg1 + "\n";
 }
+
+void quad::make_code_push_param(){
+    made_from = PUSH_PARAM;
+    code = "\t\t" + op + " " + arg1 + ";\n";
+}
+
 void quad::make_code_pop_param() {
     made_from = POP_PARAM;
-    code = "\t\t" + arg1 + " = pop_param;\n";
+    code = "\t\t" + result + " = pop_param;\n";
 }
 
 void quad::make_code(){
@@ -118,8 +128,8 @@ void quad::make_code(){
     else if(this -> made_from == GOTO){
         this -> make_code_from_goto();
     }
-    else if(this -> made_from == PARAM){
-        this -> make_code_from_param();
+    else if(this -> made_from == PUSH_PARAM){
+        this -> make_code_push_param();
     }
     else if(this -> made_from == BEGIN_FUNC){
         this -> make_code_begin_func();

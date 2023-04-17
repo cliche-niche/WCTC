@@ -41,7 +41,7 @@ OCT "0""_"*({OCTDIG}|{OCTDIG}({OCTDIG}|"_")*{OCTDIG})[lL]?
 BIN ("0b"|"0B")({BINDIG}|{BINDIG}({BINDIG}|"_")*{BINDIG})[lL]?
 EXP [eE][\+\-]?{DIGITS}
 DECFLOAT {DIGITS}"."{DIGITS}?{EXP}?[fFdD]?|"."{DIGITS}{EXP}?[fFdD]?|{DIGITS}{EXP}[fFdD]?|{DIGITS}{EXP}?[fFdD]
-HEXFLOAT {HEX}"."?|"0x"{HEXDIGS}?"."{HEXDIGS}|"0X"{HEXDIGS}?"."{HEXDIGS}[pP][\+\-]?{DIGITS}[fFdD]?
+HEXFLOAT {HEX}"."?|("0x"{HEXDIGS}?"."{HEXDIGS}|"0X"{HEXDIGS}?"."{HEXDIGS})[pP][\+\-]?{DIGITS}[fFdD]?
 BOOL "true"|"false"
 NULL "null"
 STRING "\""[^\"\n\r]*"\""

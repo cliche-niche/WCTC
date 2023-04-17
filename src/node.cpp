@@ -2229,58 +2229,58 @@ void node::type_check() {
             }else{
                 if(this -> parent -> name == "MethodInvocation"){
                     this -> parent -> children[1] -> type_check();
-                    vector<string> func_params = this -> parent -> children[1] ->get_function_parameters();
+                    vector<string> func_params = this -> parent -> children[1] -> get_function_parameters();
                     string func_name = this -> children[this -> children.size() - 1] -> name;
                     symbol_table_func* sfunc = ((symbol_table_class* ) cls) -> look_up_function(this -> children[idx + 2] -> name, func_params);
                     
                     // first check for exact match, then castable matching
-                    bool match_found = false;
-                    for(auto &func : cls -> member_funcs) {
-                        bool flag = true;
-                        if(func -> name == func_name && func_params.size() == func -> params.size()) {
-                            flag = false;
-                            for(int idx = 0; idx < func_params.size(); idx++) {
-                                if(func_params[idx] != func -> params[idx] -> type) {
-                                    flag = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if(!flag) {
-                            match_found = true;
-                            sfunc = func;
-                            break;
-                        }
-                    }
+                    // bool match_found = false;
+                    // for(auto &func : cls -> member_funcs) {
+                    //     bool flag = true;
+                    //     if(func -> name == func_name && func_params.size() == func -> params.size()) {
+                    //         flag = false;
+                    //         for(int idx = 0; idx < func_params.size(); idx++) {
+                    //             if(func_params[idx] != func -> params[idx] -> type) {
+                    //                 flag = true;
+                    //                 break;
+                    //             }
+                    //         }
+                    //     }
+                    //     if(!flag) {
+                    //         match_found = true;
+                    //         sfunc = func;
+                    //         break;
+                    //     }
+                    // }
 
-                    // now check for castable matching
-                    if(!match_found){
-                        for(auto &func : cls -> member_funcs) {
-                            bool flag = true;
-                            if(func -> name == func_name && func_params.size() == func -> params.size()) {
-                                flag = false;
-                                for(int idx = 0; idx < func_params.size(); idx++) {
-                                    if((this -> get_datatype_category(func_params[idx]) == 'I' || this -> get_datatype_category(func_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
-                                        if(this -> get_maxtype(func_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
-                                            flag = true;
-                                            break;
-                                        }
-                                    }
-                                    else {
-                                        if(func_params[idx] != func -> params[idx] -> type) {
-                                            flag = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            if(!flag) {
-                                match_found = true;
-                                sfunc = func;
-                                break;
-                            }
-                        }
-                    }
+                    // // now check for castable matching
+                    // if(!match_found){
+                    //     for(auto &func : cls -> member_funcs) {
+                    //         bool flag = true;
+                    //         if(func -> name == func_name && func_params.size() == func -> params.size()) {
+                    //             flag = false;
+                    //             for(int idx = 0; idx < func_params.size(); idx++) {
+                    //                 if((this -> get_datatype_category(func_params[idx]) == 'I' || this -> get_datatype_category(func_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
+                    //                     if(this -> get_maxtype(func_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
+                    //                         flag = true;
+                    //                         break;
+                    //                     }
+                    //                 }
+                    //                 else {
+                    //                     if(func_params[idx] != func -> params[idx] -> type) {
+                    //                         flag = true;
+                    //                         break;
+                    //                     }
+                    //                 }
+                    //             }
+                    //         }
+                    //         if(!flag) {
+                    //             match_found = true;
+                    //             sfunc = func;
+                    //             break;
+                    //         }
+                    //     }
+                    // }
                     
                     if(!sfunc){
                         cout << "ERROR: (" << this -> children[idx] -> name << ") does not have (" << this -> children[idx + 2] -> name << ") as a member. Line number: " << this -> children[idx] -> line_no << endl;
@@ -2483,55 +2483,7 @@ void node::type_check() {
             }
         }
 
-        //first check for exact match, then castable matching
-        bool match_found = false;
-        for(auto &func : class_table -> member_funcs) {
-            bool flag = true;
-            if(func -> name == func_name && func_params.size() == func -> params.size()) {
-                flag = false;
-                for(int idx = 0; idx < func_params.size(); idx++) {
-                    if(func_params[idx] != func -> params[idx] -> type) {
-                        flag = true;
-                        break;
-                    }
-                }
-            }
-            if(!flag) {
-                match_found = true;
-                this -> datatype = func -> return_type;
-                return;
-            }
-        }
-
-        // now check for castable matching
-        match_found = false;
-        for(auto &func : class_table -> member_funcs) {
-            bool flag = true;
-            if(func -> name == func_name && func_params.size() == func -> params.size()) {
-                flag = false;
-                for(int idx = 0; idx < func_params.size(); idx++) {
-                    if((this -> get_datatype_category(func_params[idx]) == 'I' || this -> get_datatype_category(func_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
-                        if(this -> get_maxtype(func_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
-                            flag = true;
-                            break;
-                        }
-                    }
-                    else {
-                        if(func_params[idx] != func -> params[idx] -> type) {
-                            flag = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            if(!flag) {
-                match_found = true;
-                this -> datatype = func -> return_type;
-                return;
-            }
-        }
-
-        if(!match_found) {
+        if(!class_table -> look_up_function(func_name, func_params)) {
             cout << "ERROR: Unknown method invocation of (" << func_name << ") with arg-types (";
             {
                 bool first = true;
@@ -2548,6 +2500,71 @@ void node::type_check() {
             cout <<") at line number: " << this->line_no << endl; // ! Tanwar print parameters
             exit(1);
         }
+
+        // //first check for exact match, then castable matching
+        // bool match_found = false;
+        // for(auto &func : class_table -> member_funcs) {
+        //     bool flag = true;
+        //     if(func -> name == func_name && func_params.size() == func -> params.size()) {
+        //         flag = false;
+        //         for(int idx = 0; idx < func_params.size(); idx++) {
+        //             if(func_params[idx] != func -> params[idx] -> type) {
+        //                 flag = true;
+        //                 break;
+        //             }
+        //         }
+        //     }
+        //     if(!flag) {
+        //         match_found = true;
+        //         this -> datatype = func -> return_type;
+        //         return;
+        //     }
+        // }
+
+        // // now check for castable matching
+        // match_found = false;
+        // for(auto &func : class_table -> member_funcs) {
+        //     bool flag = true;
+        //     if(func -> name == func_name && func_params.size() == func -> params.size()) {
+        //         flag = false;
+        //         for(int idx = 0; idx < func_params.size(); idx++) {
+        //             if((this -> get_datatype_category(func_params[idx]) == 'I' || this -> get_datatype_category(func_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
+        //                 if(this -> get_maxtype(func_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
+        //                     flag = true;
+        //                     break;
+        //                 }
+        //             }
+        //             else {
+        //                 if(func_params[idx] != func -> params[idx] -> type) {
+        //                     flag = true;
+        //                     break;
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     if(!flag) {
+        //         match_found = true;
+        //         this -> datatype = func -> return_type;
+        //         return;
+        //     }
+        // }
+        // if(!match_found) {
+        //     cout << "ERROR: Unknown method invocation of (" << func_name << ") with arg-types (";
+        //     {
+        //         bool first = true;
+        //         for(const auto (&param) : func_params){
+        //             if(first){
+        //                 cout << param;
+        //                 first = false;
+        //             }
+        //             else{
+        //                 cout << ", " << param;
+        //             }
+        //         }
+        //     }
+        //     cout <<") at line number: " << this->line_no << endl; // ! Tanwar print parameters
+        //     exit(1);
+        // }
     }
     else if (this -> name == "UnqualifiedClassInstanceCreationExpression") {
         vector<string> constructor_params;
@@ -3178,14 +3195,14 @@ void node::generate_tac(){
         this -> ta_codes.push_back(q);
         
         q = quad("", this -> get_var_from_node(), "push_param", "");        // size of array
-        q.make_code_from_param();
+        q.make_code_push_param();
         this -> ta_codes.push_back(q);
 
         q = quad("", "allocmem", "callfunc", "");
         q.make_code_from_func_call();
         this -> ta_codes.push_back(q);
 
-        q = quad("", this -> get_var_from_node(), "", "");
+        q = quad(this -> get_var_from_node(), "", "pop_param", "");
         q.make_code_pop_param();
         this -> ta_codes.push_back(q);
     }
@@ -3203,14 +3220,14 @@ void node::generate_tac(){
         symbol_table_class* cnt_class = main_table -> look_up_class(cls_name);
         
         q = quad("", to_string(cnt_class -> object_size), "push_param", "");
-        q.make_code_from_param();
+        q.make_code_push_param();
         this -> ta_codes.push_back(q);
 
         q = quad("", "allocmem", "callfunc", "");
         q.make_code_from_func_call();
         this -> ta_codes.push_back(q);
 
-        q = quad("", this -> get_var_from_node(), "", "");
+        q = quad(this -> get_var_from_node(), "", "pop_param", "");
         q.make_code_pop_param();
         this -> ta_codes.push_back(q);
 
@@ -3219,12 +3236,12 @@ void node::generate_tac(){
         
         for(auto arg : args){                                           // pushing the other parameters
             q = quad("", arg, "push_param", "");
-            q.make_code_from_param();
+            q.make_code_push_param();
             this -> ta_codes.push_back(q);
         }
 
         q = quad("", this -> get_var_from_node(), "push_param", "");    // pushing the this pointer into the constructor
-        q.make_code_from_param();
+        q.make_code_push_param();
         this -> ta_codes.push_back(q);
 
         string mangled_name = this -> get_mangled_name();
@@ -3284,7 +3301,7 @@ void node::generate_tac(){
 
         for(auto arg : args){
             q = quad("", arg, "push_param", "");
-            q.make_code_from_param();
+            q.make_code_push_param();
             this -> ta_codes.push_back(q);
         }
 
@@ -3317,7 +3334,7 @@ void node::generate_tac(){
                 this -> ta_codes.pop_back();
                 q  = quad("", this -> children[0] -> get_var_from_node(), "push_param", "");
             }
-            q.make_code_from_param();
+            q.make_code_push_param();
             this -> ta_codes.push_back(q);
         }
 
@@ -3357,7 +3374,7 @@ void node::generate_tac(){
         
         // popping the this keyword if the function is non static
         if(!this -> sym_tab_entry -> modifier_bv[M_STATIC]) {
-            q = quad("", "this", "", "");
+            q = quad("this", "", "pop_param", "");
             q.make_code_pop_param();
             this -> ta_codes.push_back(q);
         }
@@ -3366,7 +3383,7 @@ void node::generate_tac(){
         symbol_table_func* func = (symbol_table_func*) this -> sym_tab;                                           
         
         for(int idx = func -> params . size() - 1; idx >= 0; idx--){
-            q = quad("", func -> params[idx] -> name, "", "");
+            q = quad(func -> params[idx] -> name, "", "pop_param", "");
             q.make_code_pop_param();
             this -> ta_codes.push_back(q);
         }
@@ -3474,8 +3491,16 @@ void node::generate_tac(){
         string op = this -> name;
         if(op == "+" || op == "-" || op == "*" || op == "/" || op == "%" || op == "<<" || op == ">>" || op == ">>>" || op == ">" || op == "<" || op == ">=" || op == "<=" || op == "==" || op == "!=" || op == "&" || op == "|" || op == "^" || op == "&&" || op == "||") {
             string result = this -> get_var_from_node();
-            string arg1 = this -> children[0] -> get_var_from_node();
-            string arg2 = this -> children[1] -> get_var_from_node();
+            string arg1, arg2;
+
+            if(this -> children.size() > 1){
+                arg1 = this -> children[0] -> get_var_from_node();
+                arg2 = this -> children[1] -> get_var_from_node();
+            }else{
+                arg1 = "0";
+                arg2 = this -> children[1] -> get_var_from_node();
+            }
+
             quad q(result, arg1, op, arg2);
             q.make_code_from_binary();
     
@@ -3560,7 +3585,226 @@ void node::generate_tac(){
     }
 }
 
-void node::optimize_tac(){
+char node::calculate_type(string n){
+    // N for None
+    // b for boolean, D for Decimal, f for float, H for hexadecimal, F for hexadecimal float, B for binary, O for octal
+
+    if(n == ""){
+        return 'N';
+    }
+    // n.size() > 0
+    if(n == "true" || n == "false"){
+        return 'b';
+    }
+    if(n[0] != '-' && n[0] != '+' && n[0] < '0' && n[0] > '9'){
+        return 'N';
+    }
+    // Probably a number at this point
+    
+    // Check for binary
+    {
+        if(n.size() > 2 && n[0] == '0' && (n[1] == 'b' || n[1] == 'B')){
+            return 'B';
+        }
+    }
+    // Check for octal
+    {
+        bool octal = (n[0] == '0');
+        if(octal){
+            for(const auto c : n){
+                if((c < '0' || c > '7') && (c != 'l' && c != 'L' && c != '_')){
+                    octal = false;
+                    break;
+                }
+            }
+
+            if(octal){
+                return 'O';
+            }
+        }
+    }
+    // Check for decimal
+    {
+        bool decimal = true;
+        for(const auto c : n){
+            if((c < '0' || c > '9') && (c != '_' && c != 'l' && c != 'L')){
+                decimal = false;
+                break;
+            }
+        }
+
+        if(decimal){
+            return 'D';
+        }
+    }
+    // Check for hexadecimal
+    {
+        bool hexd = (n.size() > 2 && n[0] == '0' && (n[1] == 'x' || n[1] == 'X'));
+        if(hexd){
+            for(int i = 2; i < n.size(); i++){
+                if((n[i] < '0' || n[i] > '9') && (n[i] < 'a' || n[i] > 'f') && (n[i] < 'A' || n[i] > 'F')){
+                    if(n[i] != 'l' && n[i] != 'L'){
+                        hexd = false;
+                        break;
+                    }
+                }
+            }
+        }
+        if(hexd){
+            return 'H';
+        }
+    }
+    // @TODO
+    // Check for decimal float
+    {
+
+    }
+    // Check for hexadecimal Float
+    {
+
+    }
+
+    return 'N';
+}
+
+string node::convert_to_decimal(string n){
+    // @TODO
+
+    return "";
+    char t = calculate_type(n);
+    if(t == 'N'){
+        return "";
+    }
+    else if(t == 'b'){
+        return n;
+    }
+    else if(t == 'D'){
+        long long temp = 0;
+        for(int i = 0; i < n.size(); i++){
+            if(n[i] >= '0' && n[i] <= '9'){
+                temp = temp * 10 + (n[i] -'0');
+            }
+        }
+        return to_string(temp) + ((n[n.size() - 1] == 'l' || n[n.size() - 1] == 'L') ? "l" : "");
+    }
+    else if(t == 'H'){
+        long long temp = 0;
+        for(int i = 2; i < n.size(); i++){
+            if((n[i] >= '0' && n[i] <= '9') || (n[i] >= 'a' && n[i] <= 'f') || (n[i] >= 'A' && n[i] <= 'F')){
+                temp = temp * 16 + (n[i] -'0');
+            }
+        }
+        return to_string(temp) + ((n[n.size() - 1] == 'l' || n[n.size() - 1] == 'L') ? "l" : "");
+    }
+    else if(t == 'B'){
+        long long temp = 0;
+        for(int i = 2; i < n.size(); i++){
+            if(n[i] == '0' || n[i] == '1'){
+                temp = temp * 2 + (n[i] -'0');
+            }
+        }
+        return to_string(temp) + ((n[n.size() - 1] == 'l' || n[n.size() - 1] == 'L') ? "l" : "");
+    }
+    else if(t == 'O'){
+
+    }
+    else if(t == 'f'){
+
+    }
+    else if(t == 'F'){
+
+    }
+    return n;
+}
+
+void node::convert_to_decimal(){
+    string temp;
+    for(auto (&q) : this -> ta_codes){
+        temp = convert_to_decimal(q.arg1);
+        if(temp != ""){
+            q.arg1 = temp;
+        }
+
+        temp = convert_to_decimal(q.arg2);
+        if(temp != ""){
+            q.arg2 = temp;
+        }
+    }
+}
+
+void node::remove_empty_tac(){
+    vector<quad> refined_tacs;
+
+    for(auto q : this -> ta_codes){
+        if(q.code != ""){
+            refined_tacs.push_back(q);
+        }
+    }
+
+    this -> ta_codes = refined_tacs;
+    return;
+}
+
+void node::update_tac_jump_vals(){
+    int ins_count = 1;
+    map<int, int> new_ins_count;
+    for(auto (&q) : this -> ta_codes){      // Update q's ins_line
+        if(q.code != ""){
+            new_ins_count[q.ins_line] = ins_count;
+            q.ins_line = ins_count;     // q.ins_line = ins_count 
+            ins_count++;
+        }
+    }
+
+    ins_count = 1;
+    for(auto (&q) : this -> ta_codes){      // Update q's abs_jump
+        if(q.code != ""){
+            if(q.rel_jump){
+                // TESTING
+                // Lower bound used because we need the next instruction to jump onto
+                q.abs_jump = (*(new_ins_count.lower_bound(q.abs_jump))).second;
+                // q.abs_jump = new_ins_count[q.abs_jump];
+                
+                q.make_code();
+                q.rel_jump = q.abs_jump - q.ins_line;
+            }
+            ins_count++;
+        }
+    }
+}
+
+void node::rename_temporaries(){
+    map<string, int> order_of_appearance;
+    int temporaries_seen = 0;
+    for(auto (&q) : this -> ta_codes){
+        if(q.code != ""){
+            if(q.result.size() > 2 && q.result[0] == '#' && q.result[1] == '#'){
+                if(order_of_appearance[q.result] == 0){
+                    temporaries_seen++;
+                    order_of_appearance[q.result] = temporaries_seen;
+                }
+                q.result = "##t" + to_string(order_of_appearance[q.result]);
+            }
+            if(q.arg1.size() > 2 && q.arg1[0] == '#' && q.arg1[1] == '#'){
+                if(order_of_appearance[q.arg1] == 0){
+                    temporaries_seen++;
+                    order_of_appearance[q.arg1] = temporaries_seen;
+                }
+                q.arg1 = "##t" + to_string(order_of_appearance[q.arg1]);
+            }
+            if(q.arg2.size() > 2 && q.arg2[0] == '#' && q.arg2[1] == '#'){
+                if(order_of_appearance[q.arg2] == 0){
+                    temporaries_seen++;
+                    order_of_appearance[q.arg2] = temporaries_seen;
+                }
+                q.arg2 = "##t" + to_string(order_of_appearance[q.arg2]);
+            }
+            q.make_code();   
+        }
+    }
+}
+
+void node::optimize_tac_RED_TEMPS(){
     map<string, set<int> > lhs_apps, rhs_apps;
     set<int> jumped_to;
 
@@ -3578,7 +3822,7 @@ void node::optimize_tac(){
         }
     }
 
-    // Remove redundant temporaries
+    // Remove redundant temporaries (only those that have been made by us) using Copy Propagation
     {
         bool optimizing = true;
         while(optimizing){
@@ -3586,13 +3830,19 @@ void node::optimize_tac(){
             for(int i = 0; i < (this -> ta_codes).size(); i++){
                 quad (&q) = this -> ta_codes[i];
                 if(q.code != ""){
-                    if(jumped_to.find(q.ins_line) == jumped_to.end() && lhs_apps[q.result].size() == 1 && q.result.size() > 2 && q.result[0] == '#' && q.result[1] == '#'){
+                    // TESTING
+                    if(/* jumped_to.find(q.ins_line) == jumped_to.end() && */ lhs_apps[q.result].size() == 1 && q.result.size() > 2 && q.result[0] == '#' && q.result[1] == '#'){
 
                         if(q.made_from == quad::ASSIGNMENT){    
+                            // Copy Propagation
                             /*
                                 Looking for cases like
                                     t1 = a1;
                                     t2 = t1 + t3;
+                                    ...
+
+                                This is replaced by
+                                    t2 = a1 + t3;
                                     ...
                             */ 
 
@@ -3633,10 +3883,15 @@ void node::optimize_tac(){
                             }
                         }
                         else if(q.made_from == quad::BINARY || q.made_from == quad::UNARY || q.made_from == quad::LOAD || q.made_from == quad::CAST){
+                            // (Inverse?) Copy Propagation
                             /*
                                 Looking for cases like
                                     t1 = a1 + a2;
                                     t2 = t1;
+                                    ...
+                                
+                                This is replaced by
+                                    t2 = a1 + a2;
                                     ...
                             */
 
@@ -3653,6 +3908,7 @@ void node::optimize_tac(){
                                 }
                             }
 
+                            green_light = (green_light && (rhs_apps[q.result].size() == 1));
                             if(green_light){
                                 optimizing = true;
                                 q.code = "";
@@ -3680,62 +3936,182 @@ void node::optimize_tac(){
         }
     }
 
-    // Rename temporaries
-    {
-        map<string, int> order_of_appearance;
-        int temporaries_seen = 0;
-        for(auto (&q) : this -> ta_codes){
-            if(q.code != ""){
-                if(q.result.size() > 2 && q.result[0] == '#' && q.result[1] == '#'){
-                    if(order_of_appearance[q.result] == 0){
-                        temporaries_seen++;
-                        order_of_appearance[q.result] = temporaries_seen;
-                    }
-                    q.result = "##t" + to_string(order_of_appearance[q.result]);
-                }
-                if(q.arg1.size() > 2 && q.arg1[0] == '#' && q.arg1[1] == '#'){
-                    if(order_of_appearance[q.arg1] == 0){
-                        temporaries_seen++;
-                        order_of_appearance[q.arg1] = temporaries_seen;
-                    }
-                    q.arg1 = "##t" + to_string(order_of_appearance[q.arg1]);
-                }
-                if(q.arg2.size() > 2 && q.arg2[0] == '#' && q.arg2[1] == '#'){
-                    if(order_of_appearance[q.arg2] == 0){
-                        temporaries_seen++;
-                        order_of_appearance[q.arg2] = temporaries_seen;
-                    }
-                    q.arg2 = "##t" + to_string(order_of_appearance[q.arg2]);
-                }
-                q.make_code();   
-            }
+    this -> remove_empty_tac();
+    this -> update_tac_jump_vals();
+}
+
+void node::optimize_tac_CONST_and_STR_RED(){
+
+    map<string, set<int> > lhs_apps, rhs_apps;
+    set<int> jumped_to;
+
+    int ins_count = 1;
+    for(auto (&q) : this -> ta_codes){
+        if(q.code != ""){
+            q.check_jump(ins_count);        // Sets ins_line and abs_jump of q
+
+            lhs_apps[q.result].insert(ins_count);
+            rhs_apps[q.arg1].insert(ins_count);
+            rhs_apps[q.arg2].insert(ins_count);
+            jumped_to.insert(q.abs_jump);
+
+            ins_count++;
         }
     }
 
-    // Update ins_line and abs_jump
-    {
-        ins_count = 1;
-        map<int, int> new_ins_count;
-        for(auto (&q) : this -> ta_codes){      // Update q's ins_line
-            if(q.code != ""){
-                new_ins_count[q.ins_line] = ins_count;
-                q.ins_line = new_ins_count[q.ins_line];     // q.ins_line = ins_count 
-                ins_count++;
+    int opt_count = -1;                             // Number of instructions optimized
+    set<int> const_optimized, stred_optimized;      // Set of instructions optimized from constant folding/ propagation, and strength reduction
+    while(opt_count != const_optimized.size() + stred_optimized.size()){
+        opt_count = const_optimized.size() + stred_optimized.size();
+
+        // Constant Folding + Constant Propagation
+        for(int i = 0; i < this -> ta_codes.size(); i++){
+            // @TODO Support for non-decimals
+            quad (&q) = this -> ta_codes[i];
+            if(q.code == "" || const_optimized.find(q.ins_line) != const_optimized.end()){
+                continue;
+            }
+
+            if(this -> convert_to_decimal(q.arg1) == q.arg1 && this -> convert_to_decimal(q.arg2) == q.arg2){ // RHS args are constant
+                if(q.made_from == quad::BINARY){ // Constant Folding
+                    const_optimized.insert(q.ins_line);
+
+                    string op = q.op;
+                    if(op == "+"){
+                        q.arg1 = to_string(stoi(q.arg1) + stoi(q.arg2));
+                    }
+                    else if(op == "-"){
+                        q.arg1 = to_string(stoi(q.arg1) - stoi(q.arg2));
+                    }
+                    else if(op == "*"){
+                        q.arg1 = to_string(stoi(q.arg1) * stoi(q.arg2));
+                    }
+                    else if(op == "/"){
+                        q.arg1 = to_string(stoi(q.arg1) / stoi(q.arg2));
+                    }
+                    else if(op == "%"){
+                        q.arg1 = to_string(stoi(q.arg1) % stoi(q.arg2));
+                    }
+                    else{
+                        continue;
+                    }
+                    // @TODO : POORA BACHA HUA
+                    /*
+                    else if(op == "<<"){
+
+                    }
+                    else if(op == ">>"){
+
+                    }
+                    else if(op == ">>>"){
+                        
+                    }
+                    else if(op == ">"){
+                        
+                    }
+                    else if(op == "<"){
+                        
+                    }
+                    else if(op == ">="){
+                        
+                    }
+                    else if(op == "<="){
+                        
+                    }
+                    else if(op == "=="){
+                        
+                    }
+                    else if(op == "!="){
+                        
+                    }
+                    else if(op == "&"){
+                        
+                    }
+                    else if(op == "|"){
+                        
+                    }
+                    else if(op == "^"){
+                        
+                    }
+                    else if(op == "&&"){
+                        
+                    }
+                    else if(op == "||"){
+                        
+                    }
+                    */
+
+                    q.op = "=";
+                    q.arg2 = "";
+                    q.make_code_from_assignment();
+                }
+                else if(q.made_from == quad::UNARY){    // Constant Folding
+                    const_optimized.insert(q.ins_line);
+                    
+                    string op = q.op;
+                    if(op == "~"){
+
+                    }
+                    else if(op == "!"){
+
+                    }
+                }
+                
+                if(q.made_from == quad::ASSIGNMENT){    // Constant Propagation
+                    const_optimized.insert(q.ins_line);
+                    
+                    for(int j = i + 1; j < this -> ta_codes.size(); j++){
+                        quad (&p) = this -> ta_codes[j];
+
+                        if(p.code == ""){
+                            continue;
+                        }
+                        if(jumped_to.find(p.ins_line) != jumped_to.end() || rhs_apps[q.result].size() == 0){
+                            break;
+                        }
+                        if(!(p.made_from == quad::ASSIGNMENT || p.made_from == quad::BINARY || p.made_from == quad::UNARY || p.made_from == quad::CAST || p.made_from == quad::PUSH_PARAM || p.made_from == quad::RETURN)){
+                            break;
+                        }
+
+                        if(p.arg1 == q.result || p.arg2 == q.result){
+                            rhs_apps[q.result].erase(p.ins_line);
+
+                            if(p.arg1 == q.result){
+                                p.arg1 = q.arg1;
+                            }
+                            if(p.arg2 == q.result){
+                                p.arg2 = q.arg1;
+                            }
+
+                            p.make_code();
+                        }
+                        
+                        if(p.result == q.result){
+                            q.code = "";
+                            break;
+                        }
+                    }
+
+                    if(rhs_apps[q.result].size() == 0 && q.result.size() > 2 && q.result[0] == '#' && q.result[1] == '#'){
+                        q.code = "";
+                    }
+                }
             }
         }
 
-        ins_count = 1;
-        for(auto (&q) : this -> ta_codes){      // Update q's abs_jump
-            if(q.code != ""){
-                if(q.rel_jump){
-                    q.abs_jump = new_ins_count[q.abs_jump];
-                    q.make_code();
-                    q.rel_jump = q.abs_jump - q.ins_line;
-                }
-                ins_count++;
+        for(int i = 0; i < this -> ta_codes.size(); i++){
+            quad (&q) = this -> ta_codes[i];
+
+            if(q.code == "" || stred_optimized.find(q.ins_line) != stred_optimized.end()){
+                continue;
             }
+
+            // @TODO : Complete Strength Reduction
         }
     }
+
+    this -> remove_empty_tac();
+    this -> update_tac_jump_vals();
 }
 
 void node::print_tac(string filename){

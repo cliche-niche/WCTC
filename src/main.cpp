@@ -82,8 +82,16 @@ int main(int argc, char* argv[]) {
     // for(auto cls : main_table)
     // main_table->make_csv_wrapper(st_file);    
 
+
+    cout << "tac tak aa gaya kya?" << endl;
     root->generate_tac();
-    root->optimize_tac();
+    root->convert_to_decimal();
+
+    root->optimize_tac_RED_TEMPS();
+    root->print_tac("taco.txt");
+    root->optimize_tac_CONST_and_STR_RED();
+    // root->optimize_tac_COPY_PROP();
+    root->rename_temporaries();
     root->print_tac(tac_file);
     
     fclose(program);
