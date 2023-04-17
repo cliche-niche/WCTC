@@ -13,7 +13,13 @@ public class Example1 {
 
         void sex() {
             // byte a = -129;
-            // int a = 23;
+            int a = 23, b;
+
+            if(a == 0){
+                a = 5;
+            }
+
+            b = -a;
 
             // if(a > 0){
             //     ;
@@ -24,7 +30,9 @@ public class Example1 {
             // this.test(5, b, 10);
 
             int A[][][] = new int[23][54][3];
+            int B[][][];
 
+            B = new int[12][12][12];
             A[0][2][1] = 10 + A[3][4][2];
         }
 

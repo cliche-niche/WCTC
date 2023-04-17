@@ -81,11 +81,15 @@ int main(int argc, char* argv[]) {
     root->generate_tac();
     root->convert_to_decimal();
 
-    root->optimize_tac_RED_TEMPS();
-    root->print_tac("taco.txt");
-    root->optimize_tac_CONST_and_STR_RED();
-    // root->optimize_tac_COPY_PROP();
-    root->rename_temporaries();
+    bool optimizing = false;
+    do{
+        optimizing = false;
+        optimizing = (root->optimize_tac_RED_TEMPS() || optimizing);
+        optimizing = (root->optimize_tac_CONST_and_STR_RED() || optimizing);
+        // optimizing = (optimizing || root->optimize_tac_COPY_PROP());
+        // optimizing = (optimizing || root->optimize_tac_DC_ELIM());
+        root->rename_temporaries();
+    }while(optimizing);
     root->print_tac(tac_file);
     
     fclose(program);

@@ -2562,8 +2562,30 @@ string node::get_mangled_name() {
         mangled_name = this -> sym_tab -> parent_st -> name + "." + mangled_name;
     }
 
-
     return mangled_name;
+}
+
+void node::get_dimension_dfs(st_entry *arr) {
+    if(this -> name == "DimExpr") {
+        arr -> dim_sizes . push_back(this -> get_var_from_node());
+        return;
+    }
+
+    for(auto &child : this -> children) {
+        child -> get_dimension_dfs(arr);
+    }
+}
+
+void node::get_dimension_variables(st_entry *arr) {
+    if(this -> name != "ArrayCreationExpression") {
+        cout << "Error! Get Dimension variable called from unknown node. Aborting...";
+        exit(1);
+    }
+
+    arr -> dim_sizes . clear();     // for redclarations of array, remove all the previous dimension variables
+    for(auto &child : this -> children) {
+        child -> get_dimension_dfs(arr);
+    }
 }
 
 void node::generate_tac(){
@@ -2940,10 +2962,30 @@ void node::generate_tac(){
             cout << "Error: Cannot allocate memory. Specify all dimensions, without array initializers please. To be supported later." << endl;
             exit(1);
         }
-
+        
         quad q("", "", "", "");
 
         this -> append_tac(this -> children[this -> children.size() - 1]);      // Code of DimExprs
+        
+        // get the symbol table entry
+        node* cnt = this;
+        st_entry* arr = NULL;
+        if(cnt -> parent && cnt -> parent -> parent) {
+            cnt = cnt -> parent -> parent;
+        }
+        if(cnt -> children.size() == 1) {
+            cnt = cnt -> parent;
+            arr = cnt -> sym_tab_entry;
+
+            this -> get_dimension_variables(arr);
+        }
+        else {
+            // @TODO
+            // deal with names and identifiers?
+        }
+
+        // get the list of variables defining its dimensions
+        
 
         int datatype_size = 0;
         if(primitive_types.find(this -> children[1] -> name) != primitive_types.end()) {
@@ -3052,8 +3094,6 @@ void node::generate_tac(){
             q.make_code_from_load();
             this -> ta_codes.push_back(q);
         }
-
-        this -> append_tac(this -> children[0] -> ta_codes);
         return;
     }
     else if(this -> name == "MethodInvocation") {
@@ -3628,7 +3668,7 @@ void node::rename_temporaries(){
     }
 }
 
-void node::optimize_tac_RED_TEMPS(){
+bool node::optimize_tac_RED_TEMPS(){
     map<string, set<int> > lhs_apps, rhs_apps;
     set<int> jumped_to;
 
@@ -3646,6 +3686,7 @@ void node::optimize_tac_RED_TEMPS(){
         }
     }
 
+    bool any_optimization = false;
     // Remove redundant temporaries (only those that have been made by us) using Copy Propagation
     {
         bool optimizing = true;
@@ -3757,14 +3798,16 @@ void node::optimize_tac_RED_TEMPS(){
                     }
                 }
             }
+            any_optimization = (any_optimization || optimizing);
         }
     }
 
     this -> remove_empty_tac();
     this -> update_tac_jump_vals();
+    return any_optimization;
 }
 
-void node::optimize_tac_CONST_and_STR_RED(){
+bool node::optimize_tac_CONST_and_STR_RED(){
 
     map<string, set<int> > lhs_apps, rhs_apps;
     set<int> jumped_to;
@@ -3783,6 +3826,7 @@ void node::optimize_tac_CONST_and_STR_RED(){
         }
     }
 
+    bool any_optimization = false;
     int opt_count = -1;                             // Number of instructions optimized
     set<int> const_optimized, stred_optimized;      // Set of instructions optimized from constant folding/ propagation, and strength reduction
     while(opt_count != const_optimized.size() + stred_optimized.size()){
@@ -3799,71 +3843,66 @@ void node::optimize_tac_CONST_and_STR_RED(){
             if(this -> convert_to_decimal(q.arg1) == q.arg1 && this -> convert_to_decimal(q.arg2) == q.arg2){ // RHS args are constant
                 if(q.made_from == quad::BINARY){ // Constant Folding
                     const_optimized.insert(q.ins_line);
+                    any_optimization = true;
 
                     string op = q.op;
                     if(op == "+"){
-                        q.arg1 = to_string(stoi(q.arg1) + stoi(q.arg2));
+                        q.arg1 = to_string(stoll(q.arg1) + stoll(q.arg2));
                     }
                     else if(op == "-"){
-                        q.arg1 = to_string(stoi(q.arg1) - stoi(q.arg2));
+                        q.arg1 = to_string(stoll(q.arg1) - stoll(q.arg2));
                     }
                     else if(op == "*"){
-                        q.arg1 = to_string(stoi(q.arg1) * stoi(q.arg2));
+                        q.arg1 = to_string(stoll(q.arg1) * stoll(q.arg2));
                     }
                     else if(op == "/"){
-                        q.arg1 = to_string(stoi(q.arg1) / stoi(q.arg2));
+                        q.arg1 = to_string(stoll(q.arg1) / stoll(q.arg2));
                     }
                     else if(op == "%"){
-                        q.arg1 = to_string(stoi(q.arg1) % stoi(q.arg2));
+                        q.arg1 = to_string(stoll(q.arg1) % stoll(q.arg2));
                     }
-                    else{
-                        continue;
-                    }
-                    // @TODO : POORA BACHA HUA
-                    /*
                     else if(op == "<<"){
-
+                        q.arg1 = to_string(stoll(q.arg1) << stoll(q.arg2));
                     }
                     else if(op == ">>"){
-
+                        q.arg1 = to_string(stoll(q.arg1) >> stoll(q.arg2));
                     }
                     else if(op == ">>>"){
-                        
+                        q.arg1 = to_string((unsigned long long) stoll(q.arg1) >> stoll(q.arg2));
                     }
                     else if(op == ">"){
-                        
+                        q.arg1 = (stoll(q.arg1) > stoll(q.arg2) ? "true" : "false");
                     }
                     else if(op == "<"){
-                        
+                        q.arg1 = (stoll(q.arg1) < stoll(q.arg2) ? "true" : "false");
                     }
                     else if(op == ">="){
-                        
+                        q.arg1 = (stoll(q.arg1) >= stoll(q.arg2) ? "true" : "false");
                     }
                     else if(op == "<="){
-                        
+                        q.arg1 = (stoll(q.arg1) <= stoll(q.arg2) ? "true" : "false");
                     }
                     else if(op == "=="){
-                        
+                        q.arg1 = (stoll(q.arg1) == stoll(q.arg2) ? "true" : "false");
                     }
                     else if(op == "!="){
-                        
+                        q.arg1 = (stoll(q.arg1) != stoll(q.arg2) ? "true" : "false");
                     }
                     else if(op == "&"){
-                        
+                        q.arg1 = to_string(stoll(q.arg1) & stoll(q.arg2));
                     }
                     else if(op == "|"){
-                        
+                        q.arg1 = to_string(stoll(q.arg1) | stoll(q.arg2));
                     }
                     else if(op == "^"){
-                        
+                        q.arg1 = to_string(stoll(q.arg1) ^ stoll(q.arg2));
                     }
                     else if(op == "&&"){
-                        
+                        q.arg1 = ((q.arg1 == "true" && q.arg2 == "true") ? "true" : "false");
                     }
                     else if(op == "||"){
-                        
+                        q.arg1 = ((q.arg1 == "true" || q.arg2 == "true") ? "true" : "false");
                     }
-                    */
 
                     q.op = "=";
                     q.arg2 = "";
@@ -3871,13 +3910,20 @@ void node::optimize_tac_CONST_and_STR_RED(){
                 }
                 else if(q.made_from == quad::UNARY){    // Constant Folding
                     const_optimized.insert(q.ins_line);
+                    any_optimization = true;
                     
                     string op = q.op;
                     if(op == "~"){
-
+                        q.arg1 = to_string(~stoll(q.arg1));
+                        q.op = "=";
+                        q.arg2 = "";
+                        q.make_code_from_assignment();
                     }
                     else if(op == "!"){
-
+                        q.arg1 = (q.arg1 == "true" ? "false" : "true");
+                        q.op = "=";
+                        q.arg2 = "";
+                        q.make_code_from_assignment();
                     }
                 }
                 
@@ -3899,6 +3945,7 @@ void node::optimize_tac_CONST_and_STR_RED(){
 
                         if(p.arg1 == q.result || p.arg2 == q.result){
                             rhs_apps[q.result].erase(p.ins_line);
+                            any_optimization = true;
 
                             if(p.arg1 == q.result){
                                 p.arg1 = q.arg1;
@@ -3923,17 +3970,172 @@ void node::optimize_tac_CONST_and_STR_RED(){
             }
         }
 
+        // Strength Reduction (Algebraic Reduction)
         for(int i = 0; i < this -> ta_codes.size(); i++){
             quad (&q) = this -> ta_codes[i];
 
             if(q.code == "" || stred_optimized.find(q.ins_line) != stred_optimized.end()){
                 continue;
             }
+
+            string op = q.op;
+            bool reduced = false;
+            if(q.arg2 == "0"){
+                // + - * / << >> >>> & | ^
+                if(op == "+"){
+                    reduced = true;
+                    q.arg2 = "";
+                }
+                else if(op == "-"){
+                    reduced = true;
+                    q.arg2 = "";
+                }
+                else if(op == "*"){
+                    reduced = true;
+                    q.arg2 = "";
+                    q.arg1 = "0";
+                }
+                else if(op == "/"){
+                    cout << "ERROR: Zero Division detected... Exiting" << endl;
+                    exit(1);
+                }
+                else if(op == "<<"){
+                    reduced = true;
+                    q.arg2 = "";
+                }
+                else if(op == ">>"){
+                    reduced = true;
+                    q.arg2 = "";
+                }
+                else if(op == ">>>"){
+                    reduced = true;
+                    q.arg2 = "";
+                }
+                else if(op == "&"){
+                    reduced = true;
+                    q.arg2 = "";
+                    q.arg1 = "0";
+                }
+                else if(op == "|"){
+                    reduced = true;
+                    q.arg2 = "";
+                }
+                else if(op == "^"){
+                    reduced = true;
+                    q.arg2 = "";
+                }
+
+                if(reduced){
+                    q.op = "=";
+                    q.make_code_from_assignment();
+                }
+            }
+            else if(q.arg1 == "0"){
+                // + * / << >> >>> & | ^
+                if(op == "+"){
+                    reduced = true;
+                    q.arg1 = q.arg2;
+                }
+                else if(op == "*"){
+                    reduced = true;
+                }
+                else if(op == "/"){
+                    reduced = true;
+                }
+                else if(op == "<<"){
+                    reduced = true;
+                }
+                else if(op == ">>"){
+                    reduced = true;
+                }
+                else if(op == ">>>"){
+                    reduced = true;
+                }
+                else if(op == "&"){
+                    reduced = true;
+                }
+                else if(op == "|"){
+                    reduced = true;
+                    q.arg1 = q.arg2;
+                }
+                else if(op == "^"){
+                    reduced = true;
+                    q.arg1 = q.arg2;
+                }
+
+                if(reduced){
+                    q.op = "=";
+                    q.arg2 = "";
+                    q.make_code_from_assignment();
+                }
+            }
+            else if(q.arg2 == "1"){
+                // * /
+                if(op == "*"){
+                    reduced = true;
+                }
+                else if(op == "/"){
+                    reduced = true;
+                }
+
+                if(reduced){
+                    q.op = "=";
+                    q.arg2 = "";
+                    q.make_code_from_assignment();
+                }
+            }
+            else if(q.arg1 == "1"){
+                // *
+                if(op == "*"){
+                    reduced = true;
+                    q.arg1 = q.arg2;
+                }
+
+                if(reduced){
+                    q.op = "=";
+                    q.arg2 = "";
+                    q.make_code_from_assignment();
+                }
+            }
+            else if(q.arg1 == "true" || q.arg2 == "true" || q.arg1 == "false" || q.arg2 == "false"){
+                // && ||
+                if(op == "&&"){
+                    reduced = true;
+                    if(q.arg1 == "true" && q.arg2 == "true"){
+                        q.arg1 = "true";
+                    }
+                    else{
+                        q.arg1 = "false";
+                    }
+                }
+                else if(op == "||"){
+                    reduced = true;
+                    if(q.arg1 == "true" || q.arg2 == "true"){
+                        q.arg1 = "true";
+                    }
+                    else{
+                        q.arg1 = "false";
+                    }
+                }
+
+                if(reduced){
+                    q.arg2 = "";
+                    q.op = "=";
+                    q.make_code_from_assignment();
+                }
+            }
+            else{
+                // Check if arg1 or arg2 is a perfect power of two
+                // Check if arg1 == arg2 for - / ^ & |
+                // if_false false goto x; -> goto x; similarly, if_true true goto x;
+            }
+            any_optimization = (any_optimization || reduced);
         }
     }
 
     this -> remove_empty_tac();
     this -> update_tac_jump_vals();
+    return any_optimization;
 }
 
 void node::print_tac(string filename){

@@ -81,6 +81,8 @@ struct node{
     void type_check();
     void chill_traversal();                                         // just a temporary function for type checking
     vector<string> get_function_parameters();                       // returns function parameters and should only be called from BracketArgumentList node 
+    void get_dimension_variables(st_entry *arr);                       // called only from ArrayCreationExpression
+    void get_dimension_dfs(st_entry *arr);                                     // dfs called by the get_dimension_variables wrapper
     void obtain_function_parameters(vector<string> &params);        // helper function
 
     string get_var_from_node();
@@ -98,9 +100,10 @@ struct node{
     void remove_empty_tac();                    // Remove those Quads which have empty 3AC
     void update_tac_jump_vals();                // Update ins_line's and abs_jump's
     void rename_temporaries();                  // Rename temporaries starting from 1
-    void optimize_tac_RED_TEMPS();              // Remove redundant temporaries and rename them using Copy Propagation and its variant
-    void optimize_tac_CONST_and_STR_RED();      // Constant Folding and Constant Propagation, and 
-    void optimize_tac_COPY_PROP();              // Copy Propagation
+    bool optimize_tac_RED_TEMPS();              // Remove redundant temporaries and rename them using Copy Propagation and its variant
+    bool optimize_tac_CONST_and_STR_RED();      // Constant Folding and Constant Propagation, and 
+    bool optimize_tac_COPY_PROP();              // Copy Propagation
+    bool optimize_tac_DC_ELIM();                // Dead Code Elimination -- DCE (of temporaries)
     void print_tac(string filename);            // Print 3AC into the file ``filename''
 };
 
