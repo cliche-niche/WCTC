@@ -78,12 +78,6 @@ int main(int argc, char* argv[]) {
 
     root->chill_traversal();                    // walk 3
 
-    // main_table->add_SysOutPln();
-    // for(auto cls : main_table)
-    // main_table->make_csv_wrapper(st_file);    
-
-
-    cout << "tac tak aa gaya kya?" << endl;
     root->generate_tac();
     root->convert_to_decimal();
 

@@ -917,25 +917,21 @@ void node::set_datatype(node* child1, node* child2, string op){
         this->datatype = "UNDEFINED";
         return;
     }
+
+    // if control reaches here, the expression must be constant
+    this -> exp_is_constant = true;
+
     if(op == "+") {
         if(dt1 == "String" || dt2 == "String"){ 
-            this -> datatype = "String";
-            if(dt2 == "String"){
-                swap(dt1, dt2);
-                node* tmp = child2;
-                child2 = child1;
-                child1 = tmp;
-            }
-
             if(dt1 == "String"){
                 this -> exp_str_val = child1 -> exp_str_val;
                 if(dt2 == "String"){
                     this -> exp_str_val += child2 -> exp_str_val;  
                 } 
-                else if(dt2 == "double" || dt2 == "float"){
+                else if(C2 == 'D'){
                     this -> exp_str_val += to_string(child2 -> exp_dob_val);
                 }
-                else if(dt2 == "long" || dt2 == "int"){
+                else if(dt2 == "long" || dt2 == "int" || dt2 == "short" || dt2 == "byte"){
                     this -> exp_str_val += to_string(child2 -> exp_int_val);
                 }
                 else if(dt2 == "char"){
@@ -944,15 +940,20 @@ void node::set_datatype(node* child1, node* child2, string op){
                 else if(dt2 == "boolean"){
                     this -> exp_str_val += (child2 -> exp_bool_val ? "true" : "false");
                 }
+                else {
+                    this -> datatype = "ERROR";
+                    cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+                    exit(1);
+                }
             }
             else if(dt2 == "String"){
                 if(dt1 == "String"){
-                    this -> exp_str_val = child2 -> exp_str_val;  
+                    this -> exp_str_val = child1 -> exp_str_val;  
                 } 
-                else if(dt1 == "double" || dt1 == "float"){
+                else if(C1 == 'D'){
                     this -> exp_str_val = to_string(child1 -> exp_dob_val);
                 }
-                else if(dt1 == "long" || dt1 == "int"){
+                else if(dt1 == "long" || dt1 == "int" || dt1 == "short" || dt1 == "byte"){
                     this -> exp_str_val = to_string(child1 -> exp_int_val);
                 }
                 else if(dt1 == "char"){
@@ -961,43 +962,23 @@ void node::set_datatype(node* child1, node* child2, string op){
                 else if(dt1 == "boolean"){
                     this -> exp_str_val = (child1 -> exp_bool_val ? "true" : "false");
                 }
+                else {
+                    this -> datatype = "ERROR";
+                    cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+                    exit(1);
+                }
                 this -> exp_str_val += child2 -> exp_str_val;
             }
             return;
         }
 
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char" && dt1 != "String") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char" && dt2 != "String")) {
+        if((C1 != 'D' && C1 != 'I') || (C2 != 'D' && C2 != 'I')) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
 
-        if(dt1 == "String" || dt2 == "String"){ 
-            this -> datatype = "String";
-            if(dt2 == "String"){
-                swap(dt1, dt2);
-                node* tmp = child2;
-                child2 = child1;
-                child1 = tmp;
-            }
-
-            this -> exp_str_val = child1 -> exp_str_val;
-            if(dt2 == "String"){
-                this -> exp_str_val += child2 -> exp_str_val;  
-            } 
-            else if(dt2 == "double" || dt2 == "float"){
-                this -> exp_str_val += to_string(child2 -> exp_dob_val);
-            }
-            else if(dt2 == "long" || dt2 == "int"){
-                this -> exp_str_val += to_string(child2 -> exp_int_val);
-            }
-            else if(dt2 == "char"){
-                this -> exp_str_val += ((char) child2 -> exp_int_val);
-            }
-            return;
-        }
-        else if(dt1 == "double" || dt2 == "double") { 
+        if(dt1 == "double" || dt2 == "double") { 
             this -> datatype = "double";
             if(dt2 == "double"){
                 swap(dt1, dt2);
@@ -1007,10 +988,10 @@ void node::set_datatype(node* child1, node* child2, string op){
             }
 
             this -> exp_dob_val = child1 -> exp_dob_val;
-            if(dt2 == "double" || dt2 == "float"){
+            if(C2 == 'D'){
                 this -> exp_dob_val += child2 -> exp_dob_val;
             }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            else if(C2 == 'I'){
                 this -> exp_dob_val += child2 -> exp_int_val;
             }
         }
@@ -1024,52 +1005,23 @@ void node::set_datatype(node* child1, node* child2, string op){
             }
 
             this -> exp_dob_val = child1 -> exp_dob_val;
-            if(dt2 == "float"){
+            if(C2 == 'D'){
                 this -> exp_dob_val += child2 -> exp_dob_val;
             }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            else if(C2 == 'I'){
                 this -> exp_dob_val += child2 -> exp_int_val;
             }
         }
-        else if(dt1 == "long" || dt2 == "long") { 
-            this -> datatype = "long";
-            if(dt2 == "long"){
-                swap(dt1, dt2);
-                node* tmp = child2;
-                child2 = child1;
-                child1 = tmp;                
-            }
-
-            this -> exp_int_val = child1 -> exp_int_val;
-            if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val += child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "int" || dt2 == "int"){ 
-            this -> datatype = "int";    
-            if(dt2 == "int"){
-                swap(dt1, dt2);
-                node* tmp = child2;
-                child2 = child1;
-                child1 = tmp;                
-            }
-
-            this -> exp_int_val = child1 -> exp_int_val;
-            if(dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val += child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "char" || dt2 == "char"){ 
-            this -> datatype = "char";
-            this -> exp_int_val = child1 -> exp_int_val + child2 -> exp_int_val;  
+        else {  // at this point we are sure that both children have integral types
+            this -> exp_int_val = child1 -> exp_int_val + child2 -> exp_int_val;
+            this -> datatype = get_maxtype(dt1, dt2);
         }
         
         return;
     }
     else if(op == "-") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1086,16 +1038,17 @@ void node::set_datatype(node* child1, node* child2, string op){
             }
 
             this -> exp_dob_val = child1 -> exp_dob_val;
-            if(dt2 == "double" || dt2 == "float"){
+            if(C2 == 'D'){
                 this -> exp_dob_val -= child2 -> exp_dob_val;
             }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            else if(C2 == 'I'){
                 this -> exp_dob_val -= child2 -> exp_int_val;
             }
         }
         else if(dt1 == "float" || dt2 == "float") { 
             this -> datatype = "float";
             if(dt2 == "float"){
+                flip = true;
                 swap(dt1, dt2);
                 node* tmp = child2;
                 child2 = child1;
@@ -1103,44 +1056,16 @@ void node::set_datatype(node* child1, node* child2, string op){
             }
 
             this -> exp_dob_val = child1 -> exp_dob_val;
-            if(dt2 == "float"){
+            if(C2 == 'D'){
                 this -> exp_dob_val -= child2 -> exp_dob_val;
             }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            else if(C2 == 'I'){
                 this -> exp_dob_val -= child2 -> exp_int_val;
             }
         }
-        else if(dt1 == "long" || dt2 == "long") { 
-            this -> datatype = "long";
-            if(dt2 == "long"){
-                swap(dt1, dt2);
-                node* tmp = child2;
-                child2 = child1;
-                child1 = tmp;                
-            }
-
-            this -> exp_int_val = child1 -> exp_int_val;
-            if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val -= child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "int" || dt2 == "int"){ 
-            this -> datatype = "int";    
-            if(dt2 == "int"){
-                swap(dt1, dt2);
-                node* tmp = child2;
-                child2 = child1;
-                child1 = tmp;                
-            }
-
-            this -> exp_int_val = child1 -> exp_int_val;
-            if(dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val -= child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "char" || dt2 == "char"){ 
-            this -> datatype = "char";
-            this -> exp_int_val = child1 -> exp_int_val - child2 -> exp_int_val;  
+        else {
+            this -> exp_int_val = child1 -> exp_int_val - child2 -> exp_int_val;
+            this -> datatype = this -> get_maxtype(dt1, dt2);
         }
         
         if(flip){
@@ -1150,9 +1075,8 @@ void node::set_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "*") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1167,10 +1091,10 @@ void node::set_datatype(node* child1, node* child2, string op){
             }
 
             this -> exp_dob_val = child1 -> exp_dob_val;
-            if(dt2 == "double" || dt2 == "float"){
+            if(C2 == 'D'){
                 this -> exp_dob_val *= child2 -> exp_dob_val;
             }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            else if(C2 == 'I'){
                 this -> exp_dob_val *= child2 -> exp_int_val;
             }
         }
@@ -1184,177 +1108,77 @@ void node::set_datatype(node* child1, node* child2, string op){
             }
 
             this -> exp_dob_val = child1 -> exp_dob_val;
-            if(dt2 == "float"){
+            if(C2 == 'D'){
                 this -> exp_dob_val *= child2 -> exp_dob_val;
             }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            else if(C2 == 'I'){
                 this -> exp_dob_val *= child2 -> exp_int_val;
             }
         }
-        else if(dt1 == "long" || dt2 == "long") { 
-            this -> datatype = "long";
-            if(dt2 == "long"){
-                swap(dt1, dt2);
-                node* tmp = child2;
-                child2 = child1;
-                child1 = tmp;                
-            }
-
-            this -> exp_int_val = child1 -> exp_int_val;
-            if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val *= child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "int" || dt2 == "int"){ 
-            this -> datatype = "int";    
-            if(dt2 == "int"){
-                swap(dt1, dt2);
-                node* tmp = child2;
-                child2 = child1;
-                child1 = tmp;                
-            }
-
-            this -> exp_int_val = child1 -> exp_int_val;
-            if(dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val *= child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "char" || dt2 == "char"){ 
-            this -> datatype = "char";
-            this -> exp_int_val = child1 -> exp_int_val * child2 -> exp_int_val;  
+        else {
+            this -> exp_int_val = child1 -> exp_int_val * child2 -> exp_int_val;
+            this -> datatype = this -> get_maxtype(dt1, dt2);
         }
         return;
     }
     else if(op == "/") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
             // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
 
-        if(dt1 == "double" || dt2 == "double") { 
-            this -> datatype = "double";
+        if(C1 == 'D' || C2 == 'D') {
+            this -> datatype = this -> get_maxtype(dt1, dt2);
 
-            if(dt1 == "double" || dt1 == "float"){
+            if(C1 == 'D'){
                 this -> exp_dob_val = child1 -> exp_dob_val;
             }
-            else if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
+            else if(C1 == 'I'){
                 this -> exp_dob_val = child1 -> exp_int_val;
             }
-            if(dt2 == "double" || dt2 == "float"){
+            if(C2 == 'D'){
                 this -> exp_dob_val /= child2 -> exp_dob_val;
             }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            else if(C2 == 'I'){
                 this -> exp_dob_val /= child2 -> exp_int_val;
             }
         }
-        else if(dt1 == "float" || dt2 == "float") { 
-            this -> datatype = "float";
-
-            if(dt1 == "float"){
-                this -> exp_dob_val = child1 -> exp_dob_val;
-            }
-            else if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
-                this -> exp_dob_val = child1 -> exp_int_val;
-            }
-            if(dt2 == "float"){
-                this -> exp_dob_val /= child2 -> exp_dob_val;
-            }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
-                this -> exp_dob_val /= child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "long" || dt2 == "long") { 
-            this -> datatype = "long";
-
-            if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
-                this -> exp_int_val = child1 -> exp_int_val;
-            }
-            if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val /= child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "int" || dt2 == "int"){ 
-            this -> datatype = "int";
-
-            if(dt1 == "int" || dt1 == "char"){
-                this -> exp_int_val = child1 -> exp_int_val;
-            }
-            if(dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val /= child2 -> exp_int_val;
-            }
-        }
-        else if(dt1 == "char" || dt2 == "char"){ 
-            this -> datatype = "char";
-            this -> exp_int_val = child1 -> exp_int_val / child2 -> exp_int_val;  
+        else {
+            this -> exp_int_val = child1 -> exp_int_val / child2 -> exp_int_val;
+            this -> datatype = this -> get_maxtype(dt1, dt2);
         }
         return;
     }
     else if(op == "%") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
 
-        if(dt1 == "double" || dt2 == "double") { 
-            this -> datatype = "double";
+        if(C1 == 'D' || C2 == 'D') {
+            this -> datatype = this -> get_maxtype(dt1, dt2);
 
-            if(dt1 == "double" || dt1 == "float"){
+            if(C1 == 'D'){
                 this -> exp_dob_val = child1 -> exp_dob_val;
             }
-            else if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
+            else if(C1 == 'I'){
                 this -> exp_dob_val = child1 -> exp_int_val;
             }
-            if(dt2 == "double" || dt2 == "float"){
+            if(C2 == 'D'){
                 this -> exp_dob_val = fmod(this -> exp_dob_val, child2 -> exp_dob_val);
             }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            else if(C2 == 'I'){
                 this -> exp_dob_val = fmod(this -> exp_dob_val, child2 -> exp_int_val);
             }
         }
-        else if(dt1 == "float" || dt2 == "float") { 
-            this -> datatype = "float";
-
-            if(dt1 == "float"){
-                this -> exp_dob_val = child1 -> exp_dob_val;
-            }
-            else if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
-                this -> exp_dob_val = child1 -> exp_int_val;
-            }
-            if(dt2 == "float"){
-                this -> exp_dob_val = fmod(this -> exp_dob_val, child2 -> exp_dob_val);
-            }
-            else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
-                this -> exp_dob_val = fmod(this -> exp_dob_val, child2 -> exp_int_val);
-            }
+        else {
+            this -> exp_int_val = child1 -> exp_int_val % child2 -> exp_int_val;
+            this -> datatype = this -> get_maxtype(dt1, dt2);
         }
-        else if(dt1 == "long" || dt2 == "long") { 
-            this -> datatype = "long";
-
-            if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
-                this -> exp_int_val = child1 -> exp_int_val;
-            }
-            if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val = fmod(this -> exp_dob_val, child2 -> exp_int_val);
-            }
-        }
-        else if(dt1 == "int" || dt2 == "int"){ 
-            this -> datatype = "int";
-
-            if(dt1 == "int" || dt1 == "char"){
-                this -> exp_int_val = child1 -> exp_int_val;
-            }
-            if(dt2 == "int" || dt2 == "char"){
-                this -> exp_int_val = fmod(this -> exp_dob_val, child2 -> exp_int_val);
-            }
-        }
-        else if(dt1 == "char" || dt2 == "char"){ 
-            this -> datatype = "char";
-            this -> exp_int_val = child1 -> exp_int_val % child2 -> exp_int_val;  
-        }
+        
         return;
     }
     else if(op == "++" || op == "--") {
@@ -1362,7 +1186,7 @@ void node::set_datatype(node* child1, node* child2, string op){
         exit(1);
     }
     else if(op == "~") {
-        if(dt1 != "long" && dt1 != "int" && dt1 != "char") {
+        if(C1 != 'I') {
             this -> datatype = "ERROR";
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data type (" << dt1 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
@@ -1375,7 +1199,6 @@ void node::set_datatype(node* child1, node* child2, string op){
     else if(op == "!") {
         if(dt1 != "boolean") {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data type (" << dt1 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1384,9 +1207,8 @@ void node::set_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "<<") {
-        if((dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if((C1 != 'I') || (C2 != 'I')) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1399,15 +1221,20 @@ void node::set_datatype(node* child1, node* child2, string op){
             this -> exp_int_val = (((int) child1 -> exp_int_val) << (child2 -> exp_int_val));
         }
         else if(dt1 == "char"){
+            this -> exp_int_val = (((short) child1 -> exp_int_val) << (child2 -> exp_int_val));
+        }
+        else if(dt1 == "short") {
+            this -> exp_int_val = (((short) child1 -> exp_int_val) << (child2 -> exp_int_val));
+        }
+        else if(dt1 == "byte") {
             this -> exp_int_val = (((char) child1 -> exp_int_val) << (child2 -> exp_int_val));
         }
         return;
     }
     else if(op == ">>") {
-        if((dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if((C1 != 'I') || (C2 != 'I')) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
-            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
+            cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" << dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
 
@@ -1419,14 +1246,20 @@ void node::set_datatype(node* child1, node* child2, string op){
             this -> exp_int_val = (((int) child1 -> exp_int_val) >> (child2 -> exp_int_val));
         }
         else if(dt1 == "char"){
+            this -> exp_int_val = (((short) child1 -> exp_int_val) >> (child2 -> exp_int_val));
+        }
+        else if(dt1 == "short") {
+            this -> exp_int_val = (((short) child1 -> exp_int_val) >> (child2 -> exp_int_val));
+        }
+        else if(dt1 == "byte") {
             this -> exp_int_val = (((char) child1 -> exp_int_val) >> (child2 -> exp_int_val));
         }
+    
         return;
     }
     else if(op == ">>>") {
-        if((dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if((C1 != 'I') ||(C2 != 'I')) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             return;
         }
@@ -1439,30 +1272,35 @@ void node::set_datatype(node* child1, node* child2, string op){
             this -> exp_int_val = (((unsigned int) child1 -> exp_int_val) >> (child2 -> exp_int_val));
         }
         else if(dt1 == "char"){
+            this -> exp_int_val = (((unsigned short) child1 -> exp_int_val) >> (child2 -> exp_int_val));
+        }
+        else if(dt1 == "short") {
+            this -> exp_int_val = (((unsigned short) child1 -> exp_int_val) >> (child2 -> exp_int_val));
+        }
+        else if(dt1 == "byte") {
             this -> exp_int_val = (((unsigned char) child1 -> exp_int_val) >> (child2 -> exp_int_val));
         }
         return;
     }
     else if(op == ">") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
 
         this -> datatype = "boolean";
         bool result;
-        if(dt1 == "double" || dt1 == "float"){
-            if(dt2 == "double" || dt2 == "float"){
+        if(C1 == 'D'){
+            if(C2 == 'D'){
                 result = ((child1 -> exp_dob_val) > (child2 -> exp_dob_val));
-            }else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            }else if(C2 == 'I'){
                 result = ((child1 -> exp_dob_val) > (child2 -> exp_int_val));
             }
-        }else if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
-            if(dt2 == "double" || dt2 == "float"){
+        }else if(C1 == 'I'){
+            if(C2 == 'D'){
                 result = ((child1 -> exp_int_val) > (child2 -> exp_dob_val));
-            }else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            }else if(C2 == 'I'){
                 result = ((child1 -> exp_int_val) > (child2 -> exp_int_val));
             }
         }
@@ -1470,25 +1308,24 @@ void node::set_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "<") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
 
         this -> datatype = "boolean";
         bool result;
-        if(dt1 == "double" || dt1 == "float"){
-            if(dt2 == "double" || dt2 == "float"){
+        if(C1 == 'D'){
+            if(C2 == 'D'){
                 result = ((child1 -> exp_dob_val) < (child2 -> exp_dob_val));
-            }else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            }else if(C2 == 'I'){
                 result = ((child1 -> exp_dob_val) < (child2 -> exp_int_val));
             }
-        }else if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
-            if(dt2 == "double" || dt2 == "float"){
+        }else if(C1 == 'I'){
+            if(C2 == 'D'){
                 result = ((child1 -> exp_int_val) < (child2 -> exp_dob_val));
-            }else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            }else if(C2 == 'I'){
                 result = ((child1 -> exp_int_val) < (child2 -> exp_int_val));
             }
         }
@@ -1496,7 +1333,7 @@ void node::set_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == ">=") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
             // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
@@ -1505,23 +1342,23 @@ void node::set_datatype(node* child1, node* child2, string op){
 
         this -> datatype = "boolean";
         bool result;
-        if(dt1 == "double" || dt1 == "float"){
-            if(dt2 == "double" || dt2 == "float"){
+        if(C1 == 'D'){
+            if(C2 == 'D'){
                 result = ((child1 -> exp_dob_val) >= (child2 -> exp_dob_val));
-            }else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            }else if(C2 == 'I'){
                 result = ((child1 -> exp_dob_val) >= (child2 -> exp_int_val));
             }
-        }else if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
-            if(dt2 == "double" || dt2 == "float"){
+        }else if(C1 == 'I'){
+            if(C2 == 'D'){
                 result = ((child1 -> exp_int_val) >= (child2 -> exp_dob_val));
-            }else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            }else if(C2 == 'I'){
                 result = ((child1 -> exp_int_val) >= (child2 -> exp_int_val));
             }
         }
         this -> exp_bool_val = result;
     }
     else if(op == "<=") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
             // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
@@ -1530,16 +1367,16 @@ void node::set_datatype(node* child1, node* child2, string op){
 
         this -> datatype = "boolean";
         bool result;
-        if(dt1 == "double" || dt1 == "float"){
-            if(dt2 == "double" || dt2 == "float"){
+        if(C1 == 'D'){
+            if(C2 == 'D'){
                 result = ((child1 -> exp_dob_val) <= (child2 -> exp_dob_val));
-            }else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            }else if(C2 == 'I'){
                 result = ((child1 -> exp_dob_val) <= (child2 -> exp_int_val));
             }
-        }else if(dt1 == "long" || dt1 == "int" || dt1 == "char"){
-            if(dt2 == "double" || dt2 == "float"){
+        }else if(C1 == 'I'){
+            if(C2 == 'D'){
                 result = ((child1 -> exp_int_val) <= (child2 -> exp_dob_val));
-            }else if(dt2 == "long" || dt2 == "int" || dt2 == "char"){
+            }else if(C2 == 'I'){
                 result = ((child1 -> exp_int_val) <= (child2 -> exp_int_val));
             }
         }
@@ -1550,7 +1387,7 @@ void node::set_datatype(node* child1, node* child2, string op){
         if((C1 == 'B' && C2 == 'B') || ((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) || (C1 == 'N' && C2 == 'N')) {
             this -> datatype = "boolean";
             bool result;
-            if(C1 == 'N'){
+            if(C1 == 'N' || C2 == 'N'){
                 result = false;
             }
             else if(C1 == 'B'){
@@ -1577,7 +1414,6 @@ void node::set_datatype(node* child1, node* child2, string op){
         }   
         else {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1586,7 +1422,7 @@ void node::set_datatype(node* child1, node* child2, string op){
         if((C1 == 'B' && C2 == 'B') || ((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) || (C1 == 'N' && C2 == 'N')) {
             this -> datatype = "boolean";
             bool result;
-            if(C1 == 'N'){
+            if(C1 == 'N' || C2 == 'N'){
                 result = true;
             }
             else if(C1 == 'B'){
@@ -1613,7 +1449,6 @@ void node::set_datatype(node* child1, node* child2, string op){
         }   
         else {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1631,7 +1466,6 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1649,7 +1483,6 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1667,7 +1500,6 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1680,7 +1512,6 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1693,7 +1524,6 @@ void node::set_datatype(node* child1, node* child2, string op){
         }
         else {
             this -> datatype = "ERROR";
-            // EXPERIMENTAL
             cout << "ERROR: Operator \'" << op << "\' is not compatible with data types (" << dt1 << ") and (" <<dt2 << "). Line No.: " << child1 -> line_no << endl;
             exit(1);
         }
@@ -1718,7 +1548,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
             return;
         }
 
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char" && dt1 != "String") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char" && dt2 != "String")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
             // REPORT ERROR HERE ONLY
             cout << "ERROR: Illegal use of '+' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
@@ -1734,7 +1564,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "-") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
             cout << "ERROR: Illegal use of '-' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
@@ -1750,7 +1580,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "*") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
             cout << "ERROR: Illegal use of '*' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
@@ -1766,7 +1596,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "/") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
             cout << "ERROR: Illegal use of '/' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
@@ -1907,7 +1737,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "<=") {
-        if((dt1 != "double" && dt1 != "float" && dt1 != "long" && dt1 != "int" && dt1 != "char") || (dt2 != "double" && dt2 != "float" && dt2 != "long" && dt2 != "int" && dt2 != "char")) {
+        if((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) {
             this -> datatype = "ERROR";
             cout << "ERROR: Illegal use of '<=' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
@@ -2055,8 +1885,16 @@ void node::calc_datatype(node* child1, node* child2, string op){
     else if(op == "=") {
         if((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) {
             if(get_maxtype(dt1, dt2) != dt1) {
-                cout << "ERROR: Lossy conversion from (" << dt2 << ") to (" << dt1 << ") at line number: " << this -> line_no << endl;
-                exit(1); 
+                if(child2 -> exp_is_constant) {
+                    if(overflow_check(dt1, child2)) {
+                        cout << "ERROR: Lossy conversion from (" << dt2 << ") to (" << dt1 << ") at line number: " << this -> line_no << endl;
+                        exit(1);
+                    }
+                }
+                else {
+                    cout << "ERROR: Lossy conversion from (" << dt2 << ") to (" << dt1 << ") at line number: " << this -> line_no << endl;
+                    exit(1); 
+                }
             }
             if(child1 -> datatype != child2 -> datatype) {
                 child2 -> typecast_to = child1 -> datatype;
@@ -2174,6 +2012,28 @@ void node::chill_traversal(){
     }
 }
 
+bool node::overflow_check(string datatype, node* exp) {
+    if(exp -> get_datatype_category() != 'I') {
+        return true;
+    }
+    
+    long long int val = exp -> exp_int_val; 
+    if(datatype == "byte") {
+        if(val < -128 || val > 127 ) return true;
+    }
+    else if(datatype == "short") {
+        if(val < -32768 || val > 32767 ) return true;
+    }
+    else if(datatype == "char") {
+        if(val < 0 || val > 65535 ) return true;   
+    }
+    else if(datatype == "int") {
+        if(val < -2147483648 || val > 2147483647 ) return true;
+    }
+    
+    return false;
+} 
+
 void node::type_check() {
     if(this -> type_checked){
         return;
@@ -2233,54 +2093,7 @@ void node::type_check() {
                     string func_name = this -> children[this -> children.size() - 1] -> name;
                     symbol_table_func* sfunc = ((symbol_table_class* ) cls) -> look_up_function(this -> children[idx + 2] -> name, func_params);
                     
-                    // first check for exact match, then castable matching
-                    // bool match_found = false;
-                    // for(auto &func : cls -> member_funcs) {
-                    //     bool flag = true;
-                    //     if(func -> name == func_name && func_params.size() == func -> params.size()) {
-                    //         flag = false;
-                    //         for(int idx = 0; idx < func_params.size(); idx++) {
-                    //             if(func_params[idx] != func -> params[idx] -> type) {
-                    //                 flag = true;
-                    //                 break;
-                    //             }
-                    //         }
-                    //     }
-                    //     if(!flag) {
-                    //         match_found = true;
-                    //         sfunc = func;
-                    //         break;
-                    //     }
-                    // }
-
-                    // // now check for castable matching
-                    // if(!match_found){
-                    //     for(auto &func : cls -> member_funcs) {
-                    //         bool flag = true;
-                    //         if(func -> name == func_name && func_params.size() == func -> params.size()) {
-                    //             flag = false;
-                    //             for(int idx = 0; idx < func_params.size(); idx++) {
-                    //                 if((this -> get_datatype_category(func_params[idx]) == 'I' || this -> get_datatype_category(func_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
-                    //                     if(this -> get_maxtype(func_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
-                    //                         flag = true;
-                    //                         break;
-                    //                     }
-                    //                 }
-                    //                 else {
-                    //                     if(func_params[idx] != func -> params[idx] -> type) {
-                    //                         flag = true;
-                    //                         break;
-                    //                     }
-                    //                 }
-                    //             }
-                    //         }
-                    //         if(!flag) {
-                    //             match_found = true;
-                    //             sfunc = func;
-                    //             break;
-                    //         }
-                    //     }
-                    // }
+                    // FIRST CHECK FOR EXACT FUNCTION THEN CASTABLE MATCHING SHIFTED TO LOOK UP FUNC //
                     
                     if(!sfunc){
                         cout << "ERROR: (" << this -> children[idx] -> name << ") does not have (" << this -> children[idx + 2] -> name << ") as a member. Line number: " << this -> children[idx] -> line_no << endl;
@@ -2501,70 +2314,7 @@ void node::type_check() {
             exit(1);
         }
 
-        // //first check for exact match, then castable matching
-        // bool match_found = false;
-        // for(auto &func : class_table -> member_funcs) {
-        //     bool flag = true;
-        //     if(func -> name == func_name && func_params.size() == func -> params.size()) {
-        //         flag = false;
-        //         for(int idx = 0; idx < func_params.size(); idx++) {
-        //             if(func_params[idx] != func -> params[idx] -> type) {
-        //                 flag = true;
-        //                 break;
-        //             }
-        //         }
-        //     }
-        //     if(!flag) {
-        //         match_found = true;
-        //         this -> datatype = func -> return_type;
-        //         return;
-        //     }
-        // }
-
-        // // now check for castable matching
-        // match_found = false;
-        // for(auto &func : class_table -> member_funcs) {
-        //     bool flag = true;
-        //     if(func -> name == func_name && func_params.size() == func -> params.size()) {
-        //         flag = false;
-        //         for(int idx = 0; idx < func_params.size(); idx++) {
-        //             if((this -> get_datatype_category(func_params[idx]) == 'I' || this -> get_datatype_category(func_params[idx]) == 'D') && (this -> get_datatype_category(func -> params[idx] -> type) == 'I' || this -> get_datatype_category(func -> params[idx] -> type) == 'D')) {
-        //                 if(this -> get_maxtype(func_params[idx], func -> params[idx] -> type) != func -> params[idx] -> type) {
-        //                     flag = true;
-        //                     break;
-        //                 }
-        //             }
-        //             else {
-        //                 if(func_params[idx] != func -> params[idx] -> type) {
-        //                     flag = true;
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     if(!flag) {
-        //         match_found = true;
-        //         this -> datatype = func -> return_type;
-        //         return;
-        //     }
-        // }
-        // if(!match_found) {
-        //     cout << "ERROR: Unknown method invocation of (" << func_name << ") with arg-types (";
-        //     {
-        //         bool first = true;
-        //         for(const auto (&param) : func_params){
-        //             if(first){
-        //                 cout << param;
-        //                 first = false;
-        //             }
-        //             else{
-        //                 cout << ", " << param;
-        //             }
-        //         }
-        //     }
-        //     cout <<") at line number: " << this->line_no << endl; // ! Tanwar print parameters
-        //     exit(1);
-        // }
+        // FIRST CHECK FOR EXACT FUNCTION THEN CASTABLE MATCHING SHIFTED TO LOOK UP FUNC //
     }
     else if (this -> name == "UnqualifiedClassInstanceCreationExpression") {
         vector<string> constructor_params;
@@ -2637,8 +2387,16 @@ void node::type_check() {
         if(this -> children[1] && this -> children[1] -> name == "=") {     // Declaration and initialization
             if((get_datatype_category(this -> sym_tab_entry -> type) == 'I' || get_datatype_category(this -> sym_tab_entry -> type) == 'D') && (get_datatype_category(this -> children[1] -> datatype) == 'I' || get_datatype_category(this -> children[1] -> datatype) == 'D')) {
                 if(get_maxtype(this -> sym_tab_entry -> type, this -> children[1] -> datatype) != this -> sym_tab_entry -> type) {
-                    cout << "ERROR: Lossy conversion between " << this -> sym_tab_entry -> type << " and " << this -> children[1] -> datatype << " at line number: " << this -> line_no << endl;
-                    exit(1);
+                    if(this -> children[1] -> children[0] && this -> children[1] -> children[0] -> name == "Expression" && this -> children[1] -> children[0] -> exp_is_constant) {  // perform overflow checks if the LHS is constant
+                        if(this -> overflow_check(this -> sym_tab_entry -> type, this -> children[1] -> children[0])) {
+                            cout << "ERROR: Lossy conversion between " << this -> sym_tab_entry -> type << " and " << this -> children[1] -> datatype << " at line number: " << this -> line_no << endl;
+                            exit(1);
+                        }
+                    }
+                    else {
+                        cout << "ERROR: Lossy conversion between " << this -> sym_tab_entry -> type << " and " << this -> children[1] -> datatype << " at line number: " << this -> line_no << endl;
+                        exit(1);
+                    }
                 }
             }
             else if(this -> sym_tab_entry -> type != this -> children[1] -> datatype) {
@@ -2649,7 +2407,7 @@ void node::type_check() {
     }
     else if(this -> type == "OPERATOR") {
         if(this -> children.size() == 1){
-            if(this -> name == "=") {
+            if(this -> name == "="|| this -> name == "+" || this -> name == "-") {     // unary operations
                 this -> datatype = this -> children[0] -> datatype;
             }
             else {
@@ -2660,7 +2418,8 @@ void node::type_check() {
             this -> calc_datatype(this -> children[0], this -> children[1], this -> name);
         }
         else if(this -> children.size() == 3){
-            // TERNARY TO BE DEALT WITH
+            // @TODO TERNARY TO BE DEALT WITH
+            this -> calc_datatype(this -> children[1], this -> children[2], "+");
         }
     }
     else if(this -> name == "IfThenStatement" || this -> name == "IfThenElseStatement" || this -> name == "IfThenElseStatementNoShortIf") {
@@ -2762,7 +2521,7 @@ vector<string> node::get_func_args_tac(){
 
 string node::get_mangled_name() {
     if(this -> name != "UnqualifiedClassInstanceCreationExpression" && this -> name != "MethodInvocation" && this -> name != "MethodDeclaration" && this -> name != "ConstructorDeclaration") {
-        cout << "Unknown error! Mangled name called from unknown name. Aborting...";
+        cout << "Unknown error! Mangled name called from unknown node. Aborting...";
         exit(1);
     }
 
@@ -2786,8 +2545,10 @@ string node::get_mangled_name() {
             }
         }
 
-        for(int i = func_params.size() - 1; i >= 0; i--) {
-            mangled_name = "@" + func_params[i] + mangled_name; 
+        symbol_table_func* func = main_table -> look_up_class(class_name) -> look_up_function(func_name, func_params);
+
+        for(int i = func -> params.size() - 1; i >= 0; i--) {
+            mangled_name = "@" + (func -> params[i] -> type) + mangled_name; 
         }
         mangled_name = func_name + mangled_name;
         mangled_name = class_name + "." + mangled_name;
@@ -2810,6 +2571,8 @@ void node::generate_tac(){
         child -> generate_tac();
     }
 
+
+    // cout << this -> name << " " << " tick" << endl;
     if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)) {        
         // Add typecast if need be
         if(this -> typecast_to != "UNNEEDED" && this -> typecast_to != ""){
@@ -3307,7 +3070,7 @@ void node::generate_tac(){
 
         vector<string> func_params;
         string func_name;
-        symbol_table_class* class_table = this -> get_symbol_table_class();
+        symbol_table_class* class_table;
 
         bool qualified_function_call = false;
         
@@ -3317,14 +3080,24 @@ void node::generate_tac(){
             }
             else if(child -> type == "ID") {
                 func_name = child -> name;
+                class_table = this -> get_symbol_table_class();
             }
             else if(child -> name == "#Name#") {
                 func_name = child -> children[child -> children.size() - 1] -> name;        // last child of name is the function name
+
+                // get class type of the second last child in the qualified name                
+                class_table = main_table -> look_up_class(child -> children[child -> children.size() - 3] -> datatype);
+
                 qualified_function_call = true;
             }
         }
 
         symbol_table_func* func_table = class_table -> look_up_function(func_name, func_params);
+        if(!func_table) {
+            cout << "Unknown error! Function not found while generating 3AC in MethodInvocation. Aborting..." << endl;
+            exit(1); 
+        }
+
         if(!func_table -> modifier_bv[M_STATIC]) {
             if(!qualified_function_call) {
                 q = quad("", "this", "push_param", "");
@@ -3498,7 +3271,7 @@ void node::generate_tac(){
                 arg2 = this -> children[1] -> get_var_from_node();
             }else{
                 arg1 = "0";
-                arg2 = this -> children[1] -> get_var_from_node();
+                arg2 = this -> children[0] -> get_var_from_node();
             }
 
             quad q(result, arg1, op, arg2);
@@ -3569,6 +3342,43 @@ void node::generate_tac(){
                 this -> ta_codes.push_back(q);
             }
         }
+        else if(op == "?:"){
+            // @TODO TERNARY
+            string result, arg1, arg2, ope;
+            quad q("", "", "", "");
+            
+            this -> append_tac(this -> children[0]);
+
+
+            op = "if_false";
+            arg1 = this -> children[0] -> get_var_from_node();
+            arg2 = "J+" + to_string(this -> children[1] -> ta_codes.size() + 3);
+            q = quad("", arg1, op, arg2);
+            q.make_code_from_conditional();
+            this -> ta_codes.push_back(q);  // Conditional
+            
+            this -> append_tac(this -> children[1]);
+            op = "=";
+            arg1 = this -> children[1] -> get_var_from_node();
+            result = this -> get_var_from_node();
+            q = quad(result, arg1, op, "");
+            q.make_code_from_assignment();  
+            this -> ta_codes.push_back(q);  // First option
+            
+            op = "goto";
+            arg1 = "J+" + to_string(this -> children[2] -> ta_codes.size() + 2);
+            q = quad("", arg1, op, "");
+            q.make_code_from_goto();
+            this -> ta_codes.push_back(q);
+
+            this -> append_tac(this -> children[2]);
+            op = "=";
+            arg1 = this -> children[2] -> get_var_from_node();
+            result = this -> get_var_from_node();
+            q = quad(result, arg1, op, "");
+            q.make_code_from_assignment();  
+            this -> ta_codes.push_back(q);  // Second option
+        }
 
         if(this -> typecast_to != "UNNEEDED" && this -> typecast_to != ""){
             string op = this -> typecast_to;
@@ -3583,6 +3393,9 @@ void node::generate_tac(){
             this -> append_tac(child);
         }
     }
+
+
+    // cout << this -> name << " " << " tock" << endl;
 }
 
 char node::calculate_type(string n){
@@ -3668,10 +3481,8 @@ char node::calculate_type(string n){
 }
 
 string node::convert_to_decimal(string n){
-    // @TODO
-
-    return "";
     char t = calculate_type(n);
+
     if(t == 'N'){
         return "";
     }
@@ -3690,8 +3501,14 @@ string node::convert_to_decimal(string n){
     else if(t == 'H'){
         long long temp = 0;
         for(int i = 2; i < n.size(); i++){
-            if((n[i] >= '0' && n[i] <= '9') || (n[i] >= 'a' && n[i] <= 'f') || (n[i] >= 'A' && n[i] <= 'F')){
-                temp = temp * 16 + (n[i] -'0');
+            if((n[i] >= '0' && n[i] <= '9')){
+                temp = temp * 16 + (n[i] - '0');
+            }
+            if(n[i] >= 'a' && n[i] <= 'f'){
+                temp = temp * 16 + (n[0] - 'a') + 10;
+            }
+            if(n[i] >= 'A' && n[i] <= 'F'){
+                temp = temp * 16 + (n[0] - 'A') + 10;
             }
         }
         return to_string(temp) + ((n[n.size() - 1] == 'l' || n[n.size() - 1] == 'L') ? "l" : "");
@@ -3706,15 +3523,22 @@ string node::convert_to_decimal(string n){
         return to_string(temp) + ((n[n.size() - 1] == 'l' || n[n.size() - 1] == 'L') ? "l" : "");
     }
     else if(t == 'O'){
-
+        long long temp = 0;
+        for(int i = 1; i < n.size(); i++){
+            if(n[i] >= '0' && n[i] <= '7'){
+                temp = temp * 8 + (n[i] -'0');
+            }
+        }
+        return to_string(temp) + ((n[n.size() - 1] == 'l' || n[n.size() - 1] == 'L') ? "l" : "");
     }
+    // @TODO
     else if(t == 'f'){
 
     }
     else if(t == 'F'){
 
     }
-    return n;
+    return "";
 }
 
 void node::convert_to_decimal(){
@@ -4105,8 +3929,6 @@ void node::optimize_tac_CONST_and_STR_RED(){
             if(q.code == "" || stred_optimized.find(q.ins_line) != stred_optimized.end()){
                 continue;
             }
-
-            // @TODO : Complete Strength Reduction
         }
     }
 

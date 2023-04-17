@@ -1200,6 +1200,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         ;
 
@@ -1210,6 +1211,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         | Assignment { 
             $$ -> datatype = $1 -> datatype;
@@ -1217,6 +1219,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         ;
     
@@ -1227,6 +1230,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   ConditionalOrExpression OPERATOR_ternaryquestion Expression OPERATOR_ternarycolon ConditionalExpression { 
             $$->exp_applicable = true;
@@ -1242,6 +1246,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   ConditionalOrExpression OPERATOR_logicalor ConditionalAndExpression { 
             $$->exp_applicable = true;
@@ -1261,6 +1266,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   ConditionalAndExpression OPERATOR_logicaland InclusiveOrExpression { 
             $$->exp_applicable = true;
@@ -1280,6 +1286,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   InclusiveOrExpression OPERATOR_bitwiseor ExclusiveOrExpression { 
             $$->exp_applicable = true;
@@ -1299,6 +1306,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   ExclusiveOrExpression OPERATOR_xor AndExpression { 
             $$->exp_applicable = true;
@@ -1318,6 +1326,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   AndExpression OPERATOR_bitwiseand EqualityExpression { 
             $$->exp_applicable = true;
@@ -1337,6 +1346,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   EqualityExpression OPERATOR_logicalequal RelationalExpression { 
             $$->exp_applicable = true;
@@ -1365,6 +1375,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         | InstanceofExpression { 
             $$ -> datatype = $1 -> datatype;
@@ -1372,6 +1383,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   RelationalExpression OPERATOR_lt ShiftExpression { 
             $$->exp_applicable = true;
@@ -1418,6 +1430,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   ShiftExpression OPERATOR_leftshift AdditiveExpression { 
             $$->exp_applicable = true;
@@ -1455,6 +1468,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   AdditiveExpression OPERATOR_plus MultiplicativeExpression {
             $$->exp_applicable = true;
@@ -1483,6 +1497,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   MultiplicativeExpression OPERATOR_multiply UnaryExpression {
             $$->exp_applicable = true;
@@ -1520,6 +1535,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   PreDecrementExpression { 
             $$ -> datatype = $1 -> datatype;
@@ -1527,16 +1543,23 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   OPERATOR_plus UnaryExpression       %prec UNARY_plus { 
             $$->exp_applicable = true;
 
-
+            $$ -> datatype = $2 -> datatype;
+            $$ -> exp_dob_val = $2 -> exp_dob_val;
+            $$ -> exp_int_val = $2 -> exp_int_val;
+            $$ -> exp_is_constant = $2 -> exp_is_constant; 
         }
         |   OPERATOR_minus UnaryExpression      %prec UNARY_minus { 
             $$->exp_applicable = true;
 
-
+            $$ -> datatype = $2 -> datatype;
+            $$ -> exp_dob_val = -$2 -> exp_dob_val;
+            $$ -> exp_int_val = -$2 -> exp_int_val;
+            $$ -> exp_is_constant = $2 -> exp_is_constant;            
         }
         |   UnaryExpressionNotPlusMinus { 
             $$ -> datatype = $1 -> datatype;
@@ -1544,6 +1567,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         ;
 
@@ -1574,6 +1598,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   PostfixExpression { 
             $$ -> datatype = $1 -> datatype;
@@ -1581,6 +1606,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   OPERATOR_bitwisecomp UnaryExpression { 
             $$->exp_applicable = true;
@@ -1606,6 +1632,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         ;
     
@@ -1616,6 +1643,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   PostIncrementExpression { 
             $$ -> datatype = $1 -> datatype;
@@ -1623,6 +1651,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   PostDecrementExpression { 
             $$ -> datatype = $1 -> datatype;
@@ -1630,6 +1659,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         ;
     
@@ -1640,6 +1670,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   ArrayCreationExpression { 
             $$ -> datatype = $1 -> datatype;
@@ -1647,6 +1678,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         ;
     
@@ -1657,6 +1689,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   ClassLiteral { 
             $$ -> datatype = $1 -> datatype;
@@ -1664,6 +1697,7 @@
             $$ -> exp_int_val = $1 -> exp_int_val;
             $$ -> exp_str_val = $1 -> exp_str_val;
             $$ -> exp_bool_val = $1 -> exp_bool_val;
+            $$ -> exp_is_constant = $1 -> exp_is_constant;
         }
         |   KEYWORD_this { }
         |   Name DELIM_period KEYWORD_this { }
@@ -1673,6 +1707,7 @@
             $$ -> exp_int_val = $2 -> exp_int_val;
             $$ -> exp_str_val = $2 -> exp_str_val;
             $$ -> exp_bool_val = $2 -> exp_bool_val;
+            $$ -> exp_is_constant = $2 -> exp_is_constant;
         }
         |   ClassInstanceCreationExpression { }
         |   FieldAccess { }
@@ -1695,6 +1730,7 @@
                 }else{
                     $$ -> exp_int_val = stoll(s);
                 }
+                $$ -> exp_is_constant = true;
             }
         }
         | LITERAL_floatingpoint { 
@@ -1703,6 +1739,8 @@
                 if(s[(int)(s.size()) - 1] == 'f' || s[(int)(s.size()) - 1] == 'F') $$ -> datatype = "float";
                 else $$ -> datatype = "double";
                 $$ -> exp_dob_val = stold(s);
+
+                $$ -> exp_is_constant = true;
             }
         }
         | LITERAL_boolean { 
@@ -1711,6 +1749,8 @@
                 string s($1);
                 $$ -> exp_bool_val = (s == "true");
             }
+
+            $$ -> exp_is_constant = true;
         }
         | LITERAL_char { 
             $$ -> datatype = "char";
@@ -1718,6 +1758,8 @@
                 string s($1);
                 $$ -> exp_int_val = s[0];
             }
+
+            $$ -> exp_is_constant = true;
         } 
         | LITERAL_string { 
             $$ -> datatype = "String";
@@ -1725,6 +1767,8 @@
                 string s($1);
                 $$ -> exp_str_val = s;
             }
+
+            $$ -> exp_is_constant = true;
         }
         | LITERAL_textblock { 
             $$ -> datatype = "textblock";
@@ -1732,9 +1776,12 @@
                 string s($1);
                 $$ -> exp_str_val = s;
             }
+
+            $$ -> exp_is_constant = true;
         }
         | LITERAL_null { 
             $$ -> datatype = "null";
+            $$ -> exp_is_constant = true;
         }
         ;
     

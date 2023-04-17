@@ -1,4 +1,4 @@
-gcc -S -masm=intel -w -Og -fverbose-asm ../tests/test.c -o test.s
+gcc -S -w -Og -fverbose-asm ../tests/test.c -o test.s
 gcc -c test.s -o test.o
 gcc test.o -o test
 ./test

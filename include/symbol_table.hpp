@@ -22,6 +22,8 @@ struct st_entry{
     bool modifier_bv[10] = {0}; 
     bool initialized = false;   // FIELD DECLARATIONS are initialized with default values
 
+    vector<string> dim_sizes;
+
     st_entry();
     st_entry(string name, ull line_no, ull semicolon_no, string type = "int");
     st_entry(string name, st_entry (&other));

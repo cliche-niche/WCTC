@@ -1,10 +1,31 @@
 public class Example1 {
-		int x;
-        double y;
-        A a;
+		// int x;
+        // double y;
+        // A a;
+
+        // void test(int a, double b, double d) {
+
+        // }
+        
+        // void test(int a, int b, int d) {
+
+        // }
 
         void sex() {
-            a.b.fun();
+            // byte a = -129;
+            // int a = 23;
+
+            // if(a > 0){
+            //     ;
+            // }
+            // a = a*a;
+            // int b;
+            // b = 40 > a ? 20 : (a+5);
+            // this.test(5, b, 10);
+
+            int A[][][] = new int[23][54][3];
+
+            A[0][2][1] = 10 + A[3][4][2];
         }
 
         // Example1(int x, double y) {
@@ -69,12 +90,12 @@ public class Example1 {
         // }
 }
 
-class A {
-    B b;
-}
+// class A {
+//     B b;
+// }
 
-class B {
-    public void fun() {
+// class B {
+//     public void fun(double d) {
 
-    }
-}
+//     }
+// }

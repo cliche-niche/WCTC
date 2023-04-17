@@ -23,6 +23,7 @@ struct node{
     double exp_dob_val = 0.0;
     string exp_str_val = ""; 
     bool exp_bool_val = false;
+    bool exp_is_constant = false;       // set to true if the expression holds a constant value
 
     symbol_table* sym_tab;              // symbol table to which the node belongs
     st_entry* sym_tab_entry;
@@ -76,6 +77,7 @@ struct node{
 
     void modifier_check();
 
+    bool overflow_check(string datatype, node *exp);
     void type_check();
     void chill_traversal();                                         // just a temporary function for type checking
     vector<string> get_function_parameters();                       // returns function parameters and should only be called from BracketArgumentList node 
