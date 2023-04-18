@@ -26,19 +26,6 @@ set<string> primitive_types = {
 
 const int address_size = 4;
 
-// enum MODIFIER {
-//     M_PUBLIC,
-//     M_PRIVATE,
-//     M_PROTECTED,
-//     M_STATIC,
-//     M_ABSTRACT,
-//     M_NATIVE,
-//     M_SYNCHRONIZED,
-//     M_TRANSIENT,
-//     M_VOLATILE,
-//     M_FINAL,
-//     COUNT
-// };
 
 st_entry::st_entry(){;}
 

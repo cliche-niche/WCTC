@@ -10,6 +10,8 @@ public class Example1 {
         // void test(int a, int b, int d) {
 
         // }
+        
+        int A[][][][];
 
         void sex() {
             // byte a = -129;
@@ -21,6 +23,8 @@ public class Example1 {
 
             b = -a;
 
+            // Example1 obj = new Example1();
+
             // if(a > 0){
             //     ;
             // }
@@ -28,12 +32,13 @@ public class Example1 {
             // int b;
             // b = 40 > a ? 20 : (a+5);
             // this.test(5, b, 10);
+                
+            A = new int[23][54][3][10];
+            // obj.A = new int[23][54][3][10];
+            // int B[][][];
 
-            int A[][][] = new int[23][54][3];
-            int B[][][];
-
-            B = new int[12][12][12];
-            A[0][2][1] = 10 + A[3][4][2];
+            // B = new int[12][12][12];
+            // obj.A[3][2][1][5] = 10 + obj.A[3][4][2][7];
         }
 
         // Example1(int x, double y) {

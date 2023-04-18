@@ -33,7 +33,11 @@ void quad::make_code_from_store(){
 
 void quad::make_code_from_load(){
     made_from = LOAD;
-    code = "\t\t" + result + " = *(" + arg1 + ");\n";
+    code = "\t\t" + result + " = *(" + arg1;
+    if(arg2 != "") {
+        code = code + " + " + arg2;
+    }
+    code = code + ");\n";
 }
 
 void quad::make_code_from_conditional(){

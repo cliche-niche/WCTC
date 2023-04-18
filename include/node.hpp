@@ -65,6 +65,7 @@ struct node{
     symbol_table_class* get_symbol_table_class();
     st_entry* get_and_look_up();
     st_entry* get_and_look_up(string id);
+    st_entry* get_and_look_up_member_variable(string id, string cls);
     void create_scope_hierarchy();
 
     void populate_default_constructors();
@@ -85,6 +86,8 @@ struct node{
     void get_dimension_dfs(st_entry *arr);                                     // dfs called by the get_dimension_variables wrapper
     void obtain_function_parameters(vector<string> &params);        // helper function
 
+    int get_access_depth(string dt);                                // returns access depth
+    st_entry* get_and_look_up_from_name();                          // for performing look ups from qualified names
     string get_var_from_node();
     string get_next_label();                                          // Useful for IfThenStatement, WhileStatement, ForStatement, etc.
     void append_tac(vector<quad> (&tacs));

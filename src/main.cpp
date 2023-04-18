@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
     root->populate_default_constructors();      // walk 2
     root->populate_class_sizes();
     root->populate_and_check();
-
+    
     root->modifier_check();
 
     root->chill_traversal();                    // walk 3
@@ -81,6 +81,7 @@ int main(int argc, char* argv[]) {
     root->generate_tac();
     root->convert_to_decimal();
 
+    root->print_tac("taco.txt");
     bool optimizing = false;
     do{
         optimizing = false;
