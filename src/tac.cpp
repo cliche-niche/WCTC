@@ -14,21 +14,27 @@ void quad::make_code_from_binary(){
 void quad::make_code_from_unary(){
     made_from = UNARY;
     code = "\t\t" + result + " = " + op + "(" + arg1 + ");\n";
+    arg2 = "";
 }
 
 void quad::make_code_from_assignment(){
     made_from = ASSIGNMENT;
     code = "\t\t" + result + " = " + arg1 + ";\n";
+    op = "=";
+    arg2 = "";
 }
 
 void quad::make_code_from_cast(){
     made_from = CAST;
     code = "\t\t" + result + " = (" + op + ") " + arg1 + ";\n";
+    arg2 = "";
 }
 
 void quad::make_code_from_store(){
     made_from = STORE;
     code = "\t\t*(" + result + ") = " + arg1 + ";\n";
+    op = "";
+    arg2 = "";
 }
 
 void quad::make_code_from_load(){
@@ -38,6 +44,7 @@ void quad::make_code_from_load(){
         code = code + " + " + arg2;
     }
     code = code + ");\n";
+    op = "";
 }
 
 void quad::make_code_from_conditional(){
@@ -46,11 +53,15 @@ void quad::make_code_from_conditional(){
         rel_jump = stoi(arg2.substr(1, arg2.size()-1));
     }
     code = "\t\t" + op + " " + arg1 + " goto ";
+
+    result = "";
 }
 
 void quad::make_code_from_func_call(){
     made_from = FUNC_CALL;
     code = "\t\t" + op + " " + arg1 + ";\n";
+    result = "";
+    arg2 = "";
 }
 
 void quad::make_code_from_goto(){
@@ -72,11 +83,18 @@ void quad::check_jump(const int ins_line){
 void quad::make_code_begin_func() {
     made_from = BEGIN_FUNC;
     code = "\t\tbegin_func " + arg1 + "\n";
+    arg2 = "";
+    op = "";
+    result = "";
 }
 
 void quad::make_code_end_func() {
     made_from = END_FUNC;
     code = "\t\tend_func\n";
+    arg1 = "";
+    arg2 = "";
+    op = "";
+    result = "";
 }
 
 void quad::make_code_from_return() {
@@ -87,21 +105,35 @@ void quad::make_code_from_return() {
     else{
         code = "\t\t" + op + ";\n";                 // op is "return"
     }
+    arg2 = "";
+    op = "";
+    result = "";
 }
 
 void quad::make_code_shift_pointer() {
     made_from = SHIFT_POINTER;
     code = "\t\tshift_pointer " + arg1 + "\n";
+
+    result = "";
+    op = "";
+    arg2 = "";
 }
 
 void quad::make_code_push_param(){
     made_from = PUSH_PARAM;
     code = "\t\t" + op + " " + arg1 + ";\n";
+
+    arg2 = "";
+    result = "";
 }
 
 void quad::make_code_pop_param() {
     made_from = POP_PARAM;
     code = "\t\t" + result + " = pop_param;\n";
+
+    arg2 = "";
+    arg1 = "";
+    op = "";
 }
 
 void quad::make_code(){

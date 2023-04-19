@@ -2596,7 +2596,7 @@ string node::get_mangled_name() {
             mangled_name = "@" + (func -> params[i] -> type) + mangled_name; 
         }
         mangled_name = func_name + mangled_name;
-        mangled_name = class_name + "." + mangled_name;
+        mangled_name = class_name + "?" + mangled_name;
     }
     else {
         for(int i = this -> entry_list.size() - 1; i >= 0; i--) {
@@ -2604,7 +2604,7 @@ string node::get_mangled_name() {
         }
         mangled_name = this -> sym_tab_entry -> name + mangled_name;
 
-        mangled_name = this -> sym_tab -> parent_st -> name + "." + mangled_name;
+        mangled_name = this -> sym_tab -> parent_st -> name + "?" + mangled_name;
     }
 
     return mangled_name;

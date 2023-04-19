@@ -3,20 +3,23 @@
 
 int main() {
     // printf("Hello world!");
-    int A[20];
-    A[5] = 10;
+    int a, b, c;
 
-    A[2] = A[8] * A[5];
+    scanf("%d %d %d", &a, &b, &c);
 
-    int* p = (int*) malloc(20 * sizeof(int));
+    b = b * c;
 
-    A[3] = p[4];
+    printf("Here ya are mayait %d\n", b);
 
-    int* q = (int*) malloc(13 * sizeof(int));
+    // int* p = (int*) malloc(20 * sizeof(int));
 
-    p[2] = q[0];
+    // A[3] = p[4];
 
-    free(p);
+    // int* q = (int*) malloc(13 * sizeof(int));
+
+    // p[2] = q[0];
+
+    // free(p);
 
     return 0;
 }
