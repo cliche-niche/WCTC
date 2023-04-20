@@ -13,6 +13,8 @@ struct quad{
     string code = "";        // Construct from each node
     int rel_jump = 0, abs_jump = 0, ins_line = 0;
     int made_from = 0;
+    bool is_target = false;
+    
     enum code_code {
         BINARY,
         UNARY,
@@ -28,7 +30,8 @@ struct quad{
         RETURN,
         SHIFT_POINTER,
         PUSH_PARAM,
-        POP_PARAM
+        POP_PARAM,
+        RETURN_VAL
     };
 
     quad();
@@ -49,6 +52,7 @@ struct quad{
     void make_code_shift_pointer();                     // shift stack pointer
     void make_code_push_param();                        // pushparam a1;
     void make_code_pop_param();                         // r = popparam;
+    void make_code_from_return_val();                   // r = return_value;
     void check_jump(const int);
 };
 

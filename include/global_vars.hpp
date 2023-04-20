@@ -5,6 +5,7 @@
 #include "symbol_table.hpp"
 #include "node.hpp"
 #include "tac.hpp"
+#include "x86.hpp"
 
 extern unsigned long long int num_scopes;
 extern "C" int yylineno;
@@ -31,5 +32,6 @@ enum MODIFIER {
 };
 
 extern node* root;     // contains the root node of the parse tree
+extern codegen* gen;    // finally generates all the x86 code
 
 #endif

@@ -26,7 +26,6 @@ set<string> primitive_types = {
 
 const int address_size = 4;
 
-
 st_entry::st_entry(){;}
 
 st_entry::st_entry(string name, ull line_no, ull semicolon_no, string type /*= "int"*/){

@@ -2303,7 +2303,8 @@ void node::type_check() {
             }
         }
 
-        if(!class_table -> look_up_function(func_name, func_params)) {
+        symbol_table_func* func = class_table -> look_up_function(func_name, func_params);
+        if(!func) {
             cout << "ERROR: Unknown method invocation of (" << func_name << ") with arg-types (";
             {
                 bool first = true;
@@ -2321,6 +2322,7 @@ void node::type_check() {
             exit(1);
         }
 
+        this -> datatype = func -> return_type;
         // FIRST CHECK FOR EXACT FUNCTION THEN CASTABLE MATCHING SHIFTED TO LOOK UP FUNC //
     }
     else if (this -> name == "UnqualifiedClassInstanceCreationExpression") {
@@ -2593,18 +2595,18 @@ string node::get_mangled_name() {
         symbol_table_func* func = main_table -> look_up_class(class_name) -> look_up_function(func_name, func_params);
 
         for(int i = func -> params.size() - 1; i >= 0; i--) {
-            mangled_name = "@" + (func -> params[i] -> type) + mangled_name; 
+            mangled_name = "." + (func -> params[i] -> type) + mangled_name; 
         }
         mangled_name = func_name + mangled_name;
-        mangled_name = class_name + "?" + mangled_name;
+        mangled_name = class_name + ".." + mangled_name;
     }
     else {
         for(int i = this -> entry_list.size() - 1; i >= 0; i--) {
-            mangled_name = "@" + this -> entry_list[i] -> type + mangled_name;
+            mangled_name = "." + this -> entry_list[i] -> type + mangled_name;
         }
         mangled_name = this -> sym_tab_entry -> name + mangled_name;
 
-        mangled_name = this -> sym_tab -> parent_st -> name + "?" + mangled_name;
+        mangled_name = this -> sym_tab -> parent_st -> name + ".." + mangled_name;
     }
 
     return mangled_name;
@@ -3050,10 +3052,6 @@ void node::generate_tac(){
 
                 cout << "Arrays as field members not supported. Sorry..." << endl;
                 exit(1);
-
-                // this -> append_tac(cnt);    // add the code for #Name# node
-                // needs_this = false;
-                // arr = cnt -> get_and_look_up_from_name();
             }
         }
 
@@ -3088,8 +3086,8 @@ void node::generate_tac(){
         q.make_code_from_func_call();
         this -> ta_codes.push_back(q);
 
-        q = quad(this -> children[0] -> get_var_from_node(), "", "pop_param", ""); // use the new keyword node for obtaining extra temporary
-        q.make_code_pop_param();
+        q = quad(this -> children[0] -> get_var_from_node(), "", "return_value", ""); // use the new keyword node for obtaining extra temporary
+        q.make_code_from_return_val();
         this -> ta_codes.push_back(q);
 
         if(needs_this) {
@@ -3139,8 +3137,8 @@ void node::generate_tac(){
         q.make_code_from_func_call();
         this -> ta_codes.push_back(q);
 
-        q = quad(this -> get_var_from_node(), "", "pop_param", "");
-        q.make_code_pop_param();
+        q = quad(this -> get_var_from_node(), "", "return_value", "");
+        q.make_code_from_return_val();
         this -> ta_codes.push_back(q);
 
         vector<string> args = this -> children[2] -> get_func_args_tac();
@@ -3392,6 +3390,18 @@ void node::generate_tac(){
         q = quad("", "+" + to_string(total_frame_space), "", "");
         q.make_code_shift_pointer();
         this -> ta_codes.push_back(q);
+
+        // return value stored
+        if(func_table -> return_type != "void") {
+            q = quad(this -> get_var_from_node(), "", "return_val", "");
+            q.make_code_from_return_val();
+            this -> ta_codes.push_back(q);
+        }
+        else {      // if no return value simply add a blank quad
+            q = quad("", "", "return_val", "");
+            q.make_code_from_return_val();
+            this -> ta_codes.push_back(q);
+        }
     }    
     else if(this -> name == "MethodDeclaration" || this -> name == "ConstructorDeclaration") {   
 
@@ -3557,6 +3567,7 @@ void node::generate_tac(){
         
                 q = quad(result, arg1, "=", "");
                 if(this -> children[0] -> name == "ArrayAccess" || this -> children[0] -> name == "FieldAccess" || this -> children[0] -> name == "#Name#"){
+                    q.op = "";
                     q.make_code_from_store();
                     this -> children[0] -> ta_codes.pop_back();
                 }
@@ -3878,6 +3889,8 @@ void node::rename_temporaries(){
             q.make_code();   
         }
     }
+
+    this -> remove_empty_tac();
 }
 
 bool node::optimize_tac_RED_TEMPS(){
@@ -4048,10 +4061,41 @@ bool node::optimize_tac_CONST_and_STR_RED(){
         for(int i = 0; i < this -> ta_codes.size(); i++){
             // @TODO Support for non-decimals
             quad (&q) = this -> ta_codes[i];
-            if(q.code == "" || const_optimized.find(q.ins_line) != const_optimized.end()){
+            if(q.code == "" || const_optimized.find(q.ins_line) != const_optimized.end() || q.op == "<<" || q.op == ">>" || q.op == ">>>"){
                 continue;
             }
 
+            if(q.made_from == quad::CONDITIONAL){
+                if(q.op == "if_false"){
+                    if(q.arg1 == "false"){
+                        const_optimized.insert(q.ins_line);
+                        any_optimization = true;
+                        q.arg1 = q.arg2;
+                        q.op = "goto";
+                        q.make_code_from_goto();
+                    }
+                    else if(q.arg1 == "true"){
+                        const_optimized.insert(q.ins_line);
+                        any_optimization = true;
+                        q.code = "";
+                    }
+                }
+                else if(q.op == "if_true"){
+                    if(q.arg1 == "true"){
+                        const_optimized.insert(q.ins_line);
+                        any_optimization = true;
+                        q.arg1 = q.arg2;
+                        q.op = "goto";
+                        q.make_code_from_goto();
+                    }
+                    else if(q.arg1 == "false"){
+                        const_optimized.insert(q.ins_line);
+                        any_optimization = true;
+                        q.code = "";
+                    }
+                }
+                continue;
+            }
             if(this -> convert_to_decimal(q.arg1) == q.arg1 && this -> convert_to_decimal(q.arg2) == q.arg2){ // RHS args are constant
                 if(q.made_from == quad::BINARY){ // Constant Folding
                     const_optimized.insert(q.ins_line);
@@ -4073,6 +4117,7 @@ bool node::optimize_tac_CONST_and_STR_RED(){
                     else if(op == "%"){
                         q.arg1 = to_string(stoll(q.arg1) % stoll(q.arg2));
                     }
+                    /*
                     else if(op == "<<"){
                         q.arg1 = to_string(stoll(q.arg1) << stoll(q.arg2));
                     }
@@ -4082,6 +4127,7 @@ bool node::optimize_tac_CONST_and_STR_RED(){
                     else if(op == ">>>"){
                         q.arg1 = to_string((unsigned long long) stoll(q.arg1) >> stoll(q.arg2));
                     }
+                    */
                     else if(op == ">"){
                         q.arg1 = (stoll(q.arg1) > stoll(q.arg2) ? "true" : "false");
                     }
@@ -4354,9 +4400,13 @@ void node::print_tac(string filename){
     ofstream out(filename);
 
     int ins_count = 1;
+    set<int> targets;
     for(auto (&q) : this -> ta_codes) {
         if(q.code != "") {
             q.check_jump(ins_count);    // Also sets q's ins_line
+            if(q.abs_jump){
+                targets.insert(q.abs_jump);
+            }
 
             if(filename == "") {
                 cout << ins_count << (ins_count >= 100 ? ":" : ":\t") << q.code;
@@ -4365,6 +4415,12 @@ void node::print_tac(string filename){
                 out << ins_count << (ins_count >= 100 ? ":" : ":\t") << q.code;
             }
             ins_count++;
+        }
+    }
+
+    for(auto (&q) : this -> ta_codes){
+        if(q.code != "" && targets.find(q.ins_line) != targets.end()){
+            q.is_target = true;
         }
     }
 

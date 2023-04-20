@@ -14,6 +14,8 @@ string output_file = "tree.gv";
 string st_file = "symbol_table.csv";
 string tac_file = "tac.txt";
 
+codegen* gen = new codegen();
+
 void print_help_page();
 
 int main(int argc, char* argv[]) {
@@ -81,7 +83,7 @@ int main(int argc, char* argv[]) {
     root->generate_tac();
     root->convert_to_decimal();
 
-    root->print_tac("taco.txt");
+    // root->print_tac("taco.txt");             // unoptimized tac
     bool optimizing = false;
     do{
         optimizing = false;
@@ -92,6 +94,10 @@ int main(int argc, char* argv[]) {
         root->rename_temporaries();
     }while(optimizing);
     root->print_tac(tac_file);
+
+    gen->gen_global();
+    gen->gen_text();
+    gen->print_code();
     
     fclose(program);
 }

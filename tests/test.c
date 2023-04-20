@@ -3,23 +3,13 @@
 
 int main() {
     // printf("Hello world!");
-    int a, b, c;
+    int a, b, c, d;
+    b = 23;
+    while(b > 15){
+        b--;
+    }
 
-    scanf("%d %d %d", &a, &b, &c);
-
-    b = b * c;
-
-    printf("Here ya are mayait %d\n", b);
-
-    // int* p = (int*) malloc(20 * sizeof(int));
-
-    // A[3] = p[4];
-
-    // int* q = (int*) malloc(13 * sizeof(int));
-
-    // p[2] = q[0];
-
-    // free(p);
+    printf("haan bhai thek gai %d", b);
 
     return 0;
 }
