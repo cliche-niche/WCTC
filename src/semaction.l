@@ -132,6 +132,9 @@ void initialize_maps() {
         token_to_name[word] = word.substr(split+1, word.size());
     }
 
+    /******************************** STATEMENT ********************************/
+    token_to_name["STMT_print"] = "print";
+    token_to_type["STMT_print"] = "STATEMENT";
 
     /********************************* DELIMITERS *********************************/
     token_to_name["DELIM_semicolon"] = ";";

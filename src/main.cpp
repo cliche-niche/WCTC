@@ -13,6 +13,7 @@ string input_file = "../tests/test.java";
 string output_file = "tree.gv"; 
 string st_file = "symbol_table.csv";
 string tac_file = "tac.txt";
+string asm_file = "asm.txt";
 
 codegen* gen = new codegen();
 
@@ -43,6 +44,11 @@ int main(int argc, char* argv[]) {
         }
         else if(std::string(argv[i]) == "--verbose" || std::string(argv[i]) == "-v") {
             verbose = true;
+        }
+        else if(std::string(argv[i]) == "--asm" || std::string(argv[i]) == "-s") {
+            if((i + 1) < argc) asm_file = argv[i+1];
+            else cout << "Error: No assembly filename given";
+            i++;
         }
         else {
             cout << "Error: Invalid parameter\n";
@@ -83,7 +89,7 @@ int main(int argc, char* argv[]) {
     root->generate_tac();
     root->convert_to_decimal();
 
-    // root->print_tac("taco.txt");             // unoptimized tac
+    root->print_tac("taco.txt");             // unoptimized tac
     bool optimizing = false;
     do{
         optimizing = false;
@@ -97,7 +103,8 @@ int main(int argc, char* argv[]) {
 
     gen->gen_global();
     gen->gen_text();
-    gen->print_code();
+
+    gen->print_code(asm_file);
     
     fclose(program);
 }
@@ -108,6 +115,7 @@ void print_help_page() {
     cout << "-i, --input <input_file_name> \t\t\t Give input file\n";
     cout << "-o, --output <output_file_name>\t\t\t Redirect dot file to output file\n";
     cout << "-t, --taco <tac_file_name>\t\t\t Redirect 3AC file to tac output file\n";
+    cout << "-s, --asm <assembly_file_name>]\t\t\t Redirect assembly code to assembly output file\n";
     cout << "-v, --verbose \t\t\t\t\t Outputs the entire derivation in command line\n";
     return;
 }

@@ -33,5 +33,7 @@ enum MODIFIER {
 
 extern node* root;     // contains the root node of the parse tree
 extern codegen* gen;    // finally generates all the x86 code
+extern int func_count;  // used to rename functions
+extern map<string, string> func_name_map;       //  maps original function names to renamed functions
 
 #endif

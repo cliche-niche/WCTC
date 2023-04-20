@@ -11,7 +11,7 @@ symbol_table_global *main_table = new symbol_table_global();
 map<string, int> type_to_size = {
         {"byte", 1},
         {"short", 2},
-        {"int", 4},
+        {"int", 8},
         {"long", 8},
         {"float", 4},
         {"double", 8},

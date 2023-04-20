@@ -8,7 +8,12 @@ quad::quad(string r, string a1, string o, string a2) : result(r), arg1(a1), op(o
 
 void quad::make_code_from_return_val() {
     made_from = RETURN_VAL;
-    code = "\t\t" + result + " = " + "return_value;\n";
+    if(result != "") {
+        code = "\t\t" + result + " = " + "return_value;\n";
+    }
+    else {
+        code = "\t\treturn_value;\n";
+    }
 
     arg1 = "";
     arg2 = "";
@@ -40,9 +45,12 @@ void quad::make_code_from_cast(){
 
 void quad::make_code_from_store(){
     made_from = STORE;
-    code = "\t\t*(" + result + ") = " + arg1 + ";\n";
+    code = "\t\t*(" + result;
+    if(arg2 != ""){
+        code += " + " + arg2;
+    }
+    code += ") = " + arg1 + ";\n";
     op = "";
-    arg2 = "";
 }
 
 void quad::make_code_from_load(){

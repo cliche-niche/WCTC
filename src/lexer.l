@@ -231,6 +231,9 @@ ASSIGNMENTOPERATOR "*="|"/="|"%="|"+="|"-="|"<<="|">>="|">>>="|"&="|"^="|"|="
 "--" { return (OPERATOR_decrement); }
 "~" { return (OPERATOR_bitwisecomp); }
 "!" { return (OPERATOR_not); }
+
+"System.out.println" { return (STMT_print); }
+
 {ASSIGNMENTOPERATOR} { yylval.strval = strdup(yytext); return (OPERATOR_assignment); }
 
 {DEC}                   { 
