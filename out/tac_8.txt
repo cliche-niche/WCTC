@@ -1,0 +1,33 @@
+1:			begin_func test_8.main@String[]
+2:			args = pop_param;
+3:			push_param 10;
+4:			shift_pointer -24
+5:			call_func test_8.overload@int;
+6:			shift_pointer +24
+7:			##t1 = return_value;
+8:			push_param ##t1;
+9:			call_func print;
+10:			return_value;
+11:			push_param 10;
+12:			push_param 20;
+13:			shift_pointer -24
+14:			call_func test_8.overload@int@int;
+15:			shift_pointer +24
+16:			##t2 = return_value;
+17:			push_param ##t2;
+18:			call_func print;
+19:			return_value;
+20:			end_func
+21:			begin_func test_8.overload@int
+22:			a = pop_param;
+23:			return a;
+24:			end_func
+25:			begin_func test_8.overload@int@int
+26:			b = pop_param;
+27:			a = pop_param;
+28:			##t3 = a * b;
+29:			return ##t3;
+30:			end_func
+31:			begin_func test_8##Default
+32:			this = pop_param;
+33:			end_func

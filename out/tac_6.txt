@@ -1,0 +1,61 @@
+1:			begin_func test_6.sum@int[]@int
+2:			size = pop_param;
+3:			arr = pop_param;
+4:			result = 0;
+5:			i = 0;
+6:			##t1 = i < size;
+7:			if_false ##t1 goto 21;
+8:			##t2 = i;
+9:			##t3 = arr;
+10:			##t4 = *(##t3 + 8);
+11:			##t2 = ##t2 * 8;
+12:			##t2 = ##t2 + 16;
+13:			##t3 = ##t3 + ##t2;
+14:			##t3 = *(##t3);
+15:			##t5 = ##t3;
+16:			##t6 = result;
+17:			##t6 = ##t6 + ##t5;
+18:			result = ##t6;
+19:			i = i + 1;
+20:			goto 6;
+21:			return result;
+22:			end_func
+23:			begin_func test_6.main@String[]
+24:			args = pop_param;
+25:			##t7 = 5;
+26:			##t8 = 56;
+27:			push_param 56;
+28:			call_func allocmem;
+29:			##t9 = return_value;
+30:			##t8 = ##t9;
+31:			*(##t8) = 1;
+32:			##t9 = ##t9 + 8;
+33:			*(##t9) = ##t7;
+34:			arr = ##t8;
+35:			i = 0;
+36:			##t10 = i < 5;
+37:			if_false ##t10 goto 48;
+38:			##t11 = i;
+39:			##t12 = arr;
+40:			##t13 = *(##t12 + 8);
+41:			##t11 = ##t11 * 8;
+42:			##t11 = ##t11 + 16;
+43:			##t12 = ##t12 + ##t11;
+44:			##t14 = i * i;
+45:			*(##t12) = ##t14;
+46:			i = i + 1;
+47:			goto 36;
+48:			push_param arr;
+49:			push_param 5;
+50:			shift_pointer -40
+51:			call_func test_6.sum@int[]@int;
+52:			shift_pointer +40
+53:			##t15 = return_value;
+54:			result = ##t15;
+55:			push_param result;
+56:			call_func print;
+57:			return_value;
+58:			end_func
+59:			begin_func test_6##Default
+60:			this = pop_param;
+61:			end_func

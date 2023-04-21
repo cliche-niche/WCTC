@@ -1,0 +1,39 @@
+1:			begin_func test_3.main@String[]
+2:			args = pop_param;
+3:			n = 100;
+4:			count = 1;
+5:			num = 3;
+6:			##t1 = count < n;
+7:			if_false ##t1 goto 32;
+8:			isPrime = true;
+9:			i = 3;
+10:			##t2 = i <= num;
+11:			if_false ##t2 goto 26;
+12:			##t3 = i * i;
+13:			##t4 = ##t3 > num;
+14:			if_false ##t4 goto 16;
+15:			goto 26;
+16:			##t5 = num / i;
+17:			##t6 = ##t5 * i;
+18:			##t7 = ##t6 == num;
+19:			if_false ##t7 goto 22;
+20:			isPrime = false;
+21:			goto 26;
+22:			##t8 = i;
+23:			##t8 = ##t8 + 2;
+24:			i = ##t8;
+25:			goto 10;
+26:			if_false isPrime goto 28;
+27:			count = count + 1;
+28:			##t9 = num;
+29:			##t9 = ##t9 + 2;
+30:			num = ##t9;
+31:			goto 6;
+32:			prime_num = num - 2;
+33:			push_param prime_num;
+34:			call_func print;
+35:			return_value;
+36:			end_func
+37:			begin_func test_3##Default
+38:			this = pop_param;
+39:			end_func

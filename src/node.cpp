@@ -2243,7 +2243,7 @@ void node::type_check() {
         }
     }
     else if(this -> name == "PreIncrementExpression" || this -> name == "PreDecrementExpression") {
-        if(!(this -> children[1] -> type == "ID" || this -> children[1] -> name == "#Name#")) {
+        if(!(this -> children[1] -> type == "ID" || this -> children[1] -> name == "#Name#" || this -> children[1] -> name == "FieldAccess")) {
             cout << "ERROR: '"<< this -> children[0] -> name <<"' can only operate on variables at line number: " << this -> children[0] -> line_no << endl;
             exit(1);
         }
@@ -2252,7 +2252,7 @@ void node::type_check() {
         this -> type = "LITERAL";
     }
     else if(this -> name == "PostIncrementExpression" || this -> name == "PostDecrementExpression") {
-        if(!(this -> children[0] -> type == "ID" || this -> children[0] -> name == "#Name#")) {
+        if(!(this -> children[0] -> type == "ID" || this -> children[0] -> name == "#Name#" || this -> children[0] -> name == "FieldAccess")) {
             cout << "ERROR: '"<< this -> children[1] -> name <<"' can only operate on variables at line number: " << this -> children[0] -> line_no << endl;
             exit(1);
         }
@@ -3516,11 +3516,17 @@ void node::generate_tac(){
     }
     else if(this -> name == "PreIncrementExpression" || this -> name == "PreDecrementExpression" || this -> name == "PostIncrementExpression" || this -> name == "PostDecrementExpression") {
         string result = this -> get_var_from_node();
-        string arg1, op;
+        string arg1, arg2, op;
         quad q("", "", "", "");
 
         if(this -> name[1] == 'r'){     //Pre has r
+            if(this -> children[1] -> name == "ArrayAccess" || this -> children[1] -> name == "FieldAccess" || this -> children[1] -> name == "#Name#"){
+                this -> children[1] -> ta_codes.pop_back();
+            }
+            this -> append_tac(this -> children[1]);
+
             arg1 = this -> children[1] -> get_var_from_node();
+            arg2 = this -> children[0] -> get_var_from_node();
             if(this -> name[3] == 'I'){     //Increment has I
                 op = "+";
             }
@@ -3528,16 +3534,38 @@ void node::generate_tac(){
                 op = "-";
             }
 
-            q = quad(arg1, arg1, op, "1");
+            if(this -> children[1] -> name == "ArrayAccess" || this -> children[1] -> name == "FieldAccess" || this -> children[1] -> name == "#Name#"){
+                q = quad(arg2, arg1, "*()", "");
+                q.make_code_from_load();
+            }
+            else{
+                q = quad(arg2, arg1, "=", "");
+                q.make_code_from_assignment();
+            }
+            this -> ta_codes.push_back(q);
+
+            q = quad(result, arg2, op, "1");
             q.make_code_from_binary();
             this -> ta_codes.push_back(q);
 
-            q = quad(result, arg1, "=", "");
-            q.make_code_from_assignment();
+            if(this -> children[1] -> name == "ArrayAccess" || this -> children[1] -> name == "FieldAccess" || this -> children[1] -> name == "#Name#"){
+                q = quad(arg1, result, "", "");
+                q.make_code_from_store();
+            }
+            else{
+                q = quad(arg1, result, "=", "");
+                q.make_code_from_assignment();
+            }
             this -> ta_codes.push_back(q);
         }
         else if(this -> name[1] == 'o'){   //Post has o
+            if(this -> children[0] -> name == "ArrayAccess" || this -> children[0] -> name == "FieldAccess" || this -> children[0] -> name == "#Name#"){
+                this -> children[0] -> ta_codes.pop_back();
+            }
+            this -> append_tac(this -> children[0]);
+
             arg1 = this -> children[0] -> get_var_from_node();
+            arg2 = this -> children[1] -> get_var_from_node();
             if(this -> name[4] == 'I'){     //Increment has I
                 op = "+";
             }
@@ -3545,12 +3573,28 @@ void node::generate_tac(){
                 op = "-";
             }
 
-            q = quad(result, arg1, "=", "");
-            q.make_code_from_assignment();
+            if(this -> children[0] -> name == "ArrayAccess" || this -> children[0] -> name == "FieldAccess" || this -> children[0] -> name == "#Name#"){
+                q = quad(result, arg1, "*()", "");
+                q.make_code_from_load();
+            }
+            else{
+                q = quad(result, arg1, "=", "");
+                q.make_code_from_assignment();
+            }
             this -> ta_codes.push_back(q);
             
-            q = quad(arg1, arg1, op, "1");
+            q = quad(arg2, result, op, "1");
             q.make_code_from_binary();
+            this -> ta_codes.push_back(q);
+
+            if(this -> children[0] -> name == "ArrayAccess" || this -> children[0] -> name == "FieldAccess" || this -> children[0] -> name == "#Name#"){
+                q = quad(arg1, arg2, "=", "");
+                q.make_code_from_store();
+            }
+            else{
+                q = quad(arg1, arg2, "", "");
+                q.make_code_from_assignment();
+            }
             this -> ta_codes.push_back(q);
         }
 
@@ -3631,26 +3675,44 @@ void node::generate_tac(){
             string arg2 = this -> children[1] -> get_var_from_node();
             op = op.substr(0, op.size() - 1);
     
+            if(this -> children[0] -> name == "ArrayAccess" || this -> children[0] -> name == "FieldAccess" || this -> children[0] -> name == "#Name#"){
+                this -> children[0] -> ta_codes.pop_back();
+            }
             this -> append_tac(this -> children[0]);
             this -> append_tac(this -> children[1]);
-            {
-                quad q(arg1, arg1, op, arg2);
-                q.make_code_from_binary();
-                this -> ta_codes.push_back(q);
+
+            quad q("", "", "", "");
+
+            if(this -> children[0] -> name == "ArrayAccess" || this -> children[0] -> name == "FieldAccess" || this -> children[0] -> name == "#Name#"){
+                q = quad(result, arg1, "*()", "");
+                q.make_code_from_load();
             }
-            {
-                quad q(result, arg1, "=", "");
+            else{
+                q = quad(result, arg1, "=", "");
                 q.make_code_from_assignment();
-                this -> ta_codes.push_back(q);
             }
+            this -> ta_codes.push_back(q);
+
+            q = quad(result, result, op, arg2);
+            q.make_code_from_binary();
+            this -> ta_codes.push_back(q);
+
+            swap(result, arg1);
+            if(this -> children[0] -> name == "ArrayAccess" || this -> children[0] -> name == "FieldAccess" || this -> children[0] -> name == "#Name#"){
+                q = quad(result, arg1, "", "");
+                q.make_code_from_store();
+            }
+            else{
+                q = quad(result, arg1, "=", "");
+                q.make_code_from_assignment();
+            }
+            this -> ta_codes.push_back(q);
         }
         else if(op == "?:"){
-            // @TODO TERNARY
             string result, arg1, arg2, ope;
             quad q("", "", "", "");
             
             this -> append_tac(this -> children[0]);
-
 
             op = "if_false";
             arg1 = this -> children[0] -> get_var_from_node();

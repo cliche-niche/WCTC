@@ -1,43 +1,42 @@
 public class QuickSort {
-
-    int x = 5;
-    int y = 10;
-    int z = 20;
-    int a = z + 50;
-
-    // QuickSort(int a, int b) {
-    //     this.x = a;
-    //     this.y = b;
-    // }
-
-    public void print_members() {
-        System.out.println(this.x);
-        System.out.println(this.y);
-        System.out.println(this.a);
-        System.out.println(this.z);
+    static void quickSort(int[] arr, int low, int high) {
+        if (low < high) {
+            int pi = partition(arr, low, high);
+            quickSort(arr, low, pi-1);
+            quickSort(arr, pi+1, high);
+        }
     }
 
-    public int f(int x){
-        x = 20;
-        return x;
+    static int partition(int[] arr, int low, int high) {
+        int pivot = arr[high];
+        int i = (low - 1);
+        for (int j = low; j < high; j++) {
+            if (arr[j] < pivot) {
+                i++;
+                int temp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = temp;
+            }
+        }
+        int temp = arr[i+1];
+        arr[i+1] = arr[high];
+        arr[high] = temp;
+        return i+1;
     }
 
     public static void main(String[] args) {
-        QuickSort obj = new QuickSort();
-        // QuickSort obj2 = new QuickSort();
-        
-        // obj.print_members();
-        // obj2.print_members();
-        // int a, b;
-        // int woah[][] = new int[a][b];
-        // obj.x = 20;
-        // obj.print_members();
-        // obj.x = obj.x * 10;
-        // obj.print_members();
-        // System.out.println(obj.x);
-        // obj.print_members();
+        int[] arr = new int[5];
+        int a = (5 * 23 - 21) / 5 - 13;
+        arr[0] = a;
+        arr[1] = 1;
+        arr[2] = 4;
+        arr[3] = 2;
+        arr[4] = 8;
 
-        // System.out.println(obj.f(obj.x + 69));
-        obj.print_members();
+        int n = 5;
+        quickSort(arr, 0, n-1);
+        for (int i = 0; i < n; i++) {
+            System.out.println(arr[i]);
+        }
     }
 }

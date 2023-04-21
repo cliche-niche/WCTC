@@ -13,7 +13,7 @@ string input_file = "../tests/test.java";
 string output_file = "tree.gv"; 
 string st_file = "symbol_table.csv";
 string tac_file = "tac.txt";
-string asm_file = "asm.txt";
+string asm_file = "asm.s";
 
 codegen* gen = new codegen();
 
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
     root->generate_tac();
     root->convert_to_decimal();
 
-    root->print_tac("taco.txt");             // unoptimized tac
+    root->print_tac("tac_unopt.txt");             // unoptimized tac
     bool optimizing = false;
     do{
         optimizing = false;

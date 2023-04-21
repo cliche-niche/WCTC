@@ -6,6 +6,6 @@ rm lex.yy.c action.o
 bison -d -t -v parser.y
 flex lexer.l
 g++ -o WCTC.o parser.tab.c lex.yy.c node.cpp symbol_table.cpp tac.cpp x86.cpp main.cpp -ll
-./WCTC.o -i ../tests/test.java -t TAC.txt -s aditya.s
+./WCTC.o -i ../tests/test.java -t tac.txt -s asm.s
 dot -Tpng tree.gv -o AST.png
 rm tree.gv parser.output parser.tab.* lex.yy.c *.csv parser.y

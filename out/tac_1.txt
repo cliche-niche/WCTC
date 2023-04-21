@@ -1,0 +1,174 @@
+1:			begin_func test_1.max@int@int
+2:			b = pop_param;
+3:			a = pop_param;
+4:			##t1 = a > b;
+5:			if_false ##t1 goto 8;
+6:			##t2 = a;
+7:			goto 9;
+8:			##t2 = b;
+9:			return ##t2;
+10:			end_func
+11:			begin_func test_1.knapSack@int@int[]@int[]@int
+12:			n = pop_param;
+13:			val = pop_param;
+14:			wt = pop_param;
+15:			W = pop_param;
+16:			##t3 = n == 0;
+17:			##t4 = W == 0;
+18:			##t5 = ##t3 || ##t4;
+19:			if_false ##t5 goto 21;
+20:			return 0;
+21:			##t6 = n - 1;
+22:			##t7 = wt;
+23:			##t8 = *(##t7 + 8);
+24:			##t6 = ##t6 * 8;
+25:			##t6 = ##t6 + 16;
+26:			##t7 = ##t7 + ##t6;
+27:			##t7 = *(##t7);
+28:			##t9 = ##t7 > W;
+29:			if_false ##t9 goto 44;
+30:			##t10 = W;
+31:			##t11 = wt;
+32:			##t12 = val;
+33:			##t13 = n - 1;
+34:			push_param ##t10;
+35:			push_param ##t11;
+36:			push_param ##t12;
+37:			push_param ##t13;
+38:			shift_pointer -24
+39:			call_func test_1.knapSack@int@int[]@int[]@int;
+40:			shift_pointer +24
+41:			##t14 = return_value;
+42:			return ##t14;
+43:			goto 91;
+44:			##t15 = n - 1;
+45:			##t16 = val;
+46:			##t17 = *(##t16 + 8);
+47:			##t15 = ##t15 * 8;
+48:			##t15 = ##t15 + 16;
+49:			##t16 = ##t16 + ##t15;
+50:			##t16 = *(##t16);
+51:			##t18 = n - 1;
+52:			##t19 = wt;
+53:			##t20 = *(##t19 + 8);
+54:			##t18 = ##t18 * 8;
+55:			##t18 = ##t18 + 16;
+56:			##t19 = ##t19 + ##t18;
+57:			##t19 = *(##t19);
+58:			##t21 = W - ##t19;
+59:			##t22 = wt;
+60:			##t23 = val;
+61:			##t24 = n - 1;
+62:			push_param ##t21;
+63:			push_param ##t22;
+64:			push_param ##t23;
+65:			push_param ##t24;
+66:			shift_pointer -24
+67:			call_func test_1.knapSack@int@int[]@int[]@int;
+68:			shift_pointer +24
+69:			##t25 = return_value;
+70:			##t26 = ##t16 + ##t25;
+71:			##t27 = W;
+72:			##t28 = wt;
+73:			##t29 = val;
+74:			##t30 = n - 1;
+75:			push_param ##t27;
+76:			push_param ##t28;
+77:			push_param ##t29;
+78:			push_param ##t30;
+79:			shift_pointer -24
+80:			call_func test_1.knapSack@int@int[]@int[]@int;
+81:			shift_pointer +24
+82:			##t31 = return_value;
+83:			##t32 = ##t31;
+84:			push_param ##t26;
+85:			push_param ##t32;
+86:			shift_pointer -24
+87:			call_func test_1.max@int@int;
+88:			shift_pointer +24
+89:			##t33 = return_value;
+90:			return ##t33;
+91:			end_func
+92:			begin_func test_1.main@String[]
+93:			args = pop_param;
+94:			##t34 = 3;
+95:			##t35 = 40;
+96:			push_param 40;
+97:			call_func allocmem;
+98:			##t36 = return_value;
+99:			##t35 = ##t36;
+100:		*(##t35) = 1;
+101:		##t36 = ##t36 + 8;
+102:		*(##t36) = ##t34;
+103:		val = ##t35;
+104:		##t37 = 0;
+105:		##t38 = val;
+106:		##t39 = *(##t38 + 8);
+107:		##t37 = ##t37 * 8;
+108:		##t37 = ##t37 + 16;
+109:		##t38 = ##t38 + ##t37;
+110:		*(##t38) = 60;
+111:		##t40 = 1;
+112:		##t41 = val;
+113:		##t42 = *(##t41 + 8);
+114:		##t40 = ##t40 * 8;
+115:		##t40 = ##t40 + 16;
+116:		##t41 = ##t41 + ##t40;
+117:		*(##t41) = 100;
+118:		##t43 = 2;
+119:		##t44 = val;
+120:		##t45 = *(##t44 + 8);
+121:		##t43 = ##t43 * 8;
+122:		##t43 = ##t43 + 16;
+123:		##t44 = ##t44 + ##t43;
+124:		*(##t44) = 120;
+125:		##t46 = 3;
+126:		##t47 = 40;
+127:		push_param 40;
+128:		call_func allocmem;
+129:		##t48 = return_value;
+130:		##t47 = ##t48;
+131:		*(##t47) = 1;
+132:		##t48 = ##t48 + 8;
+133:		*(##t48) = ##t46;
+134:		wt = ##t47;
+135:		##t49 = 0;
+136:		##t50 = wt;
+137:		##t51 = *(##t50 + 8);
+138:		##t49 = ##t49 * 8;
+139:		##t49 = ##t49 + 16;
+140:		##t50 = ##t50 + ##t49;
+141:		*(##t50) = 10;
+142:		##t52 = 1;
+143:		##t53 = wt;
+144:		##t54 = *(##t53 + 8);
+145:		##t52 = ##t52 * 8;
+146:		##t52 = ##t52 + 16;
+147:		##t53 = ##t53 + ##t52;
+148:		*(##t53) = 20;
+149:		##t55 = 2;
+150:		##t56 = wt;
+151:		##t57 = *(##t56 + 8);
+152:		##t55 = ##t55 * 8;
+153:		##t55 = ##t55 + 16;
+154:		##t56 = ##t56 + ##t55;
+155:		*(##t56) = 30;
+156:		W = 50;
+157:		n = 3;
+158:		##t58 = wt;
+159:		##t59 = val;
+160:		push_param 50;
+161:		push_param ##t58;
+162:		push_param ##t59;
+163:		push_param 3;
+164:		shift_pointer -24
+165:		call_func test_1.knapSack@int@int[]@int[]@int;
+166:		shift_pointer +24
+167:		##t60 = return_value;
+168:		push_param ##t60;
+169:		call_func print;
+170:		return_value;
+171:		end_func
+172:		begin_func test_1##Default
+173:		this = pop_param;
+174:		end_func

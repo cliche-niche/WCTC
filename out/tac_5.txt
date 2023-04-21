@@ -1,0 +1,30 @@
+1:			begin_func test_5.factorial@int
+2:			n = pop_param;
+3:			##t1 = n == 0;
+4:			if_false ##t1 goto 7;
+5:			return 1;
+6:			goto 15;
+7:			##t2 = n - 1;
+8:			push_param ##t2;
+9:			shift_pointer -24
+10:			call_func test_5.factorial@int;
+11:			shift_pointer +24
+12:			##t3 = return_value;
+13:			##t4 = n * ##t3;
+14:			return ##t4;
+15:			end_func
+16:			begin_func test_5.main@String[]
+17:			args = pop_param;
+18:			push_param 5;
+19:			shift_pointer -24
+20:			call_func test_5.factorial@int;
+21:			shift_pointer +24
+22:			##t5 = return_value;
+23:			result = ##t5;
+24:			push_param result;
+25:			call_func print;
+26:			return_value;
+27:			end_func
+28:			begin_func test_5##Default
+29:			this = pop_param;
+30:			end_func

@@ -1,0 +1,35 @@
+1:			begin_func test_2.RecursiveFibonacci@int@int@int
+2:			n = pop_param;
+3:			b = pop_param;
+4:			a = pop_param;
+5:			##t1 = n == 1;
+6:			if_false ##t1 goto 8;
+7:			return b;
+8:			##t2 = b;
+9:			##t3 = a + b;
+10:			##t4 = n - 1;
+11:			push_param ##t2;
+12:			push_param ##t3;
+13:			push_param ##t4;
+14:			shift_pointer -24
+15:			call_func test_2.RecursiveFibonacci@int@int@int;
+16:			shift_pointer +24
+17:			##t5 = return_value;
+18:			return ##t5;
+19:			end_func
+20:			begin_func test_2.main@String[]
+21:			args = pop_param;
+22:			push_param 0;
+23:			push_param 1;
+24:			push_param 10;
+25:			shift_pointer -24
+26:			call_func test_2.RecursiveFibonacci@int@int@int;
+27:			shift_pointer +24
+28:			##t6 = return_value;
+29:			push_param ##t6;
+30:			call_func print;
+31:			return_value;
+32:			end_func
+33:			begin_func test_2##Default
+34:			this = pop_param;
+35:			end_func

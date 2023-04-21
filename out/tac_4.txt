@@ -1,0 +1,132 @@
+1:			func_calls = 0;
+2:			begin_func test_4.fib@int
+3:			this = pop_param;
+4:			n = pop_param;
+5:			##t1 = n + 1;
+6:			##t2 = ##t1 * 8;
+7:			##t2 = ##t2 + 16;
+8:			push_param ##t2;
+9:			call_func allocmem;
+10:			##t3 = return_value;
+11:			##t2 = ##t3;
+12:			*(##t2) = 1;
+13:			##t3 = ##t3 + 8;
+14:			*(##t3) = ##t1;
+15:			memo = ##t2;
+16:			i = 0;
+17:			##t4 = i <= n;
+18:			if_false ##t4 goto 28;
+19:			##t5 = i;
+20:			##t6 = memo;
+21:			##t7 = *(##t6 + 8);
+22:			##t5 = ##t5 * 8;
+23:			##t5 = ##t5 + 16;
+24:			##t6 = ##t6 + ##t5;
+25:			*(##t6) = 0;
+26:			i = i + 1;
+27:			goto 17;
+28:			##t8 = n;
+29:			##t9 = memo;
+30:			push_param ##t8;
+31:			push_param ##t9;
+32:			push_param this;
+33:			shift_pointer -24
+34:			call_func test_4.fibHelper@int@int[];
+35:			shift_pointer +24
+36:			##t10 = return_value;
+37:			return ##t10;
+38:			end_func
+39:			begin_func test_4.fibHelper@int@int[]
+40:			this = pop_param;
+41:			memo = pop_param;
+42:			n = pop_param;
+43:			##t11 = this;
+44:			##t12 = *(##t11);
+45:			##t13 = ##t12 + 1;
+46:			*(##t11) = ##t13;
+47:			##t14 = n == 0;
+48:			##t15 = n == 1;
+49:			##t16 = ##t14 || ##t15;
+50:			if_false ##t16 goto 52;
+51:			return n;
+52:			##t17 = n;
+53:			##t18 = memo;
+54:			##t19 = *(##t18 + 8);
+55:			##t17 = ##t17 * 8;
+56:			##t17 = ##t17 + 16;
+57:			##t18 = ##t18 + ##t17;
+58:			##t18 = *(##t18);
+59:			##t20 = ##t18 != 0;
+60:			if_false ##t20 goto 69;
+61:			##t21 = n;
+62:			##t22 = memo;
+63:			##t23 = *(##t22 + 8);
+64:			##t21 = ##t21 * 8;
+65:			##t21 = ##t21 + 16;
+66:			##t22 = ##t22 + ##t21;
+67:			##t22 = *(##t22);
+68:			return ##t22;
+69:			##t24 = n;
+70:			##t25 = memo;
+71:			##t26 = *(##t25 + 8);
+72:			##t24 = ##t24 * 8;
+73:			##t24 = ##t24 + 16;
+74:			##t25 = ##t25 + ##t24;
+75:			##t27 = n - 1;
+76:			##t28 = memo;
+77:			push_param ##t27;
+78:			push_param ##t28;
+79:			push_param this;
+80:			shift_pointer -24
+81:			call_func test_4.fibHelper@int@int[];
+82:			shift_pointer +24
+83:			##t29 = return_value;
+84:			##t30 = n - 2;
+85:			##t31 = memo;
+86:			push_param ##t30;
+87:			push_param ##t31;
+88:			push_param this;
+89:			shift_pointer -24
+90:			call_func test_4.fibHelper@int@int[];
+91:			shift_pointer +24
+92:			##t32 = return_value;
+93:			##t33 = ##t29 + ##t32;
+94:			*(##t25) = ##t33;
+95:			##t34 = n;
+96:			##t35 = memo;
+97:			##t36 = *(##t35 + 8);
+98:			##t34 = ##t34 * 8;
+99:			##t34 = ##t34 + 16;
+100:		##t35 = ##t35 + ##t34;
+101:		##t35 = *(##t35);
+102:		return ##t35;
+103:		end_func
+104:		begin_func test_4.main@String[]
+105:		args = pop_param;
+106:		push_param 8;
+107:		call_func allocmem;
+108:		##t37 = return_value;
+109:		push_param ##t37;
+110:		call_func test_4##Default;
+111:		obj = ##t37;
+112:		n = 10;
+113:		push_param 10;
+114:		push_param obj;
+115:		shift_pointer -40
+116:		call_func test_4.fib@int;
+117:		shift_pointer +40
+118:		##t38 = return_value;
+119:		result = ##t38;
+120:		push_param result;
+121:		call_func print;
+122:		return_value;
+123:		##t39 = obj;
+124:		##t39 = *(obj);
+125:		push_param ##t39;
+126:		call_func print;
+127:		return_value;
+128:		end_func
+129:		begin_func test_4##Default
+130:		this = pop_param;
+131:		*(this + 0) = 0;
+132:		end_func

@@ -1,0 +1,87 @@
+1:			begin_func test_7.binarySearch@int[]@int@int
+2:			size = pop_param;
+3:			x = pop_param;
+4:			arr = pop_param;
+5:			low = 0;
+6:			high = size - 1;
+7:			##t1 = low <= high;
+8:			if_false ##t1 goto 35;
+9:			##t2 = low + high;
+10:			mid = ##t2 / 2;
+11:			##t3 = mid;
+12:			##t4 = arr;
+13:			##t5 = *(##t4 + 8);
+14:			##t3 = ##t3 * 8;
+15:			##t3 = ##t3 + 16;
+16:			##t4 = ##t4 + ##t3;
+17:			##t4 = *(##t4);
+18:			##t6 = ##t4 == x;
+19:			if_false ##t6 goto 22;
+20:			return mid;
+21:			goto 34;
+22:			##t7 = mid;
+23:			##t8 = arr;
+24:			##t9 = *(##t8 + 8);
+25:			##t7 = ##t7 * 8;
+26:			##t7 = ##t7 + 16;
+27:			##t8 = ##t8 + ##t7;
+28:			##t8 = *(##t8);
+29:			##t10 = ##t8 < x;
+30:			if_false ##t10 goto 33;
+31:			low = mid + 1;
+32:			goto 34;
+33:			high = mid - 1;
+34:			goto 7;
+35:			return -1;
+36:			end_func
+37:			begin_func test_7.main@String[]
+38:			args = pop_param;
+39:			##t11 = 5;
+40:			##t12 = 56;
+41:			push_param 56;
+42:			call_func allocmem;
+43:			##t13 = return_value;
+44:			##t12 = ##t13;
+45:			*(##t12) = 1;
+46:			##t13 = ##t13 + 8;
+47:			*(##t13) = ##t11;
+48:			arr = ##t12;
+49:			i = 0;
+50:			##t14 = i < 5;
+51:			if_false ##t14 goto 62;
+52:			##t15 = i;
+53:			##t16 = arr;
+54:			##t17 = *(##t16 + 8);
+55:			##t15 = ##t15 * 8;
+56:			##t15 = ##t15 + 16;
+57:			##t16 = ##t16 + ##t15;
+58:			##t18 = i + 1;
+59:			*(##t16) = ##t18;
+60:			i = i + 1;
+61:			goto 50;
+62:			push_param arr;
+63:			push_param 3;
+64:			push_param 5;
+65:			shift_pointer -48
+66:			call_func test_7.binarySearch@int[]@int@int;
+67:			shift_pointer +48
+68:			##t19 = return_value;
+69:			result = ##t19;
+70:			push_param result;
+71:			call_func print;
+72:			return_value;
+73:			push_param arr;
+74:			push_param -20;
+75:			push_param 5;
+76:			shift_pointer -48
+77:			call_func test_7.binarySearch@int[]@int@int;
+78:			shift_pointer +48
+79:			##t20 = return_value;
+80:			result = ##t20;
+81:			push_param result;
+82:			call_func print;
+83:			return_value;
+84:			end_func
+85:			begin_func test_7##Default
+86:			this = pop_param;
+87:			end_func
