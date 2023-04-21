@@ -1,4 +1,5 @@
 clear
+cd ../src/
 flex semaction.l
 g++ -o action.o lex.yy.c -ll
 ./action.o < parser_empty.y
