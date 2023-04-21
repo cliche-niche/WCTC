@@ -1,57 +1,43 @@
-public class Example{
-    public static void main(String[] args) {
-        int a = 2, b = 3;
+public class QuickSort {
 
-        while(a < 35){
-            a++;
+    int x = 5;
+    int y = 10;
+    int z = 20;
+    int a = z + 50;
 
-            b = a * b;
-        }
-    }
-
-
-    // void func(int a, int b, int c) {
-    //     c = b*b + a/b;
-
-    //     // if(c > a && c < b && a < b && b < b) {
-    //     //     c = 250;
-    //     // }
-    //     // else {
-    //     //     c = 300;
-    //     //     c += b;
-    //     // }
-
-    //     // for(int i = 0; i < 10; i++) {
-    //     //     c = 230;
-    //     //     b = (c + 10) << 2;
-    //     //     b += 10;
-    //     //     for(int j = 0; j < 20; j++) {
-    //     //         b = 20;
-    //     //     }
-    //     // }
-
-    //     // func(1, 2, 3);
-
-    //     if(1 == 1) {
-    //         a = 20;
-    //     }
-    //     else if(1 == 0){
-    //         a = 23;
-    //     }
-
-    //     while(true){
-    //         a++;
-
-    //         if(a > 20){
-    //             break;
-    //         }
-    //     }
-
-    //     // return 10;
+    // QuickSort(int a, int b) {
+    //     this.x = a;
+    //     this.y = b;
     // }
 
-    // int hello(int a, int b) {
-    //     return a + b;
-    // } 
-}
+    public void print_members() {
+        System.out.println(this.x);
+        System.out.println(this.y);
+        System.out.println(this.a);
+        System.out.println(this.z);
+    }
 
+    public int f(int x){
+        x = 20;
+        return x;
+    }
+
+    public static void main(String[] args) {
+        QuickSort obj = new QuickSort();
+        // QuickSort obj2 = new QuickSort();
+        
+        // obj.print_members();
+        // obj2.print_members();
+        // int a, b;
+        // int woah[][] = new int[a][b];
+        // obj.x = 20;
+        // obj.print_members();
+        // obj.x = obj.x * 10;
+        // obj.print_members();
+        // System.out.println(obj.x);
+        // obj.print_members();
+
+        // System.out.println(obj.f(obj.x + 69));
+        obj.print_members();
+    }
+}

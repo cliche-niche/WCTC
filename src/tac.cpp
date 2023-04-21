@@ -86,6 +86,8 @@ void quad::make_code_from_goto(){
         rel_jump = stoi(arg1.substr(1, arg1.size()-1));
     }
     code = "\t\t" + op + " ";       // op is "GOTO"
+    arg2 = "";
+    result = "";
 }
 
 void quad::check_jump(const int ins_line){

@@ -490,6 +490,7 @@ void node::populate_default_constructors() {
         
         if(flag) continue;                          // no need to add default constructor
         
+        cls -> needs_constructor = true;
         vector<string> empty_params;
         vector<st_entry*> empty_formal_params;
         if(!(cls -> look_up_function(cls->name, empty_params))) {
@@ -1744,7 +1745,7 @@ void node::calc_datatype(node* child1, node* child2, string op){
         return;
     }
     else if(op == "<=") {
-        if((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D')) {
+        if(!((C1 == 'I' || C1 == 'D') && (C2 == 'I' || C2 == 'D'))) {
             this -> datatype = "ERROR";
             cout << "ERROR: Illegal use of '<=' operator with operands " << dt1 << " and " << dt2 << " at line number: " << child1 -> line_no << endl;
             exit(1);
@@ -2423,6 +2424,17 @@ void node::type_check() {
                 exit(1);
             } 
         }
+
+        // populate initial value if possible
+        node* cnt_node = this;
+        while(cnt_node && cnt_node -> children.size() > 0 && cnt_node -> name != "Expression") {
+            cnt_node = cnt_node -> children[cnt_node -> children.size() - 1];
+        }
+        if(cnt_node && cnt_node -> name == "Expression") {
+            if(cnt_node -> exp_is_constant) {
+                this -> sym_tab_entry -> init_val = cnt_node -> exp_int_val;
+            }
+        }
     }
     else if(this -> type == "OPERATOR") {
         if(this -> children.size() == 1){
@@ -2503,15 +2515,14 @@ int node::get_access_depth(string dt) {
 // WALK 4 : GENERATE 3AC
 
 string node::get_var_from_node(){
-    /*
-    if(this -> name == "#Name#"){
+    /* if(this -> name == "#Name#"){
         string s = "";
         for(auto (&child) : this -> children){
             s += child -> name;
         }
         return s;
     }
-    else*/ if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)){
+    else */ if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)){
         return this -> name;
     }
     
@@ -2651,9 +2662,7 @@ void node::generate_tac(){
     }
 
 
-    // cout << this -> name << " " << " tick" << endl;
-    if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)) {        
-        // Add typecast if need be
+    if(this -> type == "ID" || (this -> type == "LITERAL" && this -> children.size() == 0)) {
         if(this -> typecast_to != "UNNEEDED" && this -> typecast_to != ""){
             string op = this -> typecast_to;
             string result = this -> get_var_from_node();
@@ -2691,7 +2700,9 @@ void node::generate_tac(){
         int isMethodInvocation = 0;
 
         // Check if this is a method invocation, if so, skip the last access
-        if(this -> parent -> name == "MethodInvocation") isMethodInvocation = 1;
+        // if(this -> parent -> name == "MethodInvocation"){
+        //     isMethodInvocation = 1;
+        // } 
 
         // Assign address of first object
         q.result = this -> get_var_from_node();
@@ -2703,7 +2714,7 @@ void node::generate_tac(){
         symbol_table_class* prev_class = NULL;
         symbol_table_class* cnt_class = NULL;
         
-        for(int cur = 0; cur + 2 < this -> children.size() - isMethodInvocation; cur += 2){
+        for(int cur = 0; cur + 2 < this -> children.size() - 1 /*isMethodInvocation*/; cur += 2){
             int nxt = cur + 2;
 
             st_entry* cur_obj;
@@ -3173,24 +3184,36 @@ void node::generate_tac(){
         q.make_code_from_return_val();
         this -> ta_codes.push_back(q);
 
-        vector<string> args = this -> children[2] -> get_func_args_tac();
-        this -> append_tac(this -> children[2]);
-        
-        for(auto arg : args){                                           // pushing the other parameters
-            q = quad("", arg, "push_param", "");
-            q.make_code_push_param();
-            this -> ta_codes.push_back(q);
-        }
+        // Call the default constructor to initialize the field members before calling the user defined constructor
 
-        q = quad("", this -> get_var_from_node(), "push_param", "");    // pushing the this pointer into the constructor
+        q = quad("", this -> get_var_from_node(), "push_param", "");
         q.make_code_push_param();
         this -> ta_codes.push_back(q);
 
-        string mangled_name = this -> get_mangled_name();
-
-        q = quad("", mangled_name, "call_func", "");
+        q = quad("", cls_name + "##Default", "call_func", "");
         q.make_code_from_func_call();
         this -> ta_codes.push_back(q);
+
+        if(!cnt_class -> needs_constructor) {
+            vector<string> args = this -> children[2] -> get_func_args_tac();
+            this -> append_tac(this -> children[2]);
+            
+            for(auto arg : args){                                           // pushing the other parameters
+                q = quad("", arg, "push_param", "");
+                q.make_code_push_param();
+                this -> ta_codes.push_back(q);
+            }
+
+            q = quad("", this -> get_var_from_node(), "push_param", "");    // pushing the this pointer into the constructor
+            q.make_code_push_param();
+            this -> ta_codes.push_back(q);
+
+            string mangled_name = this -> get_mangled_name();
+
+            q = quad("", mangled_name, "call_func", "");
+            q.make_code_from_func_call();
+            this -> ta_codes.push_back(q);
+        }
     }
     else if(this -> name == "ArrayAccess"){
         for(auto (&child) : this -> children){
@@ -3322,182 +3345,6 @@ void node::generate_tac(){
                 this -> ta_codes.push_back(q);
             }
         }
-
-        /*
-        node* cnt_node = this;
-        st_entry* arr = NULL;
-        bool needs_this = true;
-        
-        while(cnt_node -> type != "ID" && cnt_node -> name != "#Name#") {
-            cnt_node = cnt_node -> children[0];
-        }
-
-        if(cnt_node -> type == "ID") {
-            arr = this -> get_and_look_up(cnt_node -> name);
-
-            if(!arr) {
-                arr = this -> get_and_look_up_member_variable(cnt_node -> name, this -> get_symbol_table_class() -> name);
-                if(!arr) {
-                    cout << "Unknown Error! Could not find class. Aborting...";
-                    exit(1);
-                }
-            }
-        }
-        else {
-            cout << "Arrays as field members not supported. Sorry..." << endl;
-            exit(1);
-            // deal with names
-            // @TODO
-            // probably wont be supported
-
-            // needs_this = false;
-            // arr = cnt_node -> get_and_look_up_from_name();
-        }
-
-        needs_this &= (arr -> table -> symbol_table_category == 'C');
-
-        quad q("", "", "", "");
-
-        if(needs_this) {    // calculate dimension size by offsetting from this
-            q = quad(this -> get_var_from_node(), "this", "*()", to_string(arr -> offset));
-            q.make_code_from_load();
-            this -> ta_codes.push_back(q);
-        }
-        else {                      // otherwise store the identifier name as base address
-            q = quad(this -> get_var_from_node(), arr -> name, "=", "");
-            q.make_code_from_assignment();
-            this -> ta_codes.push_back(q);
-        }
-
-        // get the dimension size (x_i) only if depth is not 0
-        int depth = this -> get_access_depth(this -> datatype);
-        if(depth != 0) {
-            // q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "+", to_string(depth*type_to_size["int"]));
-            // q.make_code_from_binary();
-            // this -> ta_codes.push_back(q);
-
-            q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "*()", to_string(depth * type_to_size["int"]));
-            q.make_code_from_load();
-            this -> ta_codes.push_back(q);
-        }
-
-        if(depth == 0) {       // rightmost access
-            int datatype_size = 0;
-            if(primitive_types.find(this -> datatype) != primitive_types.end()) {
-                datatype_size = type_to_size[this -> datatype];
-            }
-            else {
-                datatype_size = address_size;
-            }
-
-            q = quad(this -> children[2] -> get_var_from_node(), this -> children[2] -> get_var_from_node(), "*", to_string(datatype_size));
-            q.make_code_from_binary();
-            this -> ta_codes.push_back(q);
-
-            q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "+", this -> children[2] -> get_var_from_node());
-            q.make_code_from_binary();
-            this -> ta_codes.push_back(q);
-
-            // now add the meta data offset
-            int offset = (arr -> dim_sizes . size() + 1) * type_to_size["int"];
-            
-            // q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "+", to_string(offset));
-            // q.make_code_from_binary();
-            // this -> ta_codes.push_back(q);
-
-            // dereference to get the value - further processing in "="
-            q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "*()", to_string(offset));
-            q.make_code_from_load();
-            this -> ta_codes.push_back(q);
-        }
-        else {
-            if(this -> children[0] -> name != "ArrayAccess") {  // leftmost access
-                q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "*", this -> children[2] -> get_var_from_node());
-                q.make_code_from_binary();
-                this -> ta_codes.push_back(q);
-                cout << "possibly " << q.code;
-            }
-            else {
-                // bn * x(n-1) + b(n-1)
-                q = quad(this -> children[2] -> get_var_from_node(), this -> children[0] -> get_var_from_node(), "+", this -> children[2] -> get_var_from_node());
-                q.make_code_from_binary();
-                this -> ta_codes.push_back(q);
-
-                // if(depth == 0) {       // rightmost access
-                //     int datatype_size = 0;
-                //     if(primitive_types.find(this -> datatype) != primitive_types.end()) {
-                //         datatype_size = type_to_size[this -> datatype];
-                //     }
-                //     else {
-                //         datatype_size = address_size;
-                //     }
-
-                //     q = quad(this -> children[2] -> get_var_from_node(), this -> children[2] -> get_var_from_node(), "*", to_string(datatype_size));
-                //     q.make_code_from_binary();
-                //     this -> ta_codes.push_back(q);
-
-                //     q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "+", this -> children[2] -> get_var_from_node());
-                //     q.make_code_from_binary();
-                //     this -> ta_codes.push_back(q);
-
-                //     // now add the meta data offset
-                //     int offset = (arr -> dim_sizes . size() + 1) * type_to_size["int"];
-                    
-                //     // q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "+", to_string(offset));
-                //     // q.make_code_from_binary();
-                //     // this -> ta_codes.push_back(q);
-
-                //     // dereference to get the value - further processing in "="
-                //     q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "*()", to_string(offset));
-                //     q.make_code_from_load();
-                //     this -> ta_codes.push_back(q);
-                // }
-                // else {
-                    // (bnx(n-1) + b(n-1))x(n-2)
-                    q = quad(this -> get_var_from_node(), this -> get_var_from_node(), "*", this -> children[2] -> get_var_from_node());
-                    q.make_code_from_binary();
-                    this -> ta_codes.push_back(q);
-                // }
-            }
-        }
-        */    
-
-        // string res = this -> get_var_from_node();
-        // string arg1 = this -> children[2] -> get_var_from_node();
-        // string op = "*";
-        // string arg2;
-        
-        // quad q("", "", "", "");
-
-        // //get the array access datatype
-        // int datatype_size = 0;
-        // if(primitive_types.find(this -> datatype) != primitive_types.end()) {
-        //     datatype_size = type_to_size[this -> datatype];
-        // }
-        // else {
-        //     datatype_size = address_size;
-        // }
-        
-        // q = quad(res, arg1, op, to_string(datatype_size));
-        // q.make_code_from_binary();
-        // this -> ta_codes.push_back(q);
-        
-        // arg1 = this -> children[0] -> get_var_from_node();
-        // arg2 = res;
-        // op = "+";
-        // q = quad(res, arg1, op, arg2);
-        // q.make_code_from_binary();
-        // this -> ta_codes.push_back(q);
-
-        // if(this -> parent -> name != "ArrayAccess") {       // this is the last array access
-        //     if(this -> parent -> name != "=") {
-        //         arg1 = res;
-        //         op = "*()";
-        //         q = quad(res, arg1, op, "");
-        //         q.make_code_from_load();
-        //         this -> ta_codes.push_back(q);
-        //     }
-        // }
 
         return;
     }
@@ -4282,6 +4129,12 @@ bool node::optimize_tac_CONST_and_STR_RED(){
                 }
                 continue;
             }
+            if(q.made_from == quad::ASSIGNMENT && q.result == q.arg1){
+                q.code = "";
+                const_optimized.insert(q.ins_line);
+                any_optimization = true;
+                continue;
+            }
             if(this -> convert_to_decimal(q.arg1) == q.arg1 && this -> convert_to_decimal(q.arg2) == q.arg2){ // RHS args are constant
                 if(q.made_from == quad::BINARY){ // Constant Folding
                     const_optimized.insert(q.ins_line);
@@ -4612,6 +4465,55 @@ bool node::optimize_tac_CONST_and_STR_RED(){
     return any_optimization;
 }
 
+void node::change_bool_to_int(quad (&q)){
+    bool changed = false;
+    if(q.arg1 == "true"){
+        changed = true;
+        q.arg1 = "1";
+    }
+    else if(q.arg1 == "false"){
+        changed = true;
+        q.arg1 = "0";
+    }
+    if(q.arg2 == "true"){
+        changed = true;
+        q.arg2 = "1";
+    }
+    else if(q.arg2 == "false"){
+        changed = true;
+        q.arg2 = "0";
+    }
+    if(changed){
+        q.make_code();
+    }
+}
+
+void node::generate_tac_for_default_constructors() {
+    quad q("", "", "", "");
+
+    for(auto &cls : main_table -> classes) {
+        // if(cls -> needs_constructor) {
+            q = quad("", cls -> name + "##Default", "", "");
+            q.make_code_begin_func();
+            root -> ta_codes.push_back(q);
+
+            q = quad("this", "", "pop_param", "");
+            q.make_code_pop_param();
+            root -> ta_codes.push_back(q);
+
+            for(auto &entry : cls -> entries) {
+                q = quad("this", to_string(entry -> init_val), "", to_string(entry -> offset));
+                q.make_code_from_store();
+                root -> ta_codes.push_back(q);
+            }
+
+            q = quad("", "", "", "");
+            q.make_code_end_func();
+            root -> ta_codes.push_back(q);
+        // }
+    }
+}
+
 void node::print_tac(string filename){
     ofstream out(filename);
 
@@ -4619,11 +4521,12 @@ void node::print_tac(string filename){
     set<int> targets;
     for(auto (&q) : this -> ta_codes) {
         if(q.code != "") {
+            // change_bool_to_int(q);
             q.check_jump(ins_count);    // Also sets q's ins_line
             if(q.abs_jump){
                 targets.insert(q.abs_jump);
             }
-
+            
             if(filename == "") {
                 cout << ins_count << (ins_count >= 100 ? ":" : ":\t") << q.code;
             }

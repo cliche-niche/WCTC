@@ -47,6 +47,11 @@ instruction::instruction(string op, string a1, string a2, string a3, string it, 
 }
 
 bool codegen::isVariable(string s) {   // if the first character is a digit/-/+, then it is a constant and not a variable
+    // Undefined behaviour when s is ""
+    if(s == "") {
+        cout << "Empty string is neither constant/variable. Aborting...";
+        exit(1);
+    }
     return !(s[0] >= '0' && s[0] <= '9') && (s[0] != '-') && (s[0] != '+');
 }
 
@@ -81,7 +86,7 @@ vector<instruction> codegen::make_x86_code(quad q, int x, int y, int z){
         return insts;        
     }
     else{
-        if(q.made_from != quad::SHIFT_POINTER && q.made_from != quad::POP_PARAM && q.made_from != quad::END_FUNC){
+        if(q.made_from != quad::SHIFT_POINTER && q.made_from != quad::POP_PARAM){
             ins = instruction("", "", "", "", "comment", q.code.substr(2, q.code.size() - 2));
             insts.push_back(ins);
         }
@@ -141,11 +146,11 @@ vector<instruction> codegen::make_x86_code(quad q, int x, int y, int z){
         }
         else if(q.op == "/"){
             if(!isVariable(q.arg1)){   // arg1 is a literal
-                ins = instruction("movq", "$" + q.arg1, "%rdx");
+                ins = instruction("movq", "$" + q.arg1, "%rax");
                 insts.push_back(ins);
             }
             else{
-                ins = instruction("movq", to_string(x) + "(%rbp)", "%rdx");
+                ins = instruction("movq", to_string(x) + "(%rbp)", "%rax");
                 insts.push_back(ins);                
             }
             ins = instruction("cqto");
@@ -157,17 +162,18 @@ vector<instruction> codegen::make_x86_code(quad q, int x, int y, int z){
             else{
                 ins = instruction("movq", to_string(y) + "(%rbp)", "%rbx");
             }
+            insts.push_back(ins);
             ins = instruction("idiv", "%rbx", "");
             insts.push_back(ins);
             ins = instruction("movq", "%rax", "%rdx");
         }
         else if(q.op == "%"){
             if(!isVariable(q.arg1)){   // arg1 is a literal
-                ins = instruction("movq", "$" + q.arg1, "%rdx");
+                ins = instruction("movq", "$" + q.arg1, "%rax");
                 insts.push_back(ins);
             }
             else{
-                ins = instruction("movq", to_string(x) + "(%rbp)", "%rdx");
+                ins = instruction("movq", to_string(x) + "(%rbp)", "%rax");
                 insts.push_back(ins);                
             }
             ins = instruction("cqto");
@@ -622,7 +628,7 @@ vector<instruction> codegen::make_x86_code(quad q, int x, int y, int z){
         ins = instruction("jmp", "L" + to_string(x));
         insts.push_back(ins);
     }
-    else if(q.made_from == quad::STORE){        // *(r)(y) = a1(x)
+    else if(q.made_from == quad::STORE){        // *(r(z) + a2) = a1(x)
         if(!isVariable(q.arg1)){
             ins = instruction("movq", "$" + q.arg1, "%rax");
         }
@@ -630,17 +636,33 @@ vector<instruction> codegen::make_x86_code(quad q, int x, int y, int z){
             ins = instruction("movq", to_string(x) + "(%rbp)", "%rax");
         }
         insts.push_back(ins);
-        ins = instruction("movq", to_string(y) + "(%rbp)", "%rdx");
+        
+        ins = instruction("movq", to_string(z) + "(%rbp)", "%rdx");
         insts.push_back(ins);
-        ins = instruction("movq", "%rax", "(%rdx)");
-        insts.push_back(ins);
+
+        if(q.arg2 == "" || !isVariable(q.arg2)) {
+            ins = instruction("movq", "%rax", q.arg2 + "(%rdx)");
+            insts.push_back(ins);
+        }
+        else {
+            cout << "Unknown TAC `" << q.code << "`. Cannot make load from this code!" << endl;
+            exit(1);  
+        }
     }
-    else if(q.made_from == quad::LOAD){         // r(x) = *(a1)
-        ins = instruction("lea", to_string(x) + "(%rbp)", "%rdx");
+    else if(q.made_from == quad::LOAD){         // r(z) = *(a1(x) + a2(y))
+        ins = instruction("movq", to_string(x) + "(%rbp)", "%rdx");
         insts.push_back(ins);
-        ins = instruction("movq", "(%rdx)", "%rdx");
-        insts.push_back(ins);
-        ins = instruction("movq", "%rdx", to_string(y) + "(%rbp)");
+
+        if(q.arg2 == "" || !isVariable(q.arg2)) {
+            ins = instruction("movq", q.arg2 + "(%rdx)", "%rdx");
+            insts.push_back(ins);
+        }
+        else {
+            cout << "Unknown TAC `" << q.code << "`. Cannot make load from this code!" << endl;
+            exit(1);
+        }
+
+        ins = instruction("movq", "%rdx", to_string(z) + "(%rbp)");
         insts.push_back(ins);
     }
     else if(q.made_from == quad::BEGIN_FUNC) {  // perform callee duties
@@ -720,9 +742,32 @@ vector<instruction> codegen::make_x86_code(quad q, int x, int y, int z){
             ins = instruction("syscall");
             insts.push_back(ins);
         }
+        else {              // otherwise we perform usual callee clean up
+            // end func cannot return any values    
+            ins = instruction("add", "$" + to_string(y), "%rsp");   // delete all local and temporary variables
+            insts.push_back(ins);
+            ins = instruction("popq", "%r15");                      // restore old register values
+            insts.push_back(ins);
+            ins = instruction("popq", "%r14");
+            insts.push_back(ins);
+            ins = instruction("popq", "%r13");
+            insts.push_back(ins);
+            ins = instruction("popq", "%r12");
+            insts.push_back(ins);
+            ins = instruction("popq", "%rsi");
+            insts.push_back(ins);
+            ins = instruction("popq", "%rdi");
+            insts.push_back(ins);
+            ins = instruction("popq", "%rbx");
+            insts.push_back(ins);
+            ins = instruction("popq", "%rbp");
+            insts.push_back(ins);
+            ins = instruction("ret");
+            insts.push_back(ins);
+        }
     }
     else if(q.made_from == quad::SHIFT_POINTER) {
-        // no need to do anything really
+        // no need to do anything really for x86
     }
     else if(q.made_from == quad::FUNC_CALL) {
         if(x == 0) {        // if function is called without any parameters, we have yet to perform caller responsibilities
@@ -743,17 +788,19 @@ vector<instruction> codegen::make_x86_code(quad q, int x, int y, int z){
         }
         ins = instruction("call", this -> get_func_name(q.arg1));      // call the function
         insts.push_back(ins);
-        
+
         if(this -> get_func_name(q.arg1) == "print") {          // deal specially with print
             ins = instruction("add", "$8", "%rsp");
+            insts.push_back(ins);
         }
         else if(this -> get_func_name(q.arg1) == "allocmem") {
             ins = instruction("add", "$8", "%rsp");             // deal specially with allocmem
+            insts.push_back(ins);
         }
         else if(x > 0) {                             // pop the parameters
             ins = instruction("add", "$" + to_string(x*stack_offset), "%rsp");
+            insts.push_back(ins);
         }
-        insts.push_back(ins);
     }
     else if(q.made_from == quad::RETURN_VAL) {
         // move the return value stored in %rax to the required location
@@ -831,12 +878,23 @@ void codegen::append_ins(instruction ins) {
 void codegen::get_tac_subroutines() {
     vector<quad> subroutine;
 
-    for(quad q : root -> ta_codes) {
-        subroutine.push_back(q);
-        if(q.made_from == quad::END_FUNC) {
-            this -> subroutines.push_back(subroutine);
+    bool func_started = false;
 
-            subroutine.clear();
+    for(quad q : root -> ta_codes) {
+        if(q.made_from == quad::BEGIN_FUNC) {
+            func_started = true;
+        }
+
+        if(func_started) {
+            subroutine.push_back(q);
+        }
+
+        if(q.made_from == quad::END_FUNC) {
+            func_started = false;
+            if(subroutine.size()){
+                this -> subroutines.push_back(subroutine);
+                subroutine.clear();
+            }
         }
     }
 }
@@ -881,15 +939,19 @@ void codegen::gen_basic_block(vector<quad> BB, subroutine_table* sub_table) {
             int x = sub_table -> lookup_table[q.arg1].offset;
             insts = this -> make_x86_code(q, x, y);                
         }
-        else if(q.made_from == quad::STORE){        // *(b)(y) = a(x)
+        else if(q.made_from == quad::STORE){        // *(r(z) + a2) = a1(x)
             int x = sub_table -> lookup_table[q.arg1].offset;
-            int y = sub_table -> lookup_table[q.result].offset;
-            insts = this -> make_x86_code(q, x, y);
+            int y = sub_table -> lookup_table[q.arg2].offset;   // always 0 since q.arg2 contains a constant always
+            int z = sub_table -> lookup_table[q.result].offset;
+
+            insts = this -> make_x86_code(q, x, y, z);
         }
-        else if(q.made_from == quad::LOAD){         // b(y) = *(a)(x)
+        else if(q.made_from == quad::LOAD){         // r(z) = *(a1(x) + a2)
             int x = sub_table -> lookup_table[q.arg1].offset;
-            int y = sub_table -> lookup_table[q.result].offset;
-            insts = this -> make_x86_code(q, x, y);
+            int y = sub_table -> lookup_table[q.arg2].offset; // always 0 since q.arg2 contains a constant always
+            int z = sub_table -> lookup_table[q.result].offset;
+
+            insts = this -> make_x86_code(q, x, y, z);
         }
         else if(q.made_from == quad::CAST){         // b(y) = (op) a(x)
             int x = sub_table -> lookup_table[q.arg1].offset;
@@ -919,8 +981,9 @@ void codegen::gen_basic_block(vector<quad> BB, subroutine_table* sub_table) {
             }
             insts = this -> make_x86_code(q, sub_table -> total_space - 8 * stack_offset, sub_table -> is_main_function);        // space of 8 registers is not considered
         }
-        else if(q.made_from == quad::END_FUNC) {    // no need to do anything really
-            insts = this -> make_x86_code(q, sub_table -> is_main_function);
+        else if(q.made_from == quad::END_FUNC) {    // clean up activation record
+            // ideally only reaches this place in a void function
+            insts = this -> make_x86_code(q, sub_table -> is_main_function, sub_table -> total_space - 8 * stack_offset);
         }
         else if(q.made_from == quad::SHIFT_POINTER) {       // no need to do anything really
             insts = this -> make_x86_code(q);
@@ -931,9 +994,6 @@ void codegen::gen_basic_block(vector<quad> BB, subroutine_table* sub_table) {
         else{
             insts = this -> make_x86_code(q);
         }
-        /*
-        POP PARAM
-        */
 
         // append all the instructions finally
         for(instruction ins : insts) {
@@ -1033,11 +1093,6 @@ void codegen::print_code(string asm_file) {
     while(getline(alloc_mem, line)) {
         out << line << '\n';
     }
-    // char ch;
-    // while(print_func.eof() == 0) {
-    //     print_func >> ch;
-    //     out << ch;
-    // }
 }
 
 subroutine_entry::subroutine_entry(){;}

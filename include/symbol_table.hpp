@@ -21,6 +21,7 @@ struct st_entry{
     ull dimensions = 0;
     bool modifier_bv[10] = {0}; 
     bool initialized = false;   // FIELD DECLARATIONS are initialized with default values
+    long long int init_val = 0;
 
     vector<string> dim_sizes;
 
@@ -84,6 +85,9 @@ struct symbol_table_class : public symbol_table {
     vector<symbol_table_func* > member_funcs;
     int object_size = 0;
     bool modifier_bv[10] = {0};
+    bool needs_constructor = false;
+
+
     
     symbol_table_class(string class_name);
 

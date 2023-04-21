@@ -8,23 +8,23 @@ using namespace std;
 ull num_scopes = 0;
 symbol_table_global *main_table = new symbol_table_global();
 
-map<string, int> type_to_size = {
-        {"byte", 1},
-        {"short", 2},
+map<string, int> type_to_size = {   // only quad words supported by compiler
+        {"byte", 8},
+        {"short", 8},
         {"int", 8},
         {"long", 8},
-        {"float", 4},
+        {"float", 8},
         {"double", 8},
-        {"boolean", 1},
-        {"char", 2},
-        {"String", 4}
+        {"boolean", 8},
+        {"char", 8},
+        {"String", 8}
 };
 
 set<string> primitive_types = {
     "byte", "short", "int", "long", "float", "double", "boolean", "char", "String", "null"
 };
 
-const int address_size = 4;
+const int address_size = 8;     // only quad words supported by compiler
 
 st_entry::st_entry(){;}
 

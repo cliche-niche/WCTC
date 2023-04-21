@@ -107,6 +107,10 @@ struct node{
     bool optimize_tac_CONST_and_STR_RED();      // Constant Folding and Constant Propagation, and 
     bool optimize_tac_COPY_PROP();              // Copy Propagation
     bool optimize_tac_DC_ELIM();                // Dead Code Elimination -- DCE (of temporaries)
+    void change_bool_to_int(quad &);            // Convert all bool instances to int
+    
+    void generate_tac_for_default_constructors();   // Generates the 3AC for the default 
+
     void print_tac(string filename);            // Print 3AC into the file ``filename''
 };
 

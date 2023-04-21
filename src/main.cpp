@@ -99,6 +99,9 @@ int main(int argc, char* argv[]) {
         // optimizing = (optimizing || root->optimize_tac_DC_ELIM());
         root->rename_temporaries();
     }while(optimizing);
+
+    root->generate_tac_for_default_constructors();
+
     root->print_tac(tac_file);
 
     gen->gen_global();
