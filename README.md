@@ -2,7 +2,7 @@
 A compiler made as a part of the course project for the course [CS335: Compiler Design](https://www.cse.iitk.ac.in/users/swarnendu/courses/spring2023-cs335/) at IIT-K in 2022-23 II Sem. in a team of three (Soham [CrypthiccCrypto](https://github.com/CrypthiccCrypto) Samaddar, Janhvi [Janhvi-Rochwani](https://github.com/Janhvi-Rochwani) Rochwani, and me, Aditya [cliche-niche](cliche-niche) Tanwar).
 
 ### Introduction
-For all your <b>integral only java</b> needs (rounded to the nearest 8 bytes, {using only this class [no object arrays]}), we present to you, WCTC, a compiler that compiles Java code to x86_64 assembly code. <br>
+For all your <b>integral only java</b> needs (rounded to the nearest 8 bytes, {using only this class [no object arrays]}), we present to you WCTC, a compiler that compiles Java code to x86_64 assembly code. <br>
 A complete summary of the functionalities provided can be found in [Milestone 4's report](./docs/Milestone4_WCTC_Report.pdf), and the final presentation of the project is available [here](./docs/WCTC).
 
 ### Running
@@ -75,4 +75,4 @@ Extend the compiler to generate x86_64 assembly code which can be compiled using
 Awarded 3/3 for implementation and bonus (mean was 0.6).
 
 ## Parting Comments
-To a stressful four months, and being one of the last few batches to ever have to do ['cs335'](https://www.cse.iitk.ac.in/users/swarnendu/courses/spring2023-cs335/). We are very proud of what we have built, no matter how rudimentary, or how buggy, even if it led a lot of sleepless nights and missing classes (of cs335). <br>- JAZ Hands
+To a stressful four months, and being one of the last few batches to ever have to do ['cs335'](https://www.cse.iitk.ac.in/users/swarnendu/courses/spring2023-cs335/). We are very proud of what we have built, no matter how rudimentary, or how buggy, even if it led to a lot of sleepless nights and missing (cs335) classes. <br>- JAZ Hands
